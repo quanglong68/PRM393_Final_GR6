@@ -133,7 +133,7 @@ firebase/
 
 | Service | Vai Trò | Cấu Hình Đặc Biệt |
 |---------|---------|-------------------|
-| **Firebase Auth** | Xác thực sinh viên | Google Sign-In, domain `@fpt.edu.vn` |
+| **Firebase Auth** | Xác thực sinh viên | Google Sign-In, mọi email Google (không chặn domain — quyết định 31/10) |
 | **Cloud Firestore** | Cơ sở dữ liệu chính | `persistenceEnabled: true`, cache không giới hạn |
 | **Cloud Storage** | Lưu trữ tệp ghi chú | Path: `notes/{userId}/...`, max size 10MB |
 | **Firebase Analytics** | Đo lường hành vi | ≥7 events, bộ lọc loại trừ PII (name, email) |

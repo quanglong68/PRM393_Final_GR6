@@ -300,7 +300,7 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
                       const SizedBox(height: 2),
                       Text(
                         authVm.currentUserEmail ??
-                            'Vui lòng đăng nhập bằng tài khoản @fpt.edu.vn',
+                            'Vui lòng đăng nhập bằng tài khoản Google',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: AppColors.onSurfaceVariant,
                             ),

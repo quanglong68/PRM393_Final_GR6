@@ -110,7 +110,7 @@ class SignInScreen extends StatelessWidget {
 
                 // Google Sign-In Button
                 AppButton(
-                  label: 'Đăng nhập với Google (@fpt.edu.vn)',
+                  label: 'Đăng nhập với Google',
                   icon: Icons.login_rounded,
                   isLoading: authViewModel.isLoading,
                   isExpanded: true,
