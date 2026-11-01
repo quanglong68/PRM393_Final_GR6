@@ -49,7 +49,7 @@ void main() {
 
     // Verify SignInScreen components
     expect(find.text('FPTU Second Brain'), findsOneWidget);
-    expect(find.text('Đăng nhập với Google (@fpt.edu.vn)'), findsOneWidget);
+    expect(find.text('Đăng nhập với Google'), findsOneWidget);
     expect(find.byIcon(Icons.login_rounded), findsOneWidget);
   });
 

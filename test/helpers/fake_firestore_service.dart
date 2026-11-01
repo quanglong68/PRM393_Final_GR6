@@ -1,34 +1,48 @@
 import 'package:prm323_lab3/services/firestore_service.dart';
 
-/// Test double implementing [FirestoreService] for hermetic unit and widget testing.
+/// Test double implementing [FirestoreService] for hermetic unit and widget
+/// testing.
 ///
-/// Records all calls with their user IDs and supports simulated failures.
+/// Holds NO production fallbacks — tests seed exactly the data they assert on
+/// (via [courses], [tasks], [notes], [userProfile], [reports],
+/// [notifications]) and inspect those lists afterwards. Failure flags arm
+/// simulated remote errors.
 class FakeFirestoreService implements FirestoreService {
+  final List<Map<String, dynamic>> courses = [];
   final List<Map<String, dynamic>> tasks = [];
   final List<Map<String, dynamic>> notes = [];
+  final List<Map<String, dynamic>> reports = [];
+  final List<Map<String, dynamic>> notifications = [];
+  final List<String> registeredTokens = [];
+
   final List<String> deletedTaskCalls = [];
   final List<String> deletedNoteCalls = [];
-  final List<String> savedReportMetadataCalls = [];
-  final List<String> savedNotificationCalls = [];
-  final List<String> markedNotificationReadCalls = [];
-  final List<String> registeredTokenCalls = [];
+
+  /// Returned by [getUserProfile]; null means "profile not provisioned".
+  Map<String, dynamic>? userProfile;
 
   bool shouldFailTaskAdd = false;
   bool shouldFailTaskUpdate = false;
   bool shouldFailTaskDelete = false;
   bool shouldFailNoteSave = false;
   bool shouldFailNoteDelete = false;
-  bool shouldFailSaveReportMetadata = false;
-  bool shouldFailSaveNotification = false;
+  bool shouldFailReportSave = false;
 
   @override
-  Future<List<Map<String, dynamic>>> getCourses(String userId) async => [];
+  Future<List<Map<String, dynamic>>> getCourses(String userId) async =>
+      List.from(courses);
 
   @override
-  Future<Map<String, dynamic>?> getCourse(String courseId) async => null;
+  Future<Map<String, dynamic>?> getCourse(String courseId) async {
+    for (final c in courses) {
+      if (c['id'] == courseId) return c;
+    }
+    return null;
+  }
 
   @override
-  Future<Map<String, dynamic>?> getUserProfile(String userId) async => null;
+  Future<Map<String, dynamic>?> getUserProfile(String userId) async =>
+      userProfile;
 
   @override
   Future<List<Map<String, dynamic>>> getTasks(String userId) async =>
@@ -91,32 +105,35 @@ class FakeFirestoreService implements FirestoreService {
   @override
   Future<void> saveReportMetadata(
       String userId, Map<String, dynamic> metadata) async {
-    if (shouldFailSaveReportMetadata) {
+    if (shouldFailReportSave) {
       throw Exception('Simulated remote saveReportMetadata failure');
     }
-    savedReportMetadataCalls.add('$userId:${metadata['fileName']}');
+    reports.add({'userId': userId, ...metadata});
   }
 
   @override
   Future<List<Map<String, dynamic>>> getNotifications(String userId) async =>
-      const [];
+      List.from(notifications);
 
   @override
-  Future<void> saveNotification(String userId, Map<String, dynamic> data) async {
-    if (shouldFailSaveNotification) {
-      throw Exception('Simulated remote saveNotification failure');
-    }
-    savedNotificationCalls.add(userId);
+  Future<void> saveNotification(
+      String userId, Map<String, dynamic> data) async {
+    notifications.add({
+      'id': 'notif_${notifications.length + 1}',
+      'userId': userId,
+      ...data,
+    });
   }
 
   @override
   Future<void> markNotificationRead(
       String userId, String notificationId) async {
-    markedNotificationReadCalls.add('$userId:$notificationId');
+    final idx = notifications.indexWhere((n) => n['id'] == notificationId);
+    if (idx != -1) notifications[idx]['read'] = true;
   }
 
   @override
   Future<void> registerToken(String userId, String token) async {
-    registeredTokenCalls.add('$userId:$token');
+    registeredTokens.add('$userId:$token');
   }
 }
