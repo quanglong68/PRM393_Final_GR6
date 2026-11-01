@@ -84,7 +84,33 @@ class FirebaseFirestoreService implements FirestoreService {
           .orderBy('dueDate', descending: false)
           .get(const GetOptions(source: Source.serverAndCache));
 
-      return snapshot.docs.map((doc) => {'id': doc.id, ...doc.data()}).toList();
+      // Prefer the actual Firestore document ID as the canonical task ID.
+      // For new documents (T03-M11D fix): doc.data()['id'] == snapshot.id.
+      // For legacy documents (old .add()): doc.data()['id'] differs from snapshot.id;
+      // we use snapshot.id as the canonical ID and preserve the original data.id
+      // as a legacy reference field.
+      final doc = snapshot.docs.firstOrNull;
+      if (doc == null) return [];
+
+      final data = doc.data();
+      final firestoreId = doc.id;
+      final dataId = data['id'] as String?;
+      final taskId = dataId != null && dataId.isNotEmpty && dataId == firestoreId
+          ? firestoreId
+          : firestoreId; // always prefer Firestore document ID as canonical
+
+      // Build the map: include the canonical task ID (Firestore document ID)
+      // and optionally the original data id as legacyId for legacy documents.
+      // We explicitly do NOT spread data['id'] into the result, because that
+      // would overwrite the canonical id with the data field id — which is
+      // the root cause of the not-found error when legacy documents have a
+      // different data.id than the Firestore document ID.
+      final result = <String, dynamic>{
+        'id': taskId,
+        if (dataId != null && dataId != firestoreId) 'legacyId': dataId,
+      }..addAll(data..remove('id'));
+
+      return [result];
     } catch (e) {
       debugPrint('[Firestore] getTasks error: $e');
       rethrow;
@@ -97,15 +123,23 @@ class FirebaseFirestoreService implements FirestoreService {
       final userId = task['userId'] as String?;
       if (userId == null) throw ArgumentError('Task must include userId');
 
+      // Use the app-generated task ID as the Firestore document ID
+      // so that updateTask/deleteTask can target the correct document path.
+      var taskId = task['id'] as String?;
+      if (taskId == null || taskId.isEmpty) {
+        // Fallback: generate an ID and use .doc(id).set() if no ID provided
+        taskId = DateTime.now().millisecondsSinceEpoch.toString();
+      }
       await _firestore
           .collection('users')
           .doc(userId)
           .collection('tasks')
-          .add({
+          .doc(taskId)
+          .set({
         ...task,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
     } catch (e) {
       debugPrint('[Firestore] addTask error: $e');
       rethrow;
@@ -127,8 +161,15 @@ class FirebaseFirestoreService implements FirestoreService {
         ...data,
         'updatedAt': FieldValue.serverTimestamp(),
       });
+    } on FirebaseException catch (e) {
+      // DEBUG: Capture FirebaseException details for root-cause analysis.
+      // Log only code, message, and stack trace — no credentials, tokens, or sensitive data.
+      debugPrint('[Firestore] updateTask FirebaseException: code=${e.code}, message=${e.message}');
+      debugPrint('[Firestore] updateTask FirebaseException: stackTrace=${e.stackTrace}');
+      rethrow;
     } catch (e) {
-      debugPrint('[Firestore] updateTask error: $e');
+      // DEBUG: Capture non-FirebaseException errors.
+      debugPrint('[Firestore] updateTask unexpected error: $e');
       rethrow;
     }
   }
