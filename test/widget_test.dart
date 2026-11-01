@@ -4,22 +4,25 @@ import 'package:provider/provider.dart';
 
 import 'package:prm323_lab3/main.dart';
 import 'package:prm323_lab3/screens/note_editor_screen.dart';
+import 'helpers/mock_auth_service.dart';
+import 'helpers/mock_firestore_service.dart';
 import 'package:prm323_lab3/viewmodels/notes_viewmodel.dart';
 
 import 'helpers/fake_firestore_service.dart';
-import 'helpers/mock_auth_service.dart';
 
 void main() {
   testWidgets('Authenticated user sees AppShell with bottom navigation', (WidgetTester tester) async {
-    final mockAuth = MockAuthService(initialUserId: 'user_123', initialEmail: 'user_123@example.com');
-    final fakeFirestore = FakeFirestoreService();
+    final mockAuth = MockAuthService(initialUserId: 'user_123', initialEmail: 'ducnmse180000@fpt.edu.vn');
+    final mockFirestore = MockFirestoreService();
 
     await tester.pumpWidget(
       FptuSecondBrainApp(
         authService: mockAuth,
-        firestoreService: fakeFirestore,
+        firestoreService: mockFirestore,
       ),
     );
+    // Advance time past the 300ms delay in HomeViewModel.loadData()
+    await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
 
     // Verify app title in app bar
@@ -34,19 +37,19 @@ void main() {
 
   testWidgets('Unauthenticated user sees SignInScreen with Google sign-in button', (WidgetTester tester) async {
     final mockAuth = MockAuthService(initialUserId: null, initialEmail: null);
-    final fakeFirestore = FakeFirestoreService();
+    final mockFirestore = MockFirestoreService();
 
     await tester.pumpWidget(
       FptuSecondBrainApp(
         authService: mockAuth,
-        firestoreService: fakeFirestore,
+        firestoreService: mockFirestore,
       ),
     );
     await tester.pumpAndSettle();
 
     // Verify SignInScreen components
     expect(find.text('FPTU Second Brain'), findsOneWidget);
-    expect(find.text('Đăng nhập với Google'), findsOneWidget);
+    expect(find.text('Đăng nhập với Google (@fpt.edu.vn)'), findsOneWidget);
     expect(find.byIcon(Icons.login_rounded), findsOneWidget);
   });
 
