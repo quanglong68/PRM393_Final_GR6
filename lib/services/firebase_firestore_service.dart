@@ -161,15 +161,10 @@ class FirebaseFirestoreService implements FirestoreService {
         ...data,
         'updatedAt': FieldValue.serverTimestamp(),
       });
-    } on FirebaseException catch (e) {
-      // DEBUG: Capture FirebaseException details for root-cause analysis.
-      // Log only code, message, and stack trace — no credentials, tokens, or sensitive data.
-      debugPrint('[Firestore] updateTask FirebaseException: code=${e.code}, message=${e.message}');
-      debugPrint('[Firestore] updateTask FirebaseException: stackTrace=${e.stackTrace}');
-      rethrow;
     } catch (e) {
-      // DEBUG: Capture non-FirebaseException errors.
-      debugPrint('[Firestore] updateTask unexpected error: $e');
+      // T03-M11C temporary capture block removed: root cause was the legacy
+      // task ID mismatch fixed in T03-M11D/M11E (canonical doc IDs).
+      debugPrint('[Firestore] updateTask error: $e');
       rethrow;
     }
   }

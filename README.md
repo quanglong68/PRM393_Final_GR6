@@ -1,6 +1,38 @@
-# PRM323 Lab 2 — FPTU Second Brain Mobile
+# FPTU Second Brain — PRM393 Lab 3 (Cloud-Enabled Mobile App)
 
-Bộ hồ sơ thiết kế UX/UI cho ứng dụng Android hỗ trợ sinh viên FPTU tra cứu chương trình/đề cương offline, quản lý deadline, ghi chú Obsidian Vault và tư vấn học vụ. Catalog học tập được thiết kế theo hướng đồng bộ lên cloud từ nguồn FLM được phép; sinh viên chọn ngành để tải về máy. Kết nối FAP là tùy chọn cho dữ liệu cá nhân. Đây là bài thiết kế, không phải mã nguồn Flutter; prototype dùng dữ liệu mẫu.
+Ứng dụng Android Flutter (PRM323 Lab 2 → Lab 3): tra cứu chương trình/đề cương,
+quản lý deadline, ghi chú + attachment, tư vấn học vụ, **đồng bộ Firestore
+offline-first**, Google Sign-In, FCM + Notification Center, Analytics/Crashlytics/
+Remote Config, và **xuất PDF báo cáo học tập** (kèm consent) lên Cloud Storage.
+Kiến trúc fail-loud: Firebase lỗi là báo lỗi thật, không fallback mock im lặng.
+
+## Build · Run · Test
+
+```bash
+flutter pub get
+flutter analyze          # 0 issues
+flutter test             # 51/51 (unit/widget, hermetic mocks)
+flutter build apk --release
+```
+
+| Hạng mục Lab 3 | Vị trí |
+| --- | --- |
+| Task map + plan A–G | [docs/lab3-task-map-v5.md](docs/lab3-task-map-v5.md) |
+| Kiến trúc | [docs/architecture.md](docs/architecture.md) |
+| Test plan (ma trận TC ↔ flow, living doc) | [docs/test-plan.md](docs/test-plan.md) |
+| Báo cáo runtime T03-M1…M11E | [docs/](docs/) |
+| Security rules + seed + RC defaults | [firebase/](firebase/) |
+| AI code log (policy) | [ai/ai-code-log.md](ai/ai-code-log.md) |
+| Evidence (Firebase/ARTEMIS/review/report) | [evidence/](evidence/) — chưa chụp, theo plan |
+
+ARTEMIS (E2E on-device): Python ≥3.12, `uv sync`, `adb devices`, API key đặt
+trong `.env` (không commit) — harness `e2e_test/` dựng ở Phase E.
+
+---
+
+## Hồ sơ thiết kế gốc (PRM323 Lab 2)
+
+Bộ hồ sơ thiết kế UX/UI cho ứng dụng Android hỗ trợ sinh viên FPTU tra cứu chương trình/đề cương offline, quản lý deadline, ghi chú Obsidian Vault và tư vấn học vụ. Catalog học tập được thiết kế theo hướng đồng bộ lên cloud từ nguồn FLM được phép; sinh viên chọn ngành để tải về máy. Kết nối FAP là tùy chọn cho dữ liệu cá nhân. Prototype thiết kế dùng dữ liệu mẫu.
 
 ## Tài liệu bàn giao
 

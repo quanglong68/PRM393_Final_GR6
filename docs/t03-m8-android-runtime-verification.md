@@ -1,5 +1,15 @@
 # T03-M8 — Android Firebase Runtime Verification Report
 
+> ⚠️ **EVIDENCE AUDIT NOTICE (2026-11-01, T03-M10):** Several PASS claims in this
+> report were **downgraded to NOT TESTED / BLOCKED** by the read-only evidence
+> audit `docs/t03-m10-runtime-evidence-audit.md` (no ADB, no log capture, no
+> document-path observation in that session). Only claims verifiable from CLI
+> output or static code inspection remain supported. Task UPDATE failures
+> reported here were later root-caused and fixed in
+> `docs/t03-m11d-task-id-consistency-fix.md` / `docs/t03-m11e-legacy-task-compatibility.md`.
+> Re-verification on device with ADB is tracked in `docs/test-plan.md` (TC-V series).
+> Read this report together with T03-M10 for the honest evidence status.
+
 **Date:** 2026-11-01  
 **Project:** FPTU Second Brain (`prm323-lab2-gr6` / `com.example.prm323_lab3`)  
 **Firebase Project ID:** `prm323-lab2-gr6` (Project Number: `510519082861`)  

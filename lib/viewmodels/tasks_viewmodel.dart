@@ -5,7 +5,6 @@ import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import 'base_viewmodel.dart';
 import 'package:flutter/foundation.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class TasksViewModel extends BaseViewModel<List<TaskModel>> {
   TasksViewModel({
@@ -196,19 +195,10 @@ class TasksViewModel extends BaseViewModel<List<TaskModel>> {
           'dueDate': updated.dueDate,
           'userId': uid!,
         });
-      } on FirebaseException catch (e) {
-        // DEBUG: Capture FirebaseException details before local revert.
-        // Log only code, message, and stack trace — no credentials, tokens, or sensitive data.
-        debugPrint('[ViewModel] editTask FirebaseException: code=${e.code}, message=${e.message}');
-        debugPrint('[ViewModel] editTask FirebaseException: stackTrace=${e.stackTrace}');
-        // Preserve existing local revert and user-facing error behavior.
-        _allTasks[index] = oldTask;
-        setState(AsyncViewState.data(filteredTasks));
-        setLastError('Không thể sửa việc cần làm. Kiểm tra kết nối và thử lại.');
-        return false;
       } catch (e) {
-        // DEBUG: Capture non-FirebaseException errors.
-        debugPrint('[ViewModel] editTask unexpected error: $e');
+        // T03-M11C temporary capture block removed: root cause was the
+        // legacy task ID mismatch fixed in T03-M11D/M11E (canonical doc IDs).
+        debugPrint('[ViewModel] editTask error: $e');
         _allTasks[index] = oldTask;
         setState(AsyncViewState.data(filteredTasks));
         setLastError('Không thể sửa việc cần làm. Kiểm tra kết nối và thử lại.');
