@@ -55,3 +55,11 @@ android/app/google-services.json
 
 # Widget Preview related
 .widget_preview/
+
+# Python / ARTEMIS harness
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+e2e_test/results_run*.xml

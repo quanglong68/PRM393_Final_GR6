@@ -26,7 +26,27 @@ flutter build apk --release
 | Evidence (Firebase/ARTEMIS/review/report) | [evidence/](evidence/) — chưa chụp, theo plan |
 
 ARTEMIS (E2E on-device): Python ≥3.12, `uv sync`, `adb devices`, API key đặt
-trong `.env` (không commit) — harness `e2e_test/` dựng ở Phase E.
+trong `.env` (không commit) — harness `e2e_test/` (xem `e2e_test/README.md`).
+
+## Cấu hình Firebase
+
+`android/app/google-services.json` **không commit** (policy guide §9.3). Người clone repo tự tải
+từ Firebase Console project `prm323-lab2-gr6` và đặt đúng đường dẫn; app fail-loud bằng màn hình
+lỗi thật nếu thiếu file. `lib/firebase_options.dart` (FlutterFire CLI) có trong repo.
+
+## AI tools đã sử dụng
+
+Claude Code (kiến trúc, code, docs, debug — nhật ký: [ai/ai-code-log.md](ai/ai-code-log.md)) ·
+Google Stitch + Claude cho thiết kế Lab 2 ([ai/ai-design-log.md](ai/ai-design-log.md)) ·
+ARTEMIS (E2E) · reviewer PR: CodeRabbit/Copilot (Phase F, chưa chạy).
+
+## Known issues (03/11)
+
+- Runtime FCM 3 trạng thái, DebugView, Crashlytics dashboard, RC before/after, PDF upload,
+  offline persistence, cross-account isolation: **chưa verify trên device** — `docs/test-plan.md` §3.
+- Storage bucket trên Spark plan chưa xác nhận provisioned — blocker tiềm tàng cho PDF/attachment.
+- ARTEMIS harness chưa chạy (chờ E1); API `artemis-client` có thể cần chỉnh theo version cài.
+- Video demo + report + slides: chờ evidence (Phase G). Link video: `__________`
 
 ---
 
