@@ -83,6 +83,20 @@ class AdvisorViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Preset scenario applied in the Strategy Simulator — logs event 13
+  /// (guide §6.4 "tạo strategy"). Slider edits are NOT logged (they fire per
+  /// pixel; analytics rule is once per user action).
+  void applyPreset({required String preset, double? prm, double? swp, double? swr}) {
+    updateSimulation(prm: prm, swp: swp, swr: swr);
+    analyticsService?.logStrategyPresetApplied(preset: preset);
+  }
+
+  /// Simulator opened (guide §6.4 "xem strategy"). Called once from the
+  /// Advisor's GPA entry point — not from build().
+  void logStrategyOpened({String source = 'advisor'}) {
+    analyticsService?.logStrategyView(source: source);
+  }
+
   void _initDefaults() {
     final email = authService?.currentUserEmail;
     final name = email != null && email.isNotEmpty

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prm323_lab3/models/course_model.dart';
+import 'package:prm323_lab3/viewmodels/advisor_viewmodel.dart';
 import 'package:prm323_lab3/viewmodels/roadmap_viewmodel.dart';
 
 import '../helpers/fake_firestore_service.dart';
@@ -134,6 +135,47 @@ void main() {
       await Future<void>.delayed(Duration.zero);
       expect(vmNoAuth.allCourses, isEmpty);
       vmNoAuth.dispose();
+    });
+  });
+
+  group('Strategy events (rubric §6.4 xem/tạo strategy)', () {
+    late MockAnalyticsService analytics;
+    late AdvisorViewModel vm;
+
+    setUp(() {
+      analytics = MockAnalyticsService();
+      vm = AdvisorViewModel(analyticsService: analytics);
+    });
+
+    test('opening the simulator logs strategy_view exactly once per tap', () {
+      vm.logStrategyOpened();
+      vm.logStrategyOpened();
+      final events =
+          analytics.loggedEvents.where((e) => e['name'] == 'strategy_view');
+      expect(events.length, equals(2)); // 2 deliberate opens = 2 events
+      expect(events.first['parameters']!['source'], equals('advisor'));
+    });
+
+    test('preset applies scores AND logs strategy_preset_applied once', () {
+      vm.applyPreset(preset: 'gioi_8_5', prm: 8.5, swp: 8.5, swr: 8.5);
+      final e = analytics.loggedEvents
+          .singleWhere((ev) => ev['name'] == 'strategy_preset_applied');
+      expect(e['parameters']!['preset'], equals('gioi_8_5'));
+      // Scores updated but never carried in the event (PII rule).
+      expect(vm.predictedSemesterGpa, greaterThanOrEqualTo(8.0));
+      expect(e['parameters']!.containsKey('prm'), isFalse);
+      expect(e['parameters']!.values.any((v) => v is double), isFalse);
+    });
+
+    test('slider-style updateSimulation logs nothing (per-pixel rule)', () {
+      vm.updateSimulation(prm: 7.2);
+      vm.updateSimulation(prm: 7.3);
+      vm.updateSimulation(prm: 7.4);
+      expect(
+        analytics.loggedEvents
+            .where((e) => (e['name'] as String).startsWith('strategy')),
+        isEmpty,
+      );
     });
   });
 }

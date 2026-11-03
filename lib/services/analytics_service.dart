@@ -81,4 +81,15 @@ abstract class AnalyticsService {
   }) =>
       logEvent('notification_received',
           parameters: {'type': type, 'action': action});
+
+  /// Event 12: Strategy Simulator opened (guide v5 §6.4 "xem strategy").
+  /// [source] is 'advisor' (entry via GPA button) or 'direct'.
+  Future<void> logStrategyView({required String source}) =>
+      logEvent('strategy_view', parameters: {'source': source});
+
+  /// Event 13: A preset scenario applied in the simulator (§6.4 "tạo strategy").
+  /// [preset] is the scenario label slug; simulated scores are NOT logged
+  /// (they could be misread as real transcript data — PII rule).
+  Future<void> logStrategyPresetApplied({required String preset}) =>
+      logEvent('strategy_preset_applied', parameters: {'preset': preset});
 }

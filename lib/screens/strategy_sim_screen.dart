@@ -126,7 +126,8 @@ class StrategySimScreen extends StatelessWidget {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () {
-                    advisorVm.updateSimulation(prm: 8.5, swp: 8.5, swr: 8.5);
+                    advisorVm.applyPreset(
+                        preset: 'gioi_8_5', prm: 8.5, swp: 8.5, swr: 8.5);
                   },
                   child: const Text('Kịch bản Giỏi (8.5)'),
                 ),
@@ -135,7 +136,8 @@ class StrategySimScreen extends StatelessWidget {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () {
-                    advisorVm.updateSimulation(prm: 9.0, swp: 8.5, swr: 8.0);
+                    advisorVm.applyPreset(
+                        preset: 'dot_pha', prm: 9.0, swp: 8.5, swr: 8.0);
                   },
                   child: const Text('Kịch bản Đột phá'),
                 ),
