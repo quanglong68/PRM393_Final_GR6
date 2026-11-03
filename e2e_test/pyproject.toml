@@ -1,0 +1,26 @@
+[project]
+name = "prm393-lab3-e2e"
+version = "0.1.0"
+description = "ARTEMIS E2E harness for FPTU Second Brain (PRM393 Lab 3)"
+requires-python = ">=3.12"
+dependencies = [
+    "artemis-client @ git+https://github.com/google/artemis.git#subdirectory=packages/artemis-client",
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "pytest-timeout>=2.3",
+    "python-dotenv>=1.0",
+    "pydantic>=2.7",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+timeout = 420
+markers = [
+    "e2e: cần ARTEMIS host + device",
+    "smoke: quick single-run checks",
+    "flaky: known-unstable case (see docs/test-plan.md)",
+    "native: exercises Android system UI / adb (guide tr.23 requirement)",
+]
+
+[dependency-groups]
+dev = ["ruff>=0.6"]

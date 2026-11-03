@@ -50,6 +50,7 @@ app.*.map.json
 *.jks
 local.properties
 .env*
+!.env.example
 android/app/google-services.json
 
 # Widget Preview related
