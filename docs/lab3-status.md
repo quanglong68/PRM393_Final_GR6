@@ -1,8 +1,12 @@
 # PRM393 Lab 3 — Trạng thái task (đã xong / còn nợ)
 
-> **Cập nhật:** 2026-11-03 (rev 2) · baseline `261e6dc` + working tree 03/11.
-> Rev 1 (02/11) giờ đã nằm trong repo qua commit `dae9ad9`. Code mới pull
-> (`261e6dc`) thêm: FPT-domain gate (S-10), NoteModel parse Timestamp,
+> **Cập nhật:** 2026-11-03 (rev 3) · baseline HEAD `3b10599` + working tree 03/11.
+> Rev 2 đã được commit (`3b10599`). Rev 3 thêm: harness đổi tên theo checklist §8.3 và
+> nâng **16 → 26 cases**, mapping TC-01..14 ↔ file::test (`docs/test-plan.md` §1b), cây
+> `evidence/` đủ §10.1 + README, `.gitignore` Python block, README 3 mục mới,
+> `LAB3_CHECKLIST.md` re-tick theo thực tế, draft G2/G3 (`docs/lab3-report-outline.md`,
+> `docs/lab3-slides-outline.md`, `docs/lab3-video-script.md`).
+> Code mới pull (`261e6dc`) thêm: FPT-domain gate (S-10), NoteModel parse Timestamp,
 > SyncReloadService, **seed catalog đã xác minh trên device** — xem
 > `docs/lab3-completion-progress.md` + `docs/lab3-final-requirement-audit.md`.
 > Nguồn chéo: `docs/lab3-task-map-v5.md` (plan A–G) · `docs/test-plan.md` (TC-*) ·
@@ -51,13 +55,15 @@
 | Unit/widget/model suite xanh **54/54** | `flutter test` 03/11 trên `261e6dc` |
 | **Runtime device 02/11**: sign-in, Roadmap read sau seed, Task create/toggle, Note create/delete, manual sync | `docs/lab3-completion-progress.md` (commit `261e6dc`) |
 | FPT-domain gate S-10 (`hostedDomain` + check server-side, sign-out if ngoại domain) | `261e6dc` `firebase_auth_service.dart` |
-| **ARTEMIS harness 16 cases** — code-side xong (E2): 3 flows + TC-V1/V5 + error branch × dịch vụ + native ADB + exploratory. CHƯA chạy (chờ E1) | `e2e_test/` 03/11 |
+| **ARTEMIS harness 26 cases** (rev 3: đổi tên file theo checklist §8.3 + thêm TC-05/13/14) — code-side xong (E2): 3 flows + TC-V1/V5 + error branch × dịch vụ + native ADB + exploratory. CHƯA chạy (chờ E1) | `e2e_test/` 03/11, mapping §1b test-plan |
 | `docs/firestore-catalog-seed.md` · `docs/analytics-plan.md` · `docs/lab3-final-requirement-audit.md` | `261e6dc` |
 | Repair test sau merge (FakeFirestoreService, imports, contracts) | `d41eb74`, `90554bb`, `docs/pre-push-repair.md` VERDICT READY |
 | Gỡ debug capture blocks M11C (nợ trước code freeze) | commit `dae9ad9` |
 | `docs/test-plan.md` living doc — dọn conflict markers stash, cập nhật verify 02/11, thêm nhóm TC-S | 03/11 |
-| `ai/ai-code-log.md` — policy, 10 phiên (F4) | commit `dae9ad9` |
-| `evidence/` skeleton 4 thư mục + naming README (G1 một phần) | commit `dae9ad9` |
+| `ai/ai-code-log.md` — policy, 12 phiên (F4) | commit `dae9ad9` + rev 3 |
+| `evidence/` cây đủ §10.1 (app/ firebase×7/ artemis/logs/ code-review/ figma/ report/ video/) + README naming | `evidence/` 03/11 (rev 3) |
+| Draft G2/G3: outline report 8–12tr, slides 12–15tr, kịch bản video 7′30″ (chỗ chờ evidence đánh dấu ⏳, không bịa) | `docs/lab3-{report,slides}-outline.md`, `docs/lab3-video-script.md` 03/11 |
+| `LAB3_CHECKLIST.md` re-tick theo thực tế + §14/§15 (DEC-01..05, BUG-01/02) | `LAB3_REPORTS/` 03/11 |
 | README draft Lab 3: build/run/test + bảng link tài liệu (G4 một phần) | commit `dae9ad9` |
 | Audit banner T03-M8 ↔ M10 (M10 recommend #5) | commit `dae9ad9` |
 
@@ -101,10 +107,10 @@ FCM 3 trạng thái + tap · PDF consent→progress→metadata · `evidence/fire
 ### N-5 · Phase G — Đóng gói & nộp
 | ID | Nợ gì |
 |---|---|
-| G2 | Report PDF 8–12 tr (context/architecture/features/Firebase/testing/review/challenges) |
-| G3 | Slides 12–15 tr + video demo 5–10′ (sign-in → flows → sync → notification → PDF) |
-| G4 | README: bổ link video + mô tả evidence khi có (draft đã có) |
-| G5 | Checklist tự đánh giá 12 dòng guide §10 + re-tick `LAB3_CHECKLIST.md` đúng thực tế |
+| G2 | Report PDF 8–12 tr — **outline xong** `docs/lab3-report-outline.md`; chờ ⏳ evidence để viết bản đầy đủ |
+| G3 | Slides 12–15 tr — **outline xong** `docs/lab3-slides-outline.md`; **kịch bản video 7′30″ xong** `docs/lab3-video-script.md`; bản final chờ evidence + quay |
+| G4 | README: bổ link video + mô tả evidence khi có (draft + 3 mục mới 03/11) |
+| G5 | Checklist tự đánh giá 12 dòng guide §10 + re-tick `LAB3_CHECKLIST.md` — ✅ **rev re-tick 03/11** (theo thực tế, ⏳ đánh dấu rõ) |
 | G6 | Cắt `google-services.json`/project number khỏi mọi screenshot (§9.3) + **quyết định rename repo** `PRM393_Lab03_<StudentID>` (S-12) |
 
 ### N-0 · Việc hành chính luôn treo
@@ -119,9 +125,9 @@ A ██████████ 98%  (seed ✅ 02/11; còn UPDATE-task + offlin
 B ██████████ 100%
 C ████████░░ 80%  (code xong, còn evidence DebugView/Crash/RC)
 D ██████████ 95%  (code xong, còn verify FCM/PDF/attachment trên device)
-E █████░░░░░ 55%  (plan + harness 16 cases xong; còn E1 setup → chạy 3 runs + exploratory)
+E ██████░░░░ 60%  (plan + harness 26 cases xong; còn E1 setup → chạy 3 runs + exploratory)
 F ░░░░░░░░░░ 0%   (chờ code freeze; docs/code-review.md chưa có — rubric F-10)
-G ██░░░░░░░░ 18%  (evidence skeleton, README draft, status/audit docs; còn report/slides/video/checklist/rename)
+G ████░░░░░░ 40%  (evidence tree §10.1, README, checklist re-tick, outline report/slides + script video; còn bản final + rename)
 ```
-**≈ 65% tổng plan** (rev 2). Blocker lớn nhất bây giờ là **E1 setup + Console/device
+**≈ 70% tổng plan** (rev 3). Blocker lớn nhất bây giờ là **E1 setup + Console/device
 thuộc bạn**; sau E1 thì ARTEMIS tự chạy phần lớn N-1. Quyền repo (PR/rename) cũng thuộc bạn.

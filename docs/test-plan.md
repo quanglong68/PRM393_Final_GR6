@@ -89,6 +89,31 @@
 | TC-S-06 | Remote Config | init fail | fallback defaults json, app vẫn chạy |
 | TC-S-07 | FCM | token refresh khi chưa đăng nhập | không ghi orphan path, log rõ |
 
+## 1b. Mapping TC-01…14 (checklist §8.2) ↔ harness `e2e_test/`
+
+| Checklist | Tên | File::test |
+|---|---|---|
+| TC-01 | Google Sign-In native interaction | `test_auth.py::test_TC_01_google_signin_native` (logcat assert `Sign-In succeeded`) |
+| TC-02 | Auth state routing | `test_auth.py::test_TC_02_auth_routing` |
+| TC-03 | Curriculum flow | `test_curriculum_flow.py::test_TC_F1_01_open_course_slots` |
+| TC-04 | Search course | `test_curriculum_flow.py::test_TC_F1_02_search_course` |
+| TC-05 | Prerequisite check | `test_curriculum_flow.py::test_TC_05_prerequisite_check` |
+| TC-06 | Study Plan | `test_study_plan_flow.py::test_TC_F2_01_toggle_task` + TC-F2-05 |
+| TC-07 | Notes | `test_notes_flow.py::test_TC_F3_01_create_note` |
+| TC-08 | Advisor/Strategy | `test_advisor_error_flow.py::test_TC_08_advisor_course_question` |
+| TC-09 | Error/Empty path | `test_advisor_error_flow.py::test_TC_09_advisor_offline_retry` (+ TC-S-*) |
+| TC-10 | PDF export/upload | `test_export_profile.py::test_TC_10_pdf_export_consent_upload` (Pro) |
+| TC-11 | Remote Config | `test_export_profile.py::test_TC_11_remote_config_values_visible` |
+| TC-12 | Logout | `test_auth.py::test_TC_12_logout_clears_state` |
+| TC-13 | FCM notification | `test_instrumentation_errors.py::test_TC_13_fcm_token_registered` (+ TC-X-06 center) |
+| TC-14 | Analytics evidence | `test_instrumentation_errors.py::test_TC_14_analytics_events_log` (+ DebugView user) |
+| §8.4 Exploratory | 15–30′ Pro session | `test_exploratory.py::test_TC_EXPLORATORY_30min` |
+| — | Nợ M10 | TC-V1 (`test_study_plan_flow`), TC-V5 (`test_exploratory::test_TC_V5…`) |
+
+Mỗi ca: điều kiện đầu (docstring + setup fixture), bước (prompt tự nhiên giao ARTEMIS),
+kết quả mong đợi (assert **chuỗi/log quan sát được**). Flash cho regression, Pro cho
+exploratory + PDF export (nhiều nhánh) — checklist §8.3.
+
 ## 2. Quy trình chạy (E3, guide tr.23)
 
 1. Mỗi TC **≥3 lần** trên cùng device; bảng pass rate + avg duration ở §3; **nhật ký thực thi** lưu `evidence/artemis/logs/`.
