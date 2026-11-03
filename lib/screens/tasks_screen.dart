@@ -271,9 +271,13 @@ class TasksScreen extends StatelessWidget {
               onTap: () => vm.toggleTask(task.id),
               child: ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: Checkbox(
-                  value: task.isCompleted,
-                  onChanged: (_) => vm.toggleTask(task.id),
+                leading: Semantics(
+                  checked: task.isCompleted,
+                  label: 'Hoàn thành: ${task.title}',
+                  child: Checkbox(
+                    value: task.isCompleted,
+                    onChanged: (_) => vm.toggleTask(task.id),
+                  ),
                 ),
                 title: Text(
                   task.title,

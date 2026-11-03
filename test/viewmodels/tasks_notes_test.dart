@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import '../helpers/mock_auth_service.dart';
 import '../helpers/mock_firestore_service.dart';
+import 'package:prm323_lab3/models/app_state.dart';
 import 'package:prm323_lab3/viewmodels/notes_viewmodel.dart';
 import 'package:prm323_lab3/viewmodels/tasks_viewmodel.dart';
 
@@ -151,6 +152,27 @@ void main() {
       expect(vm.allTasks.any((t) => t.id == taskId), isTrue);
       expect(vm.lastError, contains('Không thể xóa việc cần làm'));
     });
+
+    test('Logout rebuilds the list - previous user tasks never linger (Lab 3 5.2)', () async {
+      final auth = MockAuthService(initialUserId: 'user_logout_a');
+      final fake = FakeFirestoreService();
+      final vm = TasksViewModel(authService: auth, firestoreService: fake);
+      await vm.loadData();
+      await vm.addTask(
+        title: 'Deadline của user A',
+        courseCode: 'PRM323',
+        dueDate: '20/12/2024',
+      );
+      expect(vm.allTasks, isNotEmpty);
+
+      await auth.signOut();
+      // Auth-state event triggers loadData() with a null uid → empty, not stale.
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(vm.allTasks, isEmpty);
+      expect(vm.state.state, ViewState.empty);
+      vm.dispose();
+      auth.dispose();
+    });
   });
 
   group('NotesViewModel Tests', () {
@@ -229,6 +251,26 @@ void main() {
       expect(okDelete, isFalse);
       expect(vm.lastError, contains('chưa đăng nhập'));
       expect(fake.deletedNoteCalls, isEmpty);
+    });
+
+    test('Logout rebuilds the vault - previous user notes never linger (Lab 3 5.2)', () async {
+      final auth = MockAuthService(initialUserId: 'user_logout_b');
+      final fake = FakeFirestoreService();
+      final vm = NotesViewModel(authService: auth, firestoreService: fake);
+      await vm.loadData();
+      await vm.saveNote(
+        title: 'Note của user B',
+        content: 'private',
+        courseCode: 'PRM323',
+      );
+      expect(vm.allNotes, isNotEmpty);
+
+      await auth.signOut();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(vm.allNotes, isEmpty);
+      expect(vm.state.state, ViewState.empty);
+      vm.dispose();
+      auth.dispose();
     });
 
     test('Successful note deletion removes item from list and calls remote service', () async {

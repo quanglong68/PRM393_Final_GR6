@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../models/app_state.dart';
@@ -16,12 +18,19 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
     this.analyticsService,
   }) {
     loadData();
+    // Identity switch = note list rebuild — logout never leaves the previous
+    // user's notes visible (Lab 3 §5.2). See TasksViewModel for the same rule.
+    _authSub = authService?.authStateChanges.listen((_) {
+      if (currentUserId != _loadedUid) loadData();
+    });
   }
 
   final AuthService? authService;
   final FirestoreService? firestoreService;
   final StorageService? storageService;
   final AnalyticsService? analyticsService;
+  StreamSubscription<bool>? _authSub;
+  String? _loadedUid;
 
   /// Authenticated UID, or null when no identity is available. Used for all
   /// user-owned reads/writes; never falls back to a persona ID or constant.
@@ -56,6 +65,7 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
     try {
       final firestore = firestoreService;
       final uid = currentUserId;
+      _loadedUid = uid;
       if (firestore == null || uid == null) {
         // No backend / no identity: empty state — never seeded mock notes.
         _allNotes = [];
@@ -251,5 +261,11 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
     }
     clearLastError();
     return true;
+  }
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
   }
 }

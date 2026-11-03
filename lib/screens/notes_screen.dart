@@ -164,6 +164,7 @@ class _NotesScreenState extends State<NotesScreen> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete_outline, size: 20, color: AppColors.onSurfaceVariant),
+                        tooltip: 'Xóa ghi chú',
                         onPressed: () => _deleteNoteWithFeedback(context, vm, note.id),
                       ),
                     ],

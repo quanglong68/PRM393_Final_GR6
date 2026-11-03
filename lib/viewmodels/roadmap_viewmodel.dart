@@ -14,11 +14,19 @@ class RoadmapViewModel extends BaseViewModel<List<CourseModel>> {
     this.analyticsService,
   }) {
     loadData();
+    // passedCourses is user-scoped: on logout the roadmap must drop back to
+    // "no transcript" instead of showing the previous user's results.
+    // Guard on uid change so a stream replay cannot race a concurrent load.
+    _authSub = authService?.authStateChanges.listen((_) {
+      if (currentUserId != _loadedUid) loadData();
+    });
   }
 
   final AuthService? authService;
   final FirestoreService? firestoreService;
   final AnalyticsService? analyticsService;
+  StreamSubscription<bool>? _authSub;
+  String? _loadedUid;
 
   /// Authenticated UID, or null when no identity is available. Used for the
   /// user-owned course read; never falls back to a persona ID or constant.
@@ -87,6 +95,7 @@ class RoadmapViewModel extends BaseViewModel<List<CourseModel>> {
     try {
       final firestore = firestoreService;
       final uid = currentUserId;
+      _loadedUid = uid;
       if (firestore == null || uid == null) {
         // No backend / no identity: show the empty state. Never fall back to
         // seeded mock courses (Lab 3 §1.4 fail-loud, no mockdata).
@@ -187,6 +196,7 @@ class RoadmapViewModel extends BaseViewModel<List<CourseModel>> {
   @override
   void dispose() {
     _searchDebounce?.cancel();
+    _authSub?.cancel();
     super.dispose();
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../models/app_state.dart';
 import '../models/task_model.dart';
 import '../services/analytics_service.dart';
@@ -13,11 +15,21 @@ class TasksViewModel extends BaseViewModel<List<TaskModel>> {
     this.analyticsService,
   }) {
     loadData();
+    // Logout/login must never leave the previous user's tasks on screen:
+    // rebuild the list from the new identity (Lab 3 §5.2 "logout clears local
+    // state"). loadData() with a null uid yields the honest empty state.
+    // Guarded on uid change so a stream replay of the same identity cannot
+    // race a concurrent add/update and clobber the list.
+    _authSub = authService?.authStateChanges.listen((_) {
+      if (currentUserId != _loadedUid) loadData();
+    });
   }
 
   final AuthService? authService;
   final FirestoreService? firestoreService;
   final AnalyticsService? analyticsService;
+  StreamSubscription<bool>? _authSub;
+  String? _loadedUid;
 
   /// Authenticated UID, or null when no identity is available. Used for all
   /// user-owned reads/writes; never falls back to a persona ID or constant.
@@ -53,6 +65,7 @@ class TasksViewModel extends BaseViewModel<List<TaskModel>> {
     try {
       final firestore = firestoreService;
       final uid = currentUserId;
+      _loadedUid = uid;
       if (firestore == null || uid == null) {
         // No backend / no identity: empty state — never seeded mock tasks.
         _allTasks = [];
@@ -238,5 +251,11 @@ class TasksViewModel extends BaseViewModel<List<TaskModel>> {
     }
     clearLastError();
     return true;
+  }
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
   }
 }

@@ -52,7 +52,10 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
           IconButton(
             icon: const Icon(Icons.calculate_outlined),
             tooltip: 'Mô phỏng GPA',
-            onPressed: () => Navigator.pushNamed(context, '/strategy-sim'),
+            onPressed: () {
+              advisorVm.logStrategyOpened();
+              Navigator.pushNamed(context, '/strategy-sim');
+            },
           ),
         ],
       ),
@@ -268,6 +271,7 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
                       const SizedBox(width: AppSpacing.xs),
                       IconButton.filled(
                         icon: const Icon(Icons.send_rounded),
+                        tooltip: 'Gửi câu hỏi',
                         onPressed: () => _sendMessage(advisorVm, _inputController.text),
                       ),
                     ],
