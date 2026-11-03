@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # Test Plan — PRM393 Lab 3 (ARTEMIS + runtime verification)
 
 > **Living document** theo guide v5 §6.2 — cập nhật mỗi khi có feature mới hoặc
@@ -88,3 +89,40 @@
 
 - Debug capture blocks M11C đã gỡ khỏi `tasks_viewmodel.dart` / `firebase_firestore_service.dart` (02/11) — code sẵn sàng freeze trước Phase F.
 - `docs/t03-m8-...md` đã gắn audit banner tham chiếu M10 (02/11).
+=======
+# Lab 3 Test Plan
+
+## Automated checks
+
+| Check | Command | Current evidence |
+|---|---|---|
+| Dependencies | `flutter pub get` | Run after each dependency/config change |
+| Static analysis | `flutter analyze` | Must report zero issues |
+| Unit/widget regression | `flutter test` | Hermetic fakes cover ViewModels, analytics, export, FCM wiring |
+| Debug APK | `flutter build apk --debug` | Requires user-provided `android/app/google-services.json` |
+
+## Automated coverage
+
+- Authenticated UID reaches task, note, roadmap, notification, token, and report paths.
+- Unauthenticated task/note writes fail closed.
+- Task/note delete success and failure rollback.
+- Notification foreground persistence, tap routing, cold-start routing, token registration.
+- Duplicate foreground notifications use deterministic IDs.
+- Analytics events route through `AnalyticsService` and avoid rebuild side effects.
+- PDF export uploads PDF bytes, saves metadata, reports progress, and records failure.
+
+## Manual/device matrix
+
+| Area | Action | Evidence required | Status |
+|---|---|---|---|
+| Google Sign-In | Sign in with registered Android app and SHA-1 | Screenshot + Firebase Auth user | Needs device/Console |
+| Firestore CRUD | Create, read, update, delete task and note | UI screenshot + Firestore document | Needs device/Firebase |
+| FCM | Foreground, background tap, terminated tap | Six screenshots + notification document | Needs device/FCM |
+| Analytics | Trigger each event once | DebugView screenshots | Needs device/Console |
+| Crashlytics | Non-fatal test and release crash | Crashlytics dashboard evidence | Needs device/Console |
+| Remote Config | Change parameter in Console, refresh app | Before/after screenshots | Needs Console |
+| Storage | Upload attachment/report | Storage object + download URL | Blocked if Spark lacks bucket |
+| Offline | Disable network, edit, reconnect | Before/offline/after screenshots | Needs device |
+
+Do not label runtime PASS from source or hermetic tests alone.
+>>>>>>> Stashed changes

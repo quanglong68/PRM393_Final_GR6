@@ -1,18 +1,58 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
+import '../firebase_options.dart';
+import 'firebase_firestore_service.dart';
 import 'messaging_service.dart';
+
+const _backgroundNotificationIdKey = 'notificationId';
+
+String? _notificationIdFor(RemoteMessage message) {
+  final explicitId = message.data[_backgroundNotificationIdKey];
+  if (explicitId is String && explicitId.isNotEmpty) return explicitId;
+  return message.messageId;
+}
+
+Future<void> _persistBackgroundMessage(RemoteMessage message) async {
+  final uid = FirebaseAuth.instance.currentUser?.uid;
+  if (uid == null || uid.isEmpty) return;
+
+  final notificationId = _notificationIdFor(message);
+  await FirebaseFirestoreService().saveNotification(
+    uid,
+    {
+      'title': message.notification?.title ?? message.data['title'] ?? '',
+      'body': message.notification?.body ?? message.data['body'] ?? '',
+      'type': message.data['type'] ?? 'system',
+      'read': false,
+      'route': message.data['route'],
+    },
+    notificationId: notificationId,
+  );
+}
 
 /// Top-level background/terminated handler. Must be a top-level (or static)
 /// function per firebase_messaging; runs in a separate isolate when a push
 /// wakes the app, so it only records the payload for the Notification Center.
-/// Persistence happens on next foreground start via [FirebaseMessagingService]
-/// handlers — this isolate has no service injection.
+/// The handler initializes Firebase and persists the payload directly through
+/// the owner-scoped Firestore service. A missing restored user skips safely.
 @pragma('vm:entry-point')
 Future<void> fcmBackgroundHandler(RemoteMessage message) async {
-  debugPrint('[FCM] Background message received: ${message.messageId}');
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    await _persistBackgroundMessage(message);
+    debugPrint('[FCM] Background message persisted: ${message.messageId}');
+  } catch (e) {
+    // The OS may invoke this isolate before Auth has restored a user session.
+    // Never crash the isolate or claim persistence when identity is unavailable.
+    debugPrint('[FCM] Background persistence skipped: $e');
+  }
 }
 
 /// Normalizes a [RemoteMessage] into the plain-map contract of
@@ -21,8 +61,7 @@ Map<String, dynamic> _payloadOf(RemoteMessage message) => {
       'title': message.notification?.title ?? '',
       'body': message.notification?.body ?? '',
       'data': message.data,
-      if (message.data['notificationId'] != null)
-        'notificationId': message.data['notificationId'],
+      'notificationId': _notificationIdFor(message),
     };
 
 /// Firebase Cloud Messaging implementation of [MessagingService].

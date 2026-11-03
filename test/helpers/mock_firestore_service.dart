@@ -120,7 +120,8 @@ class MockFirestoreService implements FirestoreService {
       const [];
 
   @override
-  Future<void> saveNotification(String userId, Map<String, dynamic> data) async {}
+  Future<void> saveNotification(String userId, Map<String, dynamic> data,
+      {String? notificationId}) async {}
 
   @override
   Future<void> markNotificationRead(

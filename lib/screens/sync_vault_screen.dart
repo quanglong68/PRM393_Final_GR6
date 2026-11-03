@@ -10,6 +10,7 @@ import '../services/crashlytics_service.dart';
 import '../services/firestore_service.dart';
 import '../services/remote_config_service.dart';
 import '../services/report_export_service.dart';
+import '../services/sync_reload_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../viewmodels/auth_viewmodel.dart';
@@ -111,19 +112,34 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
     });
 
     try {
-      await Future<void>.delayed(const Duration(milliseconds: 600));
+      final uid = context.read<AuthViewModel>().currentUserId;
+      if (uid == null || uid.isEmpty) {
+        throw StateError('Chưa đăng nhập — không thể đồng bộ.');
+      }
+
+      final result = await const SyncReloadService().reload(
+        roadmap: context.read<RoadmapViewModel>(),
+        tasks: context.read<TasksViewModel>(),
+        notes: context.read<NotesViewModel>(),
+      );
+      if (!result.succeeded) {
+        throw StateError(result.errorMessage!);
+      }
 
       await analytics.logSyncTriggered(triggerType: 'manual_button');
 
+      if (!mounted) return;
       setState(() {
-        _syncResult = 'Đồng bộ hai chiều hoàn tất lúc ${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}!';
+        _syncResult = 'Đã tải lại dữ liệu Cloud Firestore lúc '
+            '${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}.';
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _syncResult = 'Đồng bộ thất bại: $e';
       });
     } finally {
-      setState(() => _isSyncing = false);
+      if (mounted) setState(() => _isSyncing = false);
     }
   }
 

@@ -36,7 +36,8 @@ abstract class FirestoreService {
 
   // ── Notification Center ──
   Future<List<Map<String, dynamic>>> getNotifications(String userId);
-  Future<void> saveNotification(String userId, Map<String, dynamic> data);
+  Future<void> saveNotification(String userId, Map<String, dynamic> data,
+      {String? notificationId});
   Future<void> markNotificationRead(String userId, String notificationId);
 
   // ── FCM device tokens ──

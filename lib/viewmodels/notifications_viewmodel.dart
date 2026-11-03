@@ -107,12 +107,15 @@ class NotificationsViewModel extends BaseViewModel<List<NotificationModel>> {
     final item = NotificationModel.fromPush(payload);
 
     try {
-      await firestoreService?.saveNotification(uid, {
+      final firestore = firestoreService;
+      if (firestore == null) return;
+      await firestore.saveNotification(uid, {
         'title': item.title,
         'body': item.body,
         'type': item.type,
         'read': false,
-      });
+      }, notificationId: item.id);
+      _items.removeWhere((existing) => existing.id == item.id);
       _items.insert(0, item);
       setState(AsyncViewState.data(_items));
     } catch (e) {

@@ -283,16 +283,18 @@ class FirebaseFirestoreService implements FirestoreService {
 
   @override
   Future<void> saveNotification(
-      String userId, Map<String, dynamic> data) async {
+      String userId, Map<String, dynamic> data,
+      {String? notificationId}) async {
     try {
-      await _firestore
+      final ref = _firestore
           .collection('users')
           .doc(userId)
           .collection('notifications')
-          .add({
+          .doc(notificationId);
+      await ref.set({
         ...data,
         'receivedAt': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
     } catch (e) {
       debugPrint('[Firestore] saveNotification error: $e');
       rethrow;

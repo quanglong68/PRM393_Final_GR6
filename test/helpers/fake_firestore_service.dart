@@ -27,10 +27,17 @@ class FakeFirestoreService implements FirestoreService {
   bool shouldFailNoteSave = false;
   bool shouldFailNoteDelete = false;
   bool shouldFailReportSave = false;
+  bool shouldFailCourseLoad = false;
+  bool shouldFailTaskLoad = false;
+  bool shouldFailNoteLoad = false;
 
   @override
-  Future<List<Map<String, dynamic>>> getCourses(String userId) async =>
-      List.from(courses);
+  Future<List<Map<String, dynamic>>> getCourses(String userId) async {
+    if (shouldFailCourseLoad) {
+      throw Exception('Simulated course read failure');
+    }
+    return List.from(courses);
+  }
 
   @override
   Future<Map<String, dynamic>?> getCourse(String courseId) async {
@@ -45,8 +52,12 @@ class FakeFirestoreService implements FirestoreService {
       userProfile;
 
   @override
-  Future<List<Map<String, dynamic>>> getTasks(String userId) async =>
-      List.from(tasks);
+  Future<List<Map<String, dynamic>>> getTasks(String userId) async {
+    if (shouldFailTaskLoad) {
+      throw Exception('Simulated task read failure');
+    }
+    return List.from(tasks);
+  }
 
   @override
   Future<void> addTask(Map<String, dynamic> task) async {
@@ -77,8 +88,12 @@ class FakeFirestoreService implements FirestoreService {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getNotes(String userId) async =>
-      List.from(notes);
+  Future<List<Map<String, dynamic>>> getNotes(String userId) async {
+    if (shouldFailNoteLoad) {
+      throw Exception('Simulated note read failure');
+    }
+    return List.from(notes);
+  }
 
   @override
   Future<void> saveNote(Map<String, dynamic> note) async {
@@ -117,12 +132,20 @@ class FakeFirestoreService implements FirestoreService {
 
   @override
   Future<void> saveNotification(
-      String userId, Map<String, dynamic> data) async {
-    notifications.add({
-      'id': 'notif_${notifications.length + 1}',
+      String userId, Map<String, dynamic> data,
+      {String? notificationId}) async {
+    final id = notificationId ?? 'notif_${notifications.length + 1}';
+    final index = notifications.indexWhere((n) => n['id'] == id);
+    final item = {
+      'id': id,
       'userId': userId,
       ...data,
-    });
+    };
+    if (index == -1) {
+      notifications.add(item);
+    } else {
+      notifications[index] = item;
+    }
   }
 
   @override

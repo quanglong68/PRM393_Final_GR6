@@ -78,6 +78,33 @@ void main() {
       await messaging.dispose();
     });
 
+    test('duplicate foreground push reuses deterministic notification id', () async {
+      final firestore = FakeFirestoreService();
+      final messaging = FakeMessagingService();
+      final vm = NotificationsViewModel(
+        authService: MockAuthService(initialUserId: 'u_1'),
+        firestoreService: firestore,
+        messagingService: messaging,
+      );
+      await vm.loadData();
+
+      final payload = {
+        'title': 'Nhắc lịch học',
+        'body': 'PRM323 bắt đầu lúc 13:30',
+        'notificationId': 'message_1',
+        'data': {'type': 'system'},
+      };
+      messaging.emitForeground(payload);
+      await Future<void>.delayed(Duration.zero);
+      messaging.emitForeground(payload);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(vm.notifications, hasLength(1));
+      expect(firestore.notifications, hasLength(1));
+      expect(firestore.notifications.single['id'], 'message_1');
+      await messaging.dispose();
+    });
+
     test('tapped push marks read by id and records the route', () async {
       final firestore = FakeFirestoreService()
         ..notifications.add({

@@ -31,6 +31,7 @@ class AuthViewModel extends ChangeNotifier {
   final MessagingService? messagingService;
   final FirestoreService? firestoreService;
   StreamSubscription<bool>? _sub;
+  StreamSubscription<String>? _tokenSub;
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -45,6 +46,9 @@ class AuthViewModel extends ChangeNotifier {
 
   void _init() {
     _isAuthenticated = authService.currentUserId != null;
+    _tokenSub = messagingService?.onTokenRefresh.listen((token) {
+      unawaited(_registerToken(authService.currentUserId, token));
+    });
     _sub = authService.authStateChanges.listen((isAuth) {
       _isAuthenticated = isAuth;
       _isLoading = false;
@@ -95,10 +99,20 @@ class AuthViewModel extends ChangeNotifier {
         debugPrint('[Auth] No FCM token available — skipping registration.');
         return;
       }
+      await _registerToken(uid, token);
+    } catch (e) {
+      debugPrint('[Auth] FCM token registration failed (non-fatal): $e');
+    }
+  }
+
+  Future<void> _registerToken(String? uid, String token) async {
+    final firestore = firestoreService;
+    if (firestore == null || uid == null || uid.isEmpty || token.isEmpty) return;
+    try {
       await firestore.registerToken(uid, token);
       debugPrint('[Auth] Registered FCM token for $uid.');
     } catch (e) {
-      debugPrint('[Auth] FCM token registration failed (non-fatal): $e');
+      debugPrint('[Auth] FCM token refresh registration failed (non-fatal): $e');
     }
   }
 
@@ -145,6 +159,7 @@ class AuthViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _sub?.cancel();
+    _tokenSub?.cancel();
     super.dispose();
   }
 }
