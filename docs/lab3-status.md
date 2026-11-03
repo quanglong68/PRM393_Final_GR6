@@ -1,11 +1,13 @@
 # PRM393 Lab 3 — Trạng thái task (đã xong / còn nợ)
 
-> **Cập nhật:** 2026-11-03 (rev 3) · baseline HEAD `3b10599` + working tree 03/11.
-> Rev 2 đã được commit (`3b10599`). Rev 3 thêm: harness đổi tên theo checklist §8.3 và
-> nâng **16 → 26 cases**, mapping TC-01..14 ↔ file::test (`docs/test-plan.md` §1b), cây
-> `evidence/` đủ §10.1 + README, `.gitignore` Python block, README 3 mục mới,
-> `LAB3_CHECKLIST.md` re-tick theo thực tế, draft G2/G3 (`docs/lab3-report-outline.md`,
-> `docs/lab3-slides-outline.md`, `docs/lab3-video-script.md`).
+> **Cập nhật:** 2026-11-03 (rev 4) · **HEAD `7d201f5` = origin/main, working tree sạch**
+> (toàn bộ work 03/11 đã được bạn commit + push: `277f475..7d201f5`, 8 commit).
+> Rev 4 ghi nhận: 4 nợ checklist đã trả bằng code (Semantics, logout rebuild-list,
+> strategy events 12–13, DebugView→adb setprop), `docs/lab3-self-assessment.md`
+> (rubric 13 dòng), suite **59/59 · analyze 0**.
+> Rev 3 (đã commit): harness checklist §8.3 **26 cases**, mapping §1b, evidence tree
+> §10.1, `.gitignore` Python, README 3 mục mới, `LAB3_CHECKLIST.md` re-tick, draft G2/G3
+> (`docs/lab3-report-outline.md`, `docs/lab3-slides-outline.md`, `docs/lab3-video-script.md`).
 > Code mới pull (`261e6dc`) thêm: FPT-domain gate (S-10), NoteModel parse Timestamp,
 > SyncReloadService, **seed catalog đã xác minh trên device** — xem
 > `docs/lab3-completion-progress.md` + `docs/lab3-final-requirement-audit.md`.
@@ -114,21 +116,24 @@ FCM 3 trạng thái + tap · PDF consent→progress→metadata · `evidence/fire
 | G5 | Checklist tự đánh giá 12 dòng guide §10 + re-tick `LAB3_CHECKLIST.md` — ✅ **rev re-tick 03/11** (theo thực tế, ⏳ đánh dấu rõ) |
 | G6 | Cắt `google-services.json`/project number khỏi mọi screenshot (§9.3) + **quyết định rename repo** `PRM393_Lab03_<StudentID>` (S-12) |
 
-### N-0 · Việc hành chính luôn treo
-- **Commit** working tree hiện tại: 4 file sửa (`README.md`, `docs/t03-m8…`, 2 file lib) + 4 untracked (`ai/ai-code-log.md`, `docs/test-plan.md`, `docs/lab3-task-map-v5.md`, `evidence/`) — bạn tự commit theo rule repo.
+### N-0 · Việc hành chính
+- ~~Commit working tree~~ ✅ **XONG 03/11** — 8 commit `277f475..7d201f5` đã push `origin/main`, tree sạch.
+- Còn treo: Student ID (trống ở bìa report/checklist) + quyết định rename repo khi nộp (G6).
 
 ---
 
 ## Tổng quan tiến độ
 
 ```
-A ██████████ 98%  (seed ✅ 02/11; còn UPDATE-task + offline verify)
+A ██████████ 98%  (seed ✅ 02/11; còn UPDATE-task verify trên device — TC-V1)
 B ██████████ 100%
-C ████████░░ 80%  (code xong, còn evidence DebugView/Crash/RC)
-D ██████████ 95%  (code xong, còn verify FCM/PDF/attachment trên device)
-E ██████░░░░ 60%  (plan + harness 26 cases xong; còn E1 setup → chạy 3 runs + exploratory)
-F ░░░░░░░░░░ 0%   (chờ code freeze; docs/code-review.md chưa có — rubric F-10)
-G ████░░░░░░ 40%  (evidence tree §10.1, README, checklist re-tick, outline report/slides + script video; còn bản final + rename)
+C █████████░ 85%  (code 100% + strategy events 12–13, plan 13 dòng khớp code; còn ảnh DebugView/Crash/RC)
+D ██████████ 95%  (Semantics + logout clear-state đã trả nợ; còn verify FCM/PDF/attachment device)
+E ██████░░░░ 60%  (harness 26 cases compile OK, auto-skip an toàn; chờ E1 → 3 runs + exploratory)
+F ░░░░░░░░░░ 0%   (chờ PR + reviewer — quyền repo của bạn)
+G █████░░░░░ 45%  (evidence tree, README, checklist, outlines G2/G3, video script, self-assessment; còn final + quay + rename)
 ```
-**≈ 70% tổng plan** (rev 3). Blocker lớn nhất bây giờ là **E1 setup + Console/device
-thuộc bạn**; sau E1 thì ARTEMIS tự chạy phần lớn N-1. Quyền repo (PR/rename) cũng thuộc bạn.
+**≈ 72% tổng plan** (rev 4). **Không còn task code nào tự động làm được** — mọi mục còn
+lại cần ít nhất một trong: E1 setup (uv/ARTEMIS/GEMINI_API_KEY), emulator + 2 account
+@fpt.edu.vn, Firebase Console (bucket, screenshots), hoặc quyền repo (PR, rename).
+Thứ tự mở khoá đề xuất: **E1 → chạy ARTEMIS (tự phủ phần lớn N-1/N-2) → PR/review → video/final**.
