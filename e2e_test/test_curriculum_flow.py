@@ -40,3 +40,17 @@ async def test_TC_F1_04_ask_ai_branch(artemis, evidence_shot):
     )
     assert result.succeeded, f"ARTEMIS fail: {result.error or result.status}"
     evidence_shot("TC-F1-04")
+
+
+@require_artemis
+async def test_TC_05_prerequisite_check(artemis, evidence_shot):
+    """Lọc 'Kiểm tra môn tiên quyết' → thấy trạng thái đối chiếu bảng điểm (Flow 1 nhánh phụ)."""
+    result = await artemis.run(
+        "Ở tab 'Lộ trình học tập': bật bộ lọc/lựa chọn kiểm tra môn tiên quyết, "
+        "mở chi tiết một môn có tiên quyết (vd PRM323). Trả về dòng chữ thể hiện "
+        "tiên quyết ĐẠT hay CHƯA ĐẠT nhìn thấy trên màn."
+    )
+    assert result.succeeded, f"ARTEMIS fail: {result.error or result.status}"
+    answer = str(getattr(result, "answer", "") or "")
+    assert answer.strip(), "Agent không tường thuật trạng thái tiên quyết (guide: observable values)"
+    evidence_shot("TC-05")

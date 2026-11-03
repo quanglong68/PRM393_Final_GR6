@@ -64,3 +64,33 @@ async def test_TC_S_07_fcm_permission_native(artemis, device_state, evidence_sho
     # restore
     device_state("shell", "pm", "grant", APP_PACKAGE, "android.permission.POST_NOTIFICATIONS")
     evidence_shot("TC-S-07")
+
+
+@require_artemis
+async def test_TC_14_analytics_events_log(artemis, logcat, evidence_shot):
+    """Analytics: duyệt Home→Roadmap→Tasks→Notes→Advisor, logcat phải ghi nhận log analytics không rỗng.
+
+    DebugView (evidence Console) do người chụp; test này chứng minh events FIRE (F-08)."""
+    logcat.start("TC-14")
+    await artemis.run(
+        "Duyệt lần lượt tab Home, Lộ trình, Việc cần làm, Ghi chú; mở tìm kiếm gõ 'PRM' rồi xóa; "
+        "mở chi tiết môn PRM323."
+    )
+    text = logcat.stop_and_text()
+    low = text.lower()
+    assert any(k in low for k in ("analytics", "logevent", "log_view", "search")), (
+        f"Không thấy dòng analytics nào trong log flutter:\n{text[-600:]}"
+    )
+    evidence_shot("TC-14")
+
+
+@require_artemis
+async def test_TC_13_fcm_token_registered(artemis, device_state, logcat, evidence_shot):
+    """FCM: app chạy foreground → token được đăng ký & ghi log (delivery 3 trạng thái: phần Console user)."""
+    device_state("shell", "am", "force-stop", APP_PACKAGE)
+    logcat.start("TC-13")
+    result = await artemis.run(f"Mở app {APP_PACKAGE} tới Home (đăng nhập sẵn nếu được).")
+    text = logcat.stop_and_text()
+    assert result.succeeded, f"ARTEMIS fail: {result.error or result.status}"
+    assert "token" in text.lower(), f"Log không có FCM token registration:\n{text[-600:]}"
+    evidence_shot("TC-13")
