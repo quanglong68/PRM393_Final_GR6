@@ -6,6 +6,11 @@ Purpose: populate Roadmap catalog when `courses` is empty. No code, Rules, billi
 
 `RoadmapViewModel` reads default Firestore database collection `courses`, ordered by `semester`. It does not import local JSON. `firebase.json` has no emulator import/export configuration, so a fresh emulator has no documents. App also intentionally shows empty state when no authenticated UID exists.
 
+> **`curriculums` là collection reserved**: `firestore.rules` cho phép đọc khi đăng nhập nhưng
+> **không** screen nào của app đọc nó và Lab 2/3 không định nghĩa schema — intentionally NOT seeded.
+> Khi được hỏi trong báo cáo/nộp bài: nêu rõ đây là chỗ mở rộng (multi-curriculum) đã chuẩn bị
+> rules từ Lab 3, dữ liệu sẽ seed khi có màn hình dùng.
+
 Expected document path:
 
 ```text

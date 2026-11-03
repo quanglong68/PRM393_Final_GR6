@@ -10,7 +10,7 @@
 > SyncReloadService, **seed catalog đã xác minh trên device** — xem
 > `docs/lab3-completion-progress.md` + `docs/lab3-final-requirement-audit.md`.
 > Nguồn chéo: `docs/lab3-task-map-v5.md` (plan A–G) · `docs/test-plan.md` (TC-*) ·
-> git log · `docs/t03-m*` · `flutter analyze` (0 issues) / `flutter test` (**54/54**).
+> git log · `docs/t03-m*` · `flutter analyze` (0 issues) / `flutter test` (**59/59**).
 > File này là snapshot; cập nhật lại mỗi khi xong một mục.
 
 ---
@@ -52,7 +52,7 @@
 ### Test + nền tảng tài liệu
 | Mục | Bằng chứng |
 |---|---|
-| Unit/widget/model suite xanh **54/54** | `flutter test` 03/11 trên `261e6dc` |
+| Unit/widget/model suite xanh **59/59** | `flutter test` 03/11 trên `261e6dc` |
 | **Runtime device 02/11**: sign-in, Roadmap read sau seed, Task create/toggle, Note create/delete, manual sync | `docs/lab3-completion-progress.md` (commit `261e6dc`) |
 | FPT-domain gate S-10 (`hostedDomain` + check server-side, sign-out if ngoại domain) | `261e6dc` `firebase_auth_service.dart` |
 | **ARTEMIS harness 26 cases** (rev 3: đổi tên file theo checklist §8.3 + thêm TC-05/13/14) — code-side xong (E2): 3 flows + TC-V1/V5 + error branch × dịch vụ + native ADB + exploratory. CHƯA chạy (chờ E1) | `e2e_test/` 03/11, mapping §1b test-plan |
@@ -64,6 +64,7 @@
 | `evidence/` cây đủ §10.1 (app/ firebase×7/ artemis/logs/ code-review/ figma/ report/ video/) + README naming | `evidence/` 03/11 (rev 3) |
 | Draft G2/G3: outline report 8–12tr, slides 12–15tr, kịch bản video 7′30″ (chỗ chờ evidence đánh dấu ⏳, không bịa) | `docs/lab3-{report,slides}-outline.md`, `docs/lab3-video-script.md` 03/11 |
 | `LAB3_CHECKLIST.md` re-tick theo thực tế + §14/§15 (DEC-01..05, BUG-01/02) | `LAB3_REPORTS/` 03/11 |
+| **Nợ checklist trả hết (03/11, rev 3+):** Semantics Checkbox+tooltips; logout rebuild-list theo auth-state (+2 test); `strategy_view`/`strategy_preset_applied` wire vào AdvisorVM/sim screen (+3 test, plan 13 events); DebugView = adb setprop (firebase_analytics 13 bỏ API — ghi README); `curriculums` giải thích reserved; **tự đánh giá 13 dòng rubric** `docs/lab3-self-assessment.md`. Suite **59/59**, analyze 0 | `lib/` + `test/` + docs 03/11 |
 | README draft Lab 3: build/run/test + bảng link tài liệu (G4 một phần) | commit `dae9ad9` |
 | Audit banner T03-M8 ↔ M10 (M10 recommend #5) | commit `dae9ad9` |
 
