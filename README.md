@@ -11,7 +11,7 @@ Kiến trúc fail-loud: Firebase lỗi là báo lỗi thật, không fallback mo
 ```bash
 flutter pub get
 flutter analyze          # 0 issues
-flutter test             # 51/51 (unit/widget, hermetic mocks)
+flutter test             # 59/59 (unit/widget, hermetic mocks)
 flutter build apk --release
 ```
 
@@ -33,6 +33,14 @@ trong `.env` (không commit) — harness `e2e_test/` (xem `e2e_test/README.md`).
 `android/app/google-services.json` **không commit** (policy guide §9.3). Người clone repo tự tải
 từ Firebase Console project `prm323-lab2-gr6` và đặt đúng đường dẫn; app fail-loud bằng màn hình
 lỗi thật nếu thiếu file. `lib/firebase_options.dart` (FlutterFire CLI) có trong repo.
+
+**Analytics DebugView** (evidence §7.1): firebase_analytics 13.x không còn `enableDebugMode()` —
+bật theo cách chuẩn của Google trên debug build:
+
+```bash
+adb shell setprop debug.firebase.analytics.app com.example.prm323_lab3
+# sau đó mở app, thao tác, xem sự kiện realtime ở Console → Analytics → DebugView
+```
 
 ## AI tools đã sử dụng
 

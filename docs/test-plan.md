@@ -9,7 +9,7 @@
 > vào trạng thái SUCCESS; **không** gắn nhãn runtime PASS từ source hoặc hermetic
 > test đơn thuần.
 >
-> **Trạng thái hiện tại:** unit/widget Flutter **54/54** pass. Runtime device batch
+> **Trạng thái hiện tại:** unit/widget Flutter **59/59** pass. Runtime device batch
 > 02/11 (`docs/lab3-completion-progress.md`) xác minh sign-in, Roadmap read sau
 > seed, Task CRUD, Note CRUD, delete — **TC-V1/V3/V4 đóng một phần**. ARTEMIS E2E
 > (`e2e_test/`) chưa chạy — cần uv + API key + device (E1).
@@ -18,7 +18,7 @@
 
 | Lớp | Công cụ | Trạng thái |
 |---|---|---|
-| Unit/ViewModel/Widget/Model | `flutter test` (hermetic fakes) | ✅ 54/54 pass — 03/11 |
+| Unit/ViewModel/Widget/Model | `flutter test` (hermetic fakes) | ✅ 59/59 pass — 03/11 (thêm test logout-rebuild + strategy events) |
 | Static | `flutter analyze` | ✅ 0 issues |
 | Debug APK build | `flutter build apk --debug` + `google-services.json` ngoài repo | ✅ 02/11 (không commit JSON — `.gitignore` đã loại) |
 | Runtime CRUD trên emulator | app debug + Firebase Console + `adb logcat` | ⏳ một phần 02/11; còn FCM/Analytics/Crash/RC/Offline/Storage |
@@ -126,7 +126,7 @@ exploratory + PDF export (nhiều nhánh) — checklist §8.3.
 
 | Batch | Ngày | TC | Run 1 | Run 2 | Run 3 | Avg duration | Ghi chú |
 |---|---|---|---|---|---|---|---|
-| B0 (flutter test) | 2026-11-03 | unit/widget toàn bộ | 54/54 ✅ | — | — | ~2s/case | hermetic — không được suy ra runtime PASS |
+| B0 (flutter test) | 2026-11-03 | unit/widget toàn bộ | 59/59 ✅ | — | — | ~2s/case | hermetic — không được suy ra runtime PASS |
 | B1 (manual device) | 2026-11-02 | sign-in, F1-01 read, F2-01/05, F3-01, delete | ✅ 1 lần | ⏳ | ⏳ | — | nguồn `docs/lab3-completion-progress.md`; cần nâng lên 3 runs + ảnh |
 | B2 (TC-V còn lại + ARTEMIS) | — | V1,V2,V3,V5,V6 + TC-S + FLW-* | ⏳ | ⏳ | ⏳ | | cần E1 (uv + API key) + device + account 2 |
 
