@@ -41,6 +41,11 @@ class NotificationsViewModel extends BaseViewModel<List<NotificationModel>> {
   /// reads and clears it to navigate to the notification's destination route.
   String? lastTappedRoute;
 
+  /// Most recent foreground push, shown as an in-app banner (T12 requires a
+  /// foreground banner alongside the center). Cleared by [dismissBanner].
+  NotificationModel? _banner;
+  NotificationModel? get banner => _banner;
+
   List<NotificationModel> _items = [];
   List<NotificationModel> get notifications => List.unmodifiable(_items);
   int get unreadCount => _items.where((n) => n.isUnread).length;
@@ -114,9 +119,11 @@ class NotificationsViewModel extends BaseViewModel<List<NotificationModel>> {
         'body': item.body,
         'type': item.type,
         'read': false,
+        if (item.route != null) 'route': item.route,
       }, notificationId: item.id);
       _items.removeWhere((existing) => existing.id == item.id);
       _items.insert(0, item);
+      _banner = item;
       setState(AsyncViewState.data(_items));
     } catch (e) {
       setLastError('Không thể lưu thông báo mới: $e');
@@ -166,6 +173,12 @@ class NotificationsViewModel extends BaseViewModel<List<NotificationModel>> {
   }
 
   void consumeTappedRoute() => lastTappedRoute = null;
+
+  void dismissBanner() {
+    if (_banner == null) return;
+    _banner = null;
+    notifyListeners();
+  }
 
   @override
   void dispose() {

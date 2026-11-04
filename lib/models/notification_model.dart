@@ -1,9 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+
 /// A Notification Center entry (Lab 3 T12 — FCM + Notification Center).
 ///
-/// Mirrors documents at `users/{uid}/notifications/{id}`. Timestamps are kept
-/// as display strings because Firestore server timestamps arrive inconsistently
-/// across cache/server sources; ordering uses [receivedAt] when parseable and
-/// otherwise the document order returned by the service.
+/// Mirrors documents at `users/{uid}/notifications/{id}`. [receivedAt] is a
+/// display string: the service stores `FieldValue.serverTimestamp()`, so parsing
+/// must accept `Timestamp`, `DateTime` and legacy `String` (same rule as
+/// [NoteModel._formatUpdatedAt]). A plain `as String?` cast crashed the whole
+/// center as soon as a notification had been persisted.
 class NotificationModel {
   const NotificationModel({
     required this.id,
@@ -12,6 +16,7 @@ class NotificationModel {
     this.type = 'system',
     this.read = false,
     this.receivedAt = '',
+    this.route,
   });
 
   final String id;
@@ -23,6 +28,10 @@ class NotificationModel {
   final bool read;
   final String receivedAt;
 
+  /// In-app destination of the push (`/advisor`, `/sync-vault`, …). Null when
+  /// the sender did not address a screen — tapping then only marks read.
+  final String? route;
+
   bool get isUnread => !read;
 
   factory NotificationModel.fromMap(Map<String, dynamic> map) =>
@@ -32,8 +41,23 @@ class NotificationModel {
         body: map['body'] as String? ?? '',
         type: map['type'] as String? ?? 'system',
         read: map['read'] as bool? ?? false,
-        receivedAt: map['receivedAt'] as String? ?? '',
+        receivedAt: _formatReceivedAt(map['receivedAt']),
+        route: map['route'] as String?,
       );
+
+  static String _formatReceivedAt(Object? value) {
+    if (value is Timestamp) {
+      return DateFormat('dd/MM/yyyy HH:mm').format(value.toDate());
+    }
+    if (value is DateTime) {
+      return DateFormat('dd/MM/yyyy HH:mm').format(value);
+    }
+    // ISO-8601 strings (FCM payloads) render in the same format as Firestore
+    // timestamps; already-formatted legacy strings fall through untouched.
+    final raw = value as String? ?? '';
+    final parsed = DateTime.tryParse(raw);
+    return parsed == null ? raw : DateFormat('dd/MM/yyyy HH:mm').format(parsed);
+  }
 
   Map<String, dynamic> toMap() => {
         'id': id,
@@ -42,6 +66,7 @@ class NotificationModel {
         'type': type,
         'read': read,
         'receivedAt': receivedAt,
+        if (route != null) 'route': route,
       };
 
   NotificationModel copyWith({bool? read}) => NotificationModel(
@@ -51,6 +76,7 @@ class NotificationModel {
         type: type,
         read: read ?? this.read,
         receivedAt: receivedAt,
+        route: route,
       );
 
   /// Firebase Cloud Messaging payloads carry `title`/`body` plus custom data.
@@ -68,9 +94,8 @@ class NotificationModel {
         payload['notificationId'] as String? ??
         fallbackId ??
         'local_${DateTime.now().microsecondsSinceEpoch}';
-    final ts = map['receivedAt'] as String? ??
-        payload['receivedAt'] as String? ??
-        DateTime.now().toIso8601String();
+    final parsedTs = _formatReceivedAt(map['receivedAt']);
+    final ts = parsedTs.isEmpty ? DateTime.now().toIso8601String() : parsedTs;
     return NotificationModel(
       id: id,
       title: payload['title'] as String? ?? map['title'] as String? ?? '',
@@ -78,6 +103,7 @@ class NotificationModel {
       type: map['type'] as String? ?? payload['type'] as String? ?? 'system',
       read: false,
       receivedAt: ts,
+      route: map['route'] as String? ?? payload['route'] as String?,
     );
   }
 }

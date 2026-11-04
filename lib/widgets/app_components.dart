@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/notification_model.dart';
 import '../theme/app_spacing.dart';
 
 class AppCard extends StatelessWidget {
@@ -32,6 +33,70 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+}
+
+/// In-app banner for a push received while the app is in the foreground
+/// (Lab 3 T12 — one of the three delivery states). Tapping opens the push's
+/// destination; the close button dismisses without navigating.
+class ForegroundPushBanner extends StatelessWidget {
+  const ForegroundPushBanner({
+    super.key,
+    required this.notification,
+    required this.onOpen,
+    required this.onDismiss,
+  });
+
+  final NotificationModel notification;
+  final VoidCallback onOpen;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) => Material(
+        elevation: 6,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        child: InkWell(
+          onTap: onOpen,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Row(
+              children: [
+                const Icon(Icons.notifications_active_outlined, size: 20),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        notification.title.isEmpty
+                            ? 'Thông báo mới'
+                            : notification.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      if (notification.body.isNotEmpty)
+                        Text(
+                          notification.body,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 18),
+                  tooltip: 'Đóng',
+                  onPressed: onDismiss,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
 }
 
 class AppConfirmDialog extends StatelessWidget {

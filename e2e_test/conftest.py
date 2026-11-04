@@ -119,6 +119,6 @@ skip_without_adb = pytest.mark.skipif(
 )
 
 
-def require_artemis(func):
-    """Legacy decorator — ưu tiên dùng `skip_without_adb` trong pytestmark."""
-    return skip_without_adb(func)
+# Alias, not a wrapper: `skip_without_adb` is a pytest MarkDecorator, so
+# `skip_without_adb(func)` raised. Modules import `require_artemis` by name.
+require_artemis = skip_without_adb

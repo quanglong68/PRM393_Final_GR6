@@ -9,6 +9,8 @@ Kết quả + evidence đổ ra ../evidence/artemis/ (logs/, *.png) — đặt t
 import time
 from datetime import datetime
 
+import pytest
+
 from conftest import EVIDENCE_DIR, require_artemis, skip_without_adb
 
 pytestmark = [skip_without_adb, pytest.mark.e2e]

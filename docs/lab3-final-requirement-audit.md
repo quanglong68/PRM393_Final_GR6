@@ -1,6 +1,6 @@
 # PRM Lab 3 — Final Requirement Audit
 
-**Date:** 2026-11-02
+**Date:** 2026-11-03
 **Repository:** `prm323-lab2-gr6`
 **Framework:** Flutter / Dart
 **Project:** FPTU Second Brain (`com.example.prm323_lab3`)
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-The audit was refreshed against current source on 2026-11-02. Core data integrity, Firebase initialization, PDF export, analytics wiring, FCM plumbing, and test coverage are implemented in code. Runtime Firebase, device, Console, Storage, and submission evidence remain external verification work.
+The audit reflects current source and emulator observations through 2026-11-03. Core data integrity, Firebase initialization, PDF export, analytics wiring, FCM plumbing, and test coverage are implemented in code. Emulator evidence exists for sign-in, Firestore catalog/profile reads, Task/Note operations, and manual sync. FCM delivery, Analytics DebugView, Crashlytics dashboard, Remote Config before/after, Storage upload, and submission evidence remain unverified.
 
 ### Audit Highlights
 
@@ -17,7 +17,7 @@ The audit was refreshed against current source on 2026-11-02. Core data integrit
 |---|---|
 | **DONE IN CODE** (static/tests verified) | Updated rows below; runtime not implied |
 | **EXTERNAL / DEVICE BLOCKERS** | Firebase config, rules, device, Storage, evidence |
-| **RESOLVED IN CODE** | S-01 through S-09 except external runtime proof |
+| **RESOLVED IN CODE** | S-01 through S-10; runtime rejection path for S-10 remains unverified |
 | **FEATURE STATUS** | F-01 through F-09 code-complete; F-10 partial |
 | **NOT TESTED / UNVERIFIABLE** | 17 items (runtime/config-dependent) |
 
@@ -29,8 +29,8 @@ The audit was refreshed against current source on 2026-11-02. Core data integrit
 
 | ID | Requirement | Status | Evidence / Notes |
 |---|---|---|---|
-| **B-01** | Dependency resolution / build | `DONE IN CODE` | `pubspec.yaml:24` uses `sdk: ^3.13.0`; current `flutter analyze` and `flutter test` pass. |
-| **B-02** | Real Firebase project binding | `NEEDS DEVICE/FIREBASE VERIFICATION` | `lib/firebase_options.dart` contains project `prm323-lab2-gr6`; prior manual setup evidence records valid `google-services.json` and debug APK build. Current file is gitignored/out-of-band and must be rechecked before runtime claims. |
+| **B-01** | Dependency resolution / build | `DONE IN CODE` | `pubspec.yaml:24` uses `sdk: ^3.13.0`; current `flutter analyze` and `flutter test` pass on Dart 3.13.4. Constraint relaxed from `^3.13.5` since no resolved package exclusively requires 3.13.5; the `pubspec.lock:497` record `dart: ">=3.13.5 <4.0.0"` was written on a different machine and is not a hard runtime requirement — verified by `flutter pub get` exiting 0 and `flutter analyze` + `flutter test` passing on Dart 3.13.4.
+| **B-02** | Real Firebase project binding | `VERIFIED ON EMULATOR` | Emulator Google Sign-In and Firestore reads/writes used project `prm323-lab2-gr6`. `google-services.json` was available out-of-band for build/runtime and remains gitignored; a fresh checkout still needs its own valid config. |
 | **B-03** | Release `INTERNET` permission | `DONE IN CODE` | `android/app/src/main/AndroidManifest.xml:2-4` declares `INTERNET` and `POST_NOTIFICATIONS`. Release runtime still needs device verification. |
 | **B-04** | Silent mock fallback hides config failure | `DONE IN CODE` | `lib/main.dart:114-117,239-280` routes failed initialization to `FirebaseConfigErrorApp`; production composition no longer creates test mocks. |
 | **B-05** | Signed-in identity plumbing | `DONE IN CODE` | `TasksViewModel`, `NotesViewModel`, `RoadmapViewModel`, `NotificationsViewModel`, and `SyncVaultScreen` use `AuthService.currentUserId`; null UID rejects user-owned writes. |
@@ -48,9 +48,9 @@ The audit was refreshed against current source on 2026-11-02. Core data integrit
 | **S-07** | Analytics type checks make instrumentation fragile (medium) | `RESOLVED IN CODE` | Event call sites use `AnalyticsService` interface; regression tests verify interface doubles receive events. |
 | **S-08** | Remote Config instance mismatch (medium) | `RESOLVED IN CODE` | `main()` creates one Crashlytics and one Remote Config instance, awaits initialization, and injects those same instances. |
 | **S-09** | Storage rules deny nested note attachments (medium) | `RESOLVED IN CODE` | `firebase/storage.rules:27` uses recursive `{allPaths=**}` for note attachments and reports. |
-| **S-10** | Email-domain claim not enforced (medium, compliance) | `RESOLVED IN CODE` | `GoogleSignIn(hostedDomain: 'fpt.edu.vn')` filters picker; post-sign-in check rejects non-`@fpt.edu.vn` and signs out. Runtime verify on device. |
+| **S-10** | Enforce FPT email domain (medium, compliance) | `RESOLVED IN CODE` | `GoogleSignIn(hostedDomain: 'fpt.edu.vn')` filters picker; post-sign-in check rejects non-`@fpt.edu.vn` and signs out. Runtime rejection branch remains unverified. |
 | **S-11** | Test suite cannot catch defects (medium) | `IMPROVED IN CODE` | Current tests cover UID propagation, rollback, delete persistence calls, analytics wiring, PDF export, and FCM token/notification flows. Live Firebase Rules and device delivery still need external verification. |
-| **S-12** | Repository name mismatch with rubric (low) | `CONFIRMED` | Rubric §9 requires repo named `PRM393_Lab03_<StudentID>`. Current repo is `prm323-lab2-gr6`. **Rubric does NOT require changing applicationId** — only repo name and deliverable file names (`report/Lab03_<StudentID>.pdf`, `slides/Lab03_<StudentID>_slides.pdf`). Rename repo on GitHub khi nộp. |
+| **S-12** | Repository name mismatch with rubric (low) | `CONFIRMED` | Checklist §2.1 requires a public repo named `PRM393_Lab03_<StudentID>`. Current repo is `prm323-lab2-gr6`. Checklist does not require changing `applicationId`; report/slides filenames are specified separately in the submission section. Rename the repo on GitHub at submission. |
 
 ### 1.3 Feature Gaps
 
@@ -84,12 +84,14 @@ The following are verified as working:
 - **`RemoteConfigService`** defaults + settings
 - **`MockAuthService`/`MockFirestoreService`/`MockAnalyticsService****: confined to `test/`
 - **Docs**: `docs/architecture.md`, `docs/design-traceability.md`, plus design/ux/ai/handoff/assets folders (43 files)
-- **54 tests** pass (T03-M11 + analytics + PDF + FCM + SyncReload + NoteModel)
+- **68 tests** pass (T03-M11 + analytics + PDF + FCM + SyncReload + Timestamp parsing)
 - **`flutter analyze`**: 0 issues across all modifications
 
 ---
 
 ## 2. Priority Implementation Roadmap
+
+> This dependency-ordered roadmap records the original implementation plan. For current completion status, use §4; milestones already verified there should not be treated as active blockers.
 
 Based on the audit, the following milestones must be resolved in order:
 
@@ -148,7 +150,7 @@ The T03-M11E legacy task document compatibility fix is **verified and complete**
 
 - `flutter pub get` — PASS.
 - `flutter analyze` — PASS, 0 issues.
-- `flutter test` — PASS, **54 tests** (thêm NoteModel Timestamp + SyncReloadService).
+- `flutter test` — PASS, **68 tests** (2026-11-04).
 - `flutter build apk --debug` — PASS.
 - UID propagation, rollback, PDF export, analytics, FCM token/notification wiring, and truthful three-store reload outcomes — covered by source and hermetic tests.
 - Firestore and Storage rules are owner-scoped/default-deny in local files.
@@ -163,23 +165,22 @@ The T03-M11E legacy task document compatibility fix is **verified and complete**
 - **Note CRUD**: PASS — tạo, đọc — ghi đúng `users/{uid}/notes/{noteId}`.
 - **Delete**: PASS — hai bản ghi test đã xóa thành công.
 
-### External verification still required
+### External/device/Console verification still required
 
-1. FCM delivery: foreground, background, terminated — chưa xác minh. Tap routing chưa test.
-2. Analytics DebugView: chưa kiểm tra event delivery trên Console.
-3. Crashlytics: chưa test non-fatal hoặc kiểm tra dashboard.
-4. Remote Config: `firebase/remote-config-defaults.json` tồn tại; chưa test Console before/after.
-5. Storage bucket: chưa xác minh provisioning. Spark plan có thể chặn.
-6. Firestore Rules deployment: đã deploy trước đó (71-line, documented in t03-m7). Cần recheck trên Console.
-7. PDF export runtime: cần Storage bucket hoạt động.
-8. Offline/reconnect behavior: chưa test.
+1. FCM foreground/background/terminated delivery and tap routing.
+2. Analytics DebugView event delivery and exact counts.
+3. Crashlytics non-fatal event visible in dashboard.
+4. Remote Config before/after behavior from Console.
+5. Storage bucket availability, attachment upload, and PDF upload/runtime. Check current provisioning; do not assume Spark blocks it.
+6. Firestore Rules deployment status recheck in Console; local rules and past documentation are not current Console evidence.
+7. Offline/reconnect behavior.
+8. Runtime rejection of a non-`@fpt.edu.vn` account; the code gate is present but that branch has not been observed.
 
-### Blockers
+### Submission gaps (not Firebase blockers)
 
-- **Storage**: Spark plan có thể chặn bucket provisioning. Không nâng billing nếu chưa có quyết định nhóm.
-- **S-10**: Email `@fpt.edu.vn` enforcement: UI label nói nhưng không gate. Client/rules đều không check domain.
-- **S-12**: Application ID `com.example.prm323_lab3` chưa khớp rubric `PRM393_Lab03_<StudentID>`.
-- **AI review**: `docs/code-review.md` cần review output thật và Git history. Không bịa.
-- **Evidence**: ARTEMIS traces, screenshots, report PDF, slide PDF, demo video cần bằng chứng thật.
+- `evidence/README.md` is a matrix, not a set of screenshots/traces. Checklist requires at least 10 ARTEMIS tests, each run 3 times; the 68 Flutter tests do not count as ARTEMIS runs.
+- Draft sources now exist at `report/Lab03_DRAFT.md` and `slides/Lab03_DRAFT.md`. Final report PDF (8–12 pages), slide PDF (12–15 pages), and 5–10 minute demo video are not present. Final versions need Student ID and genuine runtime evidence.
+- AI review must be genuine: at least five findings and three separate fix commits per checklist. No review output or matching commit evidence exists in this pass; do not fabricate it.
+- Rubric requires repository name `PRM393_Lab03_<StudentID>` at submission, not an application ID change. The app remains `com.example.prm323_lab3`.
 
-No Git staging, commit, push, pull, reset, deployment, or cloud data mutation was performed by this pass.
+The ignored `android/app/google-services.json` was available out-of-band for the verified emulator build/runtime. Do not print or commit it; a clean checkout must supply a matching file. No Rules deployment, billing change, Git operation, or cloud-data mutation was performed by this audit update.

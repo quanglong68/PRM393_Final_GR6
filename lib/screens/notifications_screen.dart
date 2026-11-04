@@ -74,7 +74,13 @@ class _NotificationList extends StatelessWidget {
           return Opacity(
             opacity: item.isUnread ? 1 : 0.6,
             child: AppCard(
-              onTap: () => vm.markAsRead(item.id),
+              onTap: () {
+                vm.markAsRead(item.id);
+                final route = item.route;
+                if (route != null && route.isNotEmpty) {
+                  Navigator.pushNamed(context, route);
+                }
+              },
               child: ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: CircleAvatar(

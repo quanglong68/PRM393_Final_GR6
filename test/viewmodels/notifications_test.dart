@@ -78,6 +78,33 @@ void main() {
       await messaging.dispose();
     });
 
+    test('foreground push exposes a banner and persists its route', () async {
+      final firestore = FakeFirestoreService();
+      final messaging = FakeMessagingService();
+      final vm = NotificationsViewModel(
+        authService: MockAuthService(initialUserId: 'u_1'),
+        firestoreService: firestore,
+        messagingService: messaging,
+      );
+      await vm.loadData();
+
+      messaging.emitForeground({
+        'title': 'Gợi ý học tập',
+        'body': 'Mở tư vấn',
+        'notificationId': 'push_route_1',
+        'data': {'type': 'advisor', 'route': '/advisor'},
+      });
+      await Future<void>.delayed(Duration.zero);
+
+      expect(vm.banner?.title, 'Gợi ý học tập');
+      expect(firestore.notifications.single['route'], '/advisor');
+      expect(vm.notifications.single.route, '/advisor');
+
+      vm.dismissBanner();
+      expect(vm.banner, isNull);
+      await messaging.dispose();
+    });
+
     test('duplicate foreground push reuses deterministic notification id', () async {
       final firestore = FakeFirestoreService();
       final messaging = FakeMessagingService();

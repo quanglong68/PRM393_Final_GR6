@@ -14,7 +14,7 @@
 | 7 | Firestore & rules | Collections, owner-scoped default-deny, offline persistence, canonical-ID fix | snippet rules + doc tree | 40″ |
 | 8 | Storage & PDF export | Consent → generate (DejaVu VI) → `reports/{uid}` → progress → URL | 3 ảnh ⏳ | 40″ |
 | 9 | Analytics/Crashlytics/RC/FCM | 11 events + PII filter; custom key; `maintenance_mode`; token 3 trạng thái + Notification Center | DebugView + dashboard ⏳ | 40″ |
-| 10 | Test chiến lược | Kim tự tháp: 54/54 hermetic ≠ runtime; TC map 3 flow + error + native adb | test-plan ma trận | 30″ |
+| 10 | Test chiến lược | Kim tự tháp: 68/68 hermetic ≠ runtime; TC map 3 flow + error + native adb | test-plan ma trận | 30″ |
 | 11 | ARTEMIS results | 26 cases; Flash/Pro; assert observable values; pass rate ×3 runs; exploratory 15–30′ | runs table + trace ⏳ | 45″ — slide ăn điểm, để dành số thật |
 | 12 | AI Code Review | ≥5 findings ≥2 nhóm, decision table, 3 × `fix(CR-0x)` | snippet code-review.md ⏳ | 30″ |
 | 13 | Challenges & fixes | BUG-01/02, evidence audit liêm chính, Spark limits | git log cut | 30″ |

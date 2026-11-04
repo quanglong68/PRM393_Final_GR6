@@ -35,6 +35,7 @@ import 'viewmodels/notes_viewmodel.dart';
 import 'viewmodels/notifications_viewmodel.dart';
 import 'viewmodels/roadmap_viewmodel.dart';
 import 'viewmodels/tasks_viewmodel.dart';
+import 'widgets/app_components.dart';
 import 'widgets/app_navigation.dart';
 
 /// Captured Firebase initialization failure (T04: fail loud, never mock silently).
@@ -280,19 +281,179 @@ class FirebaseConfigErrorApp extends StatelessWidget {
       );
 }
 
-/// Authentication Gate: Routes to [AppShell] when authenticated, [SignInScreen] otherwise.
-class AuthGate extends StatelessWidget {
+/// Authentication Gate: routes to [AppShell] when authenticated,
+/// [SignInScreen] otherwise.
+///
+/// Two Remote Config gates run *before* the shell (audit M-09 — a flag that is
+/// only printed in the Demo Area is not "enforced"):
+/// 1. `min_app_version` — an outdated build is blocked even before sign-in, so
+///    a user on an old APK cannot keep using removed/broken cloud calls.
+/// 2. `maintenance_mode` — blocks signed-in users while the backend is down.
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  bool _checking = false;
+
+  /// Re-fetch Remote Config and re-evaluate both gates. Returns true when the
+  /// blocking screen may be left. A failed fetch simply keeps the current
+  /// values, so the failure surfaces as "still blocked" plus a snackbar.
+  Future<bool> _recheck() async {
+    if (_checking) return false;
+    setState(() => _checking = true);
+    final rc = context.read<RemoteConfigService>();
+    await rc.fetchAndActivate();
+    if (!mounted) return false;
+    setState(() => _checking = false);
+    return !rc.isVersionBelowMinimum && !rc.isMaintenanceMode;
+  }
+
+  Future<void> _retry() async {
+    final rc = context.read<RemoteConfigService>();
+    final blockedBefore = rc.isVersionBelowMinimum;
+    final cleared = await _recheck();
+    if (!mounted || cleared) return;
+    final message = blockedBefore
+        ? 'Ứng dụng vẫn cần cập nhật lên phiên bản ${rc.minAppVersion}.'
+        : 'Ứng dụng vẫn đang bảo trì.';
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
 
   @override
   Widget build(BuildContext context) {
     final authVm = context.watch<AuthViewModel>();
+    // Remote Config is a plain service, not a Listenable: [setState] in
+    // [_recheck] is what makes the gate re-read these getters after a fetch.
+    final rc = context.read<RemoteConfigService>();
 
-    if (authVm.isAuthenticated) {
-      return const AppShell();
+    if (rc.isVersionBelowMinimum) {
+      return VersionBlockedScreen(
+        currentVersion: kAppVersion,
+        minimumVersion: rc.minAppVersion,
+        checking: _checking,
+        onRecheck: _retry,
+      );
     }
-    return const SignInScreen();
+
+    if (!authVm.isAuthenticated) return const SignInScreen();
+
+    if (rc.isMaintenanceMode) {
+      return MaintenanceScreen(checking: _checking, onRecheck: _retry);
+    }
+
+    return const AppShell();
   }
+}
+
+/// Shown instead of the shell when Remote Config `min_app_version` is newer
+/// than this build (audit M-09). Deliberately offers no "continue anyway" —
+/// the only actions are retry (the value may have been lowered) and closing the
+/// app to install the store update.
+class VersionBlockedScreen extends StatelessWidget {
+  const VersionBlockedScreen({
+    super.key,
+    required this.currentVersion,
+    required this.minimumVersion,
+    required this.checking,
+    required this.onRecheck,
+  });
+
+  final String currentVersion;
+  final String minimumVersion;
+  final bool checking;
+  final Future<void> Function() onRecheck;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.system_update_rounded, size: 64),
+                const SizedBox(height: 16),
+                const Text(
+                  'Cần cập nhật ứng dụng',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Phiên bản hiện tại $currentVersion thấp hơn mức tối thiểu '
+                  '$minimumVersion. Vui lòng cập nhật từ Google Play để tiếp tục.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                checking
+                    ? const CircularProgressIndicator()
+                    : TextButton(
+                        onPressed: onRecheck,
+                        child: const Text('Thử lại'),
+                      ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Cấu hình: Remote Config `min_app_version`.',
+                  style: TextStyle(fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+}
+
+/// Shown instead of [AppShell] when Remote Config `maintenance_mode` is on.
+/// Signed-in users keep their session; "Thử lại" re-fetches the flag and leaves
+/// the screen as soon as maintenance is over.
+class MaintenanceScreen extends StatelessWidget {
+  const MaintenanceScreen({
+    super.key,
+    required this.checking,
+    required this.onRecheck,
+  });
+
+  final bool checking;
+  final Future<void> Function() onRecheck;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.construction_rounded, size: 64),
+                const SizedBox(height: 16),
+                const Text(
+                  'Ứng dụng đang bảo trì',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Vui lòng quay lại sau. Cấu hình: Remote Config '
+                  '`maintenance_mode`.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                checking
+                    ? const CircularProgressIndicator()
+                    : TextButton(
+                        onPressed: onRecheck,
+                        child: const Text('Thử lại'),
+                      ),
+              ],
+            ),
+          ),
+        ),
+      );
 }
 
 /// Root shell that manages bottom navigation between the 4 main tabs.
@@ -336,14 +497,38 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     // Re-evaluate on every rebuild so a tap arriving while idle routes too.
     _maybeRouteTappedNotification();
+    final notificationsVm = context.watch<NotificationsViewModel>();
+    final banner = notificationsVm.banner;
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
+      body: Stack(
         children: [
-          HomeScreen(onNavigate: _onTabSelected),
-          const RoadmapScreen(),
-          const TasksScreen(),
-          const NotesScreen(),
+          IndexedStack(
+            index: _currentIndex,
+            children: [
+              HomeScreen(onNavigate: _onTabSelected),
+              const RoadmapScreen(),
+              const TasksScreen(),
+              const NotesScreen(),
+            ],
+          ),
+          if (banner != null)
+            Positioned(
+              top: MediaQuery.paddingOf(context).top + 8,
+              left: 12,
+              right: 12,
+              child: ForegroundPushBanner(
+                notification: banner,
+                onOpen: () {
+                  notificationsVm.dismissBanner();
+                  notificationsVm.markAsRead(banner.id);
+                  final route = banner.route;
+                  if (route != null && route.isNotEmpty) {
+                    Navigator.pushNamed(context, route);
+                  }
+                },
+                onDismiss: notificationsVm.dismissBanner,
+              ),
+            ),
         ],
       ),
       bottomNavigationBar: AppBottomNav(

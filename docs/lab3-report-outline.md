@@ -36,7 +36,7 @@ Tên đề tài, sinh viên/mã SV, repo, Firebase project, ngày. Ảnh app (m�
 - FCM: token `users/{uid}/tokens`, 3 trạng thái, tap-route Notification Center; ⏳ 6 ảnh.
 
 ## §5 Testing (~2 tr)
-- Kim tự tháp: 54/54 unit+widget hermetic (03/11) — nêu rõ **hermetic ≠ runtime PASS** (guide tr.23).
+- Kim tự tháp: 68/68 unit+widget hermetic (04/11) — nêu rõ **hermetic ≠ runtime PASS** (guide tr.23).
 - `docs/test-plan.md`: ma trận TC ↔ 3 flow + nhánh lỗi + TC-S per-service + TC-V (nợ M10).
 - ARTEMIS: harness 26 cases (`e2e_test/`), Flash cho regression + Pro cho exploratory/export; assert **giá trị quan sát được** (logcat, doc ID, chuỗi trả lời) không chỉ SUCCESS; native interaction qua adb (wifi toggle, screencap, pm revoke).
 - ⏳ Bảng pass rate ×3 runs, avg duration, flaky log; exploratory summary (≥15′).

@@ -11,8 +11,8 @@ Kiến trúc fail-loud: Firebase lỗi là báo lỗi thật, không fallback mo
 ```bash
 flutter pub get
 flutter analyze          # 0 issues
-flutter test             # 59/59 (unit/widget, hermetic mocks)
-flutter build apk --release
+flutter test             # 84 tests (unit/widget, hermetic mocks + Timestamp parsing + SyncReloadService + version gate)
+flutter build apk --debug   # PASS on 2026-11-02 with out-of-band google-services.json
 ```
 
 | Hạng mục Lab 3 | Vị trí |
@@ -23,38 +23,73 @@ flutter build apk --release
 | Báo cáo runtime T03-M1…M11E | [docs/](docs/) |
 | Security rules + seed + RC defaults | [firebase/](firebase/) |
 | AI code log (policy) | [ai/ai-code-log.md](ai/ai-code-log.md) |
-| Evidence (Firebase/ARTEMIS/review/report) | [evidence/](evidence/) — chưa chụp, theo plan |
+| Evidence matrix | [evidence/README.md](evidence/README.md) — matrix và yêu cầu bằng chứng; chưa có bộ ảnh/trace hoàn chỉnh |
+| Report/slides drafts | [report/Lab03_DRAFT.md](report/Lab03_DRAFT.md), [slides/Lab03_DRAFT.md](slides/Lab03_DRAFT.md); final PDFs/video chưa có |
 
-ARTEMIS (E2E on-device): Python ≥3.12, `uv sync`, `adb devices`, API key đặt
-trong `.env` (không commit) — harness `e2e_test/` (xem `e2e_test/README.md`).
+ARTEMIS (E2E on-device): checklist yêu cầu tối thiểu 10 test, mỗi test chạy 3 lần. Harness có tại `e2e_test/` (26 case thu thập được, `pytest --collect-only` sạch), nhưng **chưa chạy được ca nào**: ARTEMIS host lên bình thường, device `emulator-5554` sẵn sàng, song Gemini free-tier đã hết quota ngày (HTTP 429, reset ≈14h). Chi tiết ở [evidence/artemis/RUN_LOG_2026-11-04.md](evidence/artemis/RUN_LOG_2026-11-04.md). 68 là tổng Flutter unit/widget tests, **không phải** ARTEMIS test cases.
 
-## Cấu hình Firebase
+### Evidence matrix (local emulator, 2026-11-02)
 
-`android/app/google-services.json` **không commit** (policy guide §9.3). Người clone repo tự tải
-từ Firebase Console project `prm323-lab2-gr6` và đặt đúng đường dẫn; app fail-loud bằng màn hình
-lỗi thật nếu thiếu file. `lib/firebase_options.dart` (FlutterFire CLI) có trong repo.
+| Area | Evidence | Status |
+|------|----------|--------|
+| Sign-In | Emulator log: Google Sign-In successful, navigation to HomeScreen | ✅ Verified |
+| Roadmap/Firestore | Courses displayed from `courses` collection; `passedCourses` prerequisite checks work | ✅ Verified |
+| Task CRUD | Create → Firestore `users/{uid}/tasks/{taskId}`; Toggle `isCompleted` update; Delete removes test records | ✅ Verified |
+| Note CRUD | Create → Firestore `users/{uid}/notes/{noteId}`; Read verified | ✅ Verified |
+| Delete | 2 test records deleted successfully; optimistic restore on failure | ✅ Verified |
+| Manual sync | SyncReloadService reloads all 3 stores after NoteModel Timestamp fix | ✅ Verified |
+| NoteModel Timestamp | `_formatUpdatedAt` handles Firestore `Timestamp`, `DateTime`, legacy `String` | ✅ Verified |
+| NotificationModel Timestamp | `fromMap`/`fromPush` handle `Timestamp`, `DateTime`, ISO string; regression test added after a live crash | ✅ Verified |
+| Notification banner/route | Foreground push persists `route`, shows in-app banner, Notification Center tap navigates | ✅ Verified (hermetic) |
+| Maintenance mode | Remote Config `maintenance_mode=true` renders `MaintenanceScreen` instead of the shell | ✅ Verified (hermetic) |
+| Version gate | Remote Config `min_app_version` above the build blocks with `VersionBlockedScreen` before sign-in; equal/newer passes; malformed value fails open | ✅ Verified (hermetic) |
+| Tests | 84 tests pass (unit/widget hermetic + Timestamp parsing + SyncReloadService + version gate) | ✅ Verified |
+| Build | `flutter analyze`: 0 issues; `flutter test`: 68/68 pass; `flutter build apk --debug`: PASS | ✅ Verified |
 
-**Analytics DebugView** (evidence §7.1): firebase_analytics 13.x không còn `enableDebugMode()` —
-bật theo cách chuẩn của Google trên debug build:
+### Known limitations (emulator only)
+
+- FCM delivery (foreground/background/terminated) và tap routing: chưa test trên thiết bị có Play Services
+- Analytics DebugView event delivery: chưa check trên Console
+- Crashlytics dashboard collection (non-fatal test): chưa test trên device
+- Remote Config before/after behavior: chưa test trên Console
+- Storage bucket provisioning và PDF export runtime: chưa xác minh trên Firebase Console/device; không nâng billing khi chưa được nhóm đồng ý
+- Offline/reconnect behavior: chưa test
+- Firestore Rules deployment status: cần recheck trên Console
+- S-10: code gate `hostedDomain` + hậu kiểm email `@fpt.edu.vn` đã có; chưa thử đăng nhập bằng tài khoản ngoài domain để xác minh nhánh từ chối trên emulator.
+- ARTEMIS E2E tests: cần device có Google Play Services; Python `uv`, `adb` chưa setup
+
+### Hướng dẫn chạy (emulator)
 
 ```bash
-adb shell setprop debug.firebase.analytics.app com.example.prm323_lab3
-# sau đó mở app, thao tác, xem sự kiện realtime ở Console → Analytics → DebugView
+# Cài dependency
+flutter pub get
+
+# Phân tích code
+flutter analyze
+
+# Chạy test
+flutter test
+
+# Build APK debug (cần google-services.json out-of-band)
+flutter build apk --debug
+
+# Chạy trên emulator
+flutter emulator --create --avd <avd-name>
+flutter run -d <emulator-id>
 ```
 
-## AI tools đã sử dụng
+### Giới hạn
 
-Claude Code (kiến trúc, code, docs, debug — nhật ký: [ai/ai-code-log.md](ai/ai-code-log.md)) ·
-Google Stitch + Claude cho thiết kế Lab 2 ([ai/ai-design-log.md](ai/ai-design-log.md)) ·
-ARTEMIS (E2E) · reviewer PR: CodeRabbit/Copilot (Phase F, chưa chạy).
+- Kết quả runtime đã ghi nhận trên emulator với Firebase project `prm323-lab2-gr6`; `google-services.json` là file out-of-band/gitignored. APK debug build đã pass trong checkout này, nhưng clone mới cần tự cung cấp config hợp lệ.
+- Các runtime feature cần thiết bị có Google Play Services: FCM 3 trạng thái, Analytics DebugView, Crashlytics dashboard, Remote Config before/after, Storage bucket + PDF export, offline/reconnect.
+- Repo hiện `prm323-lab2-gr6` chưa khớp mẫu tên repo ở checklist §2.1 (`PRM393_Lab03_<StudentID>`). Đổi tên repo trên GitHub khi nộp bài; checklist không yêu cầu đổi `applicationId`.
+- `@fpt.edu.vn` enforcement: code đã lọc account và hậu kiểm email; runtime rejection với tài khoản khác domain chưa kiểm chứng.
 
-## Known issues (03/11)
+### AI tools sử dụng
 
-- Runtime FCM 3 trạng thái, DebugView, Crashlytics dashboard, RC before/after, PDF upload,
-  offline persistence, cross-account isolation: **chưa verify trên device** — `docs/test-plan.md` §3.
-- Storage bucket trên Spark plan chưa xác nhận provisioned — blocker tiềm tàng cho PDF/attachment.
-- ARTEMIS harness chưa chạy (chờ E1); API `artemis-client` có thể cần chỉnh theo version cài.
-- Video demo + report + slides: chờ evidence (Phase G). Link video: `__________`
+- Claude Code ( Anthropic ) để trợ lý phát triển, review code, và tạo documentation này.
+- firebase_analytics, firebase_core, firebase_auth, firebase_crashlytics, firebase_messaging, firebase_remote_config, cloud_firestore, firebase_storage packages.
+- Provider state management, `AsyncViewState<T>` pattern, `NoteModel.fromMap` với Timestamp parsing.
 
 ---
 
