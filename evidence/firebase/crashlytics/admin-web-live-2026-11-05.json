@@ -1,0 +1,45 @@
+{
+  "source": "Firebase Crashlytics",
+  "anonymousStatus": 401,
+  "dashboardStatus": 200,
+  "apiStatus": 200,
+  "nativeCrash": true,
+  "demoNonfatal": true,
+  "issues": [
+    {
+      "id": "37586cd1f4caa7b42f763b33b9538f95",
+      "title": "package:flutter/src/widgets/heroes.dart - Hero._allHeroesFor.inviteHero.<fn>",
+      "type": "FATAL",
+      "events": "3",
+      "users": "1"
+    },
+    {
+      "id": "c1f1974b3335c6bf1ddc41a33003e9d2",
+      "title": "package:prm323_lab3/screens/sync_vault_screen.dart - _SyncVaultScreenState._testCrashlytics",
+      "type": "NON_FATAL",
+      "events": "2",
+      "users": "1"
+    },
+    {
+      "id": "41a0bd83a879aa676843f00ad1b3eeac",
+      "title": "package:prm323_lab3/services/report_export_service.dart - ReportExportService.exportStudyReport",
+      "type": "NON_FATAL",
+      "events": "1",
+      "users": "1"
+    },
+    {
+      "id": "c6bf5994d0d39f67b13167a72090be3b",
+      "title": "package:prm323_lab3/services/crashlytics_service.dart - CrashlyticsService.initialize.<fn>",
+      "type": "FATAL",
+      "events": "1",
+      "users": "1"
+    },
+    {
+      "id": "ece9690113b884780b157ecd849ebd37",
+      "title": "io.flutter.plugins.firebase.crashlytics.FlutterFirebaseCrashlyticsPlugin.crash$lambda$0",
+      "type": "FATAL",
+      "events": "1",
+      "users": "1"
+    }
+  ]
+}

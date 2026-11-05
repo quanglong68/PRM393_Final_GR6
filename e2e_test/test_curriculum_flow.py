@@ -1,56 +1,46 @@
-"""Flow 1 — Tra cứu Slot & Đầu điểm (TC-F1-*). Guide tr.23: phủ flow Lab 2."""
-
+"""Verified Lab 3 cases; observations asserted from TaskResult.output JSON."""
 import pytest
-
-from conftest import require_artemis, skip_without_adb
-
+from conftest import APP_PACKAGE, require_artemis, skip_without_adb
+from observations import equals, contains_text
 pytestmark = [skip_without_adb, pytest.mark.e2e]
 
 
 @require_artemis
-async def test_TC_F1_01_open_course_slots(artemis, evidence_shot):
-    """Home → Lộ trình → PRM323 → Lịch slot ≤3 chạm, thấy danh sách slot."""
-    result = await artemis.run(
-        "Trong app 'FPTU Second Brain' đã đăng nhập: mở tab 'Lộ trình học tập', "
-        "chạm môn 'PRM323', vào tab 'Lịch slot'. Trả về số lượng slot nhìn thấy "
-        "và tên một slot đầu tiên."
+async def test_TC_F1_01_open_course_slots(artemis):
+    observed = await artemis.run(
+        'From Home open Lộ trình, choose PRM323, open Lịch slot. Read all three course-tab labels. Report the number of actual detailed slots and the empty-state message when zero; do not treat total-slot defaults as slot records.',
+        {'tabs': 'array of course tabs', 'slot_count': 'integer', 'slot_empty_message': 'string'},
     )
-    assert result.succeeded, f"ARTEMIS fail: {result.error or result.status}"
-    obs = str(getattr(result, "answer", "") or getattr(result, "summary", "") or "")
-    assert obs.strip(), "Agent không tường thuật giá trị quan sát được (guide: không tin SUCCESS suông)"
-    evidence_shot("TC-F1-01")
-
+    assert set(['Lịch slot','Đánh giá','Tổng quan']).issubset(set(observed['tabs']))
+    assert type(observed['slot_count']) is int and observed['slot_count'] >= 0
+    if observed['slot_count']==0: assert 'chưa có' in observed['slot_empty_message'].casefold()
 
 @require_artemis
-async def test_TC_F1_02_search_course(artemis, evidence_shot):
-    """Ô tìm kiếm 'PRM' chỉ còn môn khớp."""
-    result = await artemis.run(
-        "Ở màn 'Lộ trình học tập', gõ 'PRM' vào ô tìm kiếm. Liệt kê tên môn còn hiển thị."
+async def test_TC_F1_02_search_course(artemis):
+    observed = await artemis.run(
+        'From Home open Lộ trình, clear old search and search PRM. Report only the course codes actually shown after filtering.',
+        {'course_codes': 'array of course codes'},
     )
-    assert result.succeeded, f"ARTEMIS fail: {result.error or result.status}"
-    evidence_shot("TC-F1-02")
-
+    assert observed['course_codes']
+    assert 'PRM323' in observed['course_codes']
+    assert all(code.startswith('PRM') for code in observed['course_codes'])
 
 @require_artemis
-async def test_TC_F1_04_ask_ai_branch(artemis, evidence_shot):
-    """Chi tiết môn → 'Hỏi trợ lý AI về môn này' → Advisor kèm mã môn."""
-    result = await artemis.run(
-        "Mở chi tiết môn PRM323, chạm nút 'Hỏi trợ lý AI về môn này'. "
-        "Xác nhận màn trợ lý AI hiện ra và có ngữ cảnh môn PRM323; trả về câu chữ hiển thị ngữ cảnh đó."
+async def test_TC_F1_04_ask_ai_branch(artemis):
+    observed = await artemis.run(
+        'From Home open Lộ trình, PRM323, Tổng quan, then Hỏi cố vấn về PRM323. Do not send the question. Read the prefilled question and final screen title.',
+        {'screen_title': 'literal screen title', 'prefilled_question': 'literal text in question field'},
     )
-    assert result.succeeded, f"ARTEMIS fail: {result.error or result.status}"
-    evidence_shot("TC-F1-04")
-
+    equals(observed,'screen_title','Cố vấn học tập')
+    assert 'PRM323' in observed['prefilled_question']
 
 @require_artemis
-async def test_TC_05_prerequisite_check(artemis, evidence_shot):
-    """Lọc 'Kiểm tra môn tiên quyết' → thấy trạng thái đối chiếu bảng điểm (Flow 1 nhánh phụ)."""
-    result = await artemis.run(
-        "Ở tab 'Lộ trình học tập': bật bộ lọc/lựa chọn kiểm tra môn tiên quyết, "
-        "mở chi tiết một môn có tiên quyết (vd PRM323). Trả về dòng chữ thể hiện "
-        "tiên quyết ĐẠT hay CHƯA ĐẠT nhìn thấy trên màn."
+async def test_TC_05_prerequisite_check(artemis):
+    observed = await artemis.run(
+        'From Home open PRM323 course detail, Tổng quan. Read the actual prerequisite state and missing prerequisite codes. Do not invent transcript data.',
+        {'prerequisite_state': 'eligible or missing', 'missing_codes': 'array'},
     )
-    assert result.succeeded, f"ARTEMIS fail: {result.error or result.status}"
-    answer = str(getattr(result, "answer", "") or "")
-    assert answer.strip(), "Agent không tường thuật trạng thái tiên quyết (guide: observable values)"
-    evidence_shot("TC-05")
+    assert observed['prerequisite_state'] in {'eligible','missing'}
+    assert isinstance(observed['missing_codes'],list)
+    if observed['prerequisite_state']=='eligible': assert observed['missing_codes']==[]
+    else: assert observed['missing_codes']

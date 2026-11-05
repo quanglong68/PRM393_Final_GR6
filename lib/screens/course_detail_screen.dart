@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/app_state.dart';
+import '../models/course_model.dart';
+import '../viewmodels/academic_viewmodel.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../viewmodels/roadmap_viewmodel.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_components.dart';
+import '../widgets/app_states.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   const CourseDetailScreen({super.key, required this.courseId});
@@ -35,25 +39,39 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final roadmapVm = context.watch<RoadmapViewModel>();
+
+    // Standard AsyncViewState branches (§4.2) — a detail screen that loads
+    // from the catalog must not render a bare "not found" while the catalog
+    // is still loading or has failed.
+    switch (roadmapVm.state.state) {
+      case ViewState.loading:
+        return Scaffold(
+          appBar: const CustomAppBar(title: 'Chi tiết môn học'),
+          body: const AppLoadingState(message: 'Đang tải thông tin môn học...'),
+        );
+      case ViewState.error:
+        return Scaffold(
+          appBar: const CustomAppBar(title: 'Chi tiết môn học'),
+          body: AppErrorState(
+            message:
+                roadmapVm.state.message ?? 'Không tải được dữ liệu môn học.',
+            onRetry: roadmapVm.loadData,
+          ),
+        );
+      case ViewState.empty:
+      case ViewState.data:
+        break;
+    }
+
     final course = roadmapVm.findCourseById(widget.courseId);
 
     if (course == null) {
       return Scaffold(
         appBar: const CustomAppBar(title: 'Chi tiết môn học'),
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.search_off_outlined, size: 48, color: AppColors.error),
-              const SizedBox(height: AppSpacing.md),
-              const Text('Không tìm thấy thông tin môn học.'),
-              const SizedBox(height: AppSpacing.md),
-              FilledButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Quay lại'),
-              ),
-            ],
-          ),
+        body: AppEmptyState(
+          message: 'Không tìm thấy thông tin môn học này trong lộ trình.',
+          actionLabel: 'Quay lại lộ trình',
+          onAction: () => Navigator.pop(context),
         ),
       );
     }
@@ -61,226 +79,326 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     final isEligible = roadmapVm.isEligibleForCourse(course);
     final missingPrereqs = roadmapVm.getMissingPrerequisites(course);
 
-    return Scaffold(
-      appBar: CustomAppBar(
-        title: course.code,
-        onBack: () => Navigator.pop(context),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        children: [
-          // Course Header Card
-          AppCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.xs,
-                        vertical: AppSpacing.xxs,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryContainer,
-                        borderRadius: BorderRadius.circular(AppRadius.xs),
-                      ),
-                      child: Text(
-                        'Kỳ ${course.semester} · ${course.major}',
-                        style: const TextStyle(
-                          color: AppColors.onPrimaryContainer,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
-                      ),
+    final overview = ListView(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      children: [
+        // Course Header Card
+        AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xs,
+                      vertical: AppSpacing.xxs,
                     ),
-                    Text(
-                      '${course.credits} Tín chỉ',
-                      style: Theme.of(context).textTheme.titleSmall,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryContainer,
+                      borderRadius: BorderRadius.circular(AppRadius.xs),
                     ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  course.name,
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  'Giảng viên: ${course.lecturer}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.onSurfaceVariant,
+                    child: Text(
+                      'Kỳ ${course.semester} · ${course.major}',
+                      style: const TextStyle(
+                        color: AppColors.onPrimaryContainer,
+                        fontWeight: FontWeight.w600,
+                        fontSize: AppFontSize.label,
                       ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-
-                // Attendance / Slot progress
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Tiến độ slot học', style: Theme.of(context).textTheme.titleSmall),
-                    Text(
-                      'Slot ${course.completedSlots}/${course.totalSlots} (${(course.progress * 100).toInt()}%)',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.xs),
-                  child: LinearProgressIndicator(
-                    value: course.progress,
-                    minHeight: 8,
-                    backgroundColor: AppColors.skeleton,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      course.progress >= 1.0 ? AppColors.success : AppColors.primary,
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
+                  Text(
+                    '${course.credits} Tín chỉ',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                course.name,
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                course.lecturer.isEmpty
+                    ? 'Chưa có thông tin giảng viên.'
+                    : 'Giảng viên: ${course.lecturer}',
+                style: Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(color: AppColors.onSurfaceVariant),
+              ),
+              const SizedBox(height: AppSpacing.md),
 
-          // Prerequisite Check Section
-          Text('Điều kiện tiên quyết', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: AppSpacing.sm),
-          AppCard(
-            child: course.prerequisites.isEmpty
-                ? const Row(
-                    children: [
-                      Icon(Icons.check_circle_outline, color: AppColors.success),
-                      SizedBox(width: AppSpacing.sm),
-                      Text('Môn học này không yêu cầu môn tiên quyết.'),
-                    ],
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            isEligible ? Icons.check_circle_outline : Icons.warning_amber_rounded,
-                            color: isEligible ? AppColors.success : AppColors.warning,
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: Text(
-                              isEligible
-                                  ? 'Bạn đã hoàn thành đủ các môn tiên quyết!'
-                                  : 'Cảnh báo: Bạn chưa đạt điều kiện tiên quyết!',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: isEligible ? AppColors.success : AppColors.warning,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Divider(height: AppSpacing.lg),
-                      ...course.prerequisites.map((req) {
-                        final passed = roadmapVm.passedCourses.contains(req);
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('• Môn $req', style: const TextStyle(fontWeight: FontWeight.w500)),
-                              Text(
-                                passed ? 'Đã đạt ✓' : 'Chưa đạt ✗',
-                                style: TextStyle(
-                                  color: passed ? AppColors.success : AppColors.error,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-                      if (!isEligible) ...[
-                        const SizedBox(height: AppSpacing.sm),
-                        Container(
-                          padding: const EdgeInsets.all(AppSpacing.xs),
-                          decoration: BoxDecoration(
-                            color: AppColors.warningContainer,
-                            borderRadius: BorderRadius.circular(AppRadius.xs),
-                          ),
+              // Attendance / Slot progress
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Tiến độ slot học',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  Text(
+                    course.totalSlots == 0
+                        ? 'Chưa có dữ liệu slot'
+                        : 'Slot ${course.completedSlots}/${course.totalSlots} (${(course.progress * 100).toInt()}%)',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.xs),
+                child: LinearProgressIndicator(
+                  value: course.progress.clamp(0.0, 1.0),
+                  minHeight: 8,
+                  backgroundColor: AppColors.skeleton,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    course.progress >= 1.0
+                        ? AppColors.success
+                        : AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+
+        // Prerequisite Check Section
+        Text(
+          'Điều kiện tiên quyết',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        AppCard(
+          child: course.prerequisites.isEmpty
+              ? const Row(
+                  children: [
+                    Icon(Icons.check_circle_outline, color: AppColors.success),
+                    SizedBox(width: AppSpacing.sm),
+                    Text('Môn học này không yêu cầu môn tiên quyết.'),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          isEligible
+                              ? Icons.check_circle_outline
+                              : Icons.warning_amber_rounded,
+                          color: isEligible
+                              ? AppColors.success
+                              : AppColors.warning,
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
                           child: Text(
-                            'Khuyến nghị: Cần hoàn thành môn ${missingPrereqs.join(', ')} trước khi làm đồ án/thi môn này.',
-                            style: const TextStyle(fontSize: 12, color: AppColors.warning),
+                            isEligible
+                                ? 'Bạn đã hoàn thành đủ các môn tiên quyết!'
+                                : 'Cảnh báo: Bạn chưa đạt điều kiện tiên quyết!',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: isEligible
+                                  ? AppColors.success
+                                  : AppColors.warning,
+                            ),
                           ),
                         ),
                       ],
-                    ],
-                  ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          // Assignments / Labs Section
-          Text('Bài tập & Điểm thành phần', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: AppSpacing.sm),
-
-          if (course.labs.isEmpty)
-            const AppCard(
-              child: Padding(
-                padding: EdgeInsets.all(AppSpacing.sm),
-                child: Text('Chưa có danh sách bài tập cho môn này.'),
-              ),
-            )
-          else
-            ...course.labs.map((lab) {
-              final isGraded = lab.status == 'graded';
-              return Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                child: AppCard(
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(
-                      isGraded ? Icons.assignment_turned_in_outlined : Icons.pending_actions_outlined,
-                      color: isGraded ? AppColors.success : AppColors.warning,
                     ),
-                    title: Text(lab.title, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: Text('Hạn nộp: ${lab.deadline}'),
-                    trailing: isGraded
-                        ? Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.xs,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.successContainer,
-                              borderRadius: BorderRadius.circular(AppRadius.xs),
-                            ),
-                            child: Text(
-                              '${lab.score}/10',
+                    const Divider(height: AppSpacing.lg),
+                    ...course.prerequisites.map((req) {
+                      final passed = roadmapVm.passedCourses.contains(req);
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.xxs,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '• Môn $req',
                               style: const TextStyle(
-                                color: AppColors.success,
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                          )
-                        : const Text('Đang làm', style: TextStyle(color: AppColors.warning)),
-                  ),
+                            Text(
+                              passed ? 'Đã đạt ✓' : 'Chưa đạt ✗',
+                              style: TextStyle(
+                                color: passed
+                                    ? AppColors.success
+                                    : AppColors.error,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    if (!isEligible) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.xs),
+                        decoration: BoxDecoration(
+                          color: AppColors.warningContainer,
+                          borderRadius: BorderRadius.circular(AppRadius.xs),
+                        ),
+                        child: Text(
+                          'Khuyến nghị: Cần hoàn thành môn ${missingPrereqs.join(', ')} trước khi làm đồ án/thi môn này.',
+                          style: const TextStyle(
+                            fontSize: AppFontSize.label,
+                            color: AppColors.warning,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-              );
-            }),
+        ),
+        const SizedBox(height: AppSpacing.md),
 
-          const SizedBox(height: AppSpacing.lg),
-
-          // Action buttons
-          AppButton(
-            label: 'Tạo ghi chú cho ${course.code}',
-            icon: Icons.edit_note_outlined,
-            isExpanded: true,
-            onPressed: () => Navigator.pushNamed(
-              context,
-              '/note-editor',
-              arguments: course.code,
-            ),
+        if (course.overview.isNotEmpty) Text(course.overview),
+        const SizedBox(height: AppSpacing.md),
+        AppButton(
+          label: 'Hỏi cố vấn về ${course.code}',
+          icon: Icons.school_outlined,
+          onPressed: () =>
+              Navigator.pushNamed(context, '/advisor', arguments: course.code),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        // Action buttons
+        AppButton(
+          label: 'Tạo ghi chú cho ${course.code}',
+          icon: Icons.edit_note_outlined,
+          isExpanded: true,
+          onPressed: () => Navigator.pushNamed(
+            context,
+            '/note-editor',
+            arguments: course.code,
           ),
-        ],
+        ),
+      ],
+    );
+    final academic = context.watch<AcademicViewModel>();
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        appBar: CustomAppBar(
+          title: course.code,
+          onBack: () => Navigator.pop(context),
+        ),
+        body: Column(
+          children: [
+            const TabBar(
+              tabs: [
+                Tab(text: 'Lịch slot'),
+                Tab(text: 'Đánh giá'),
+                Tab(text: 'Tổng quan'),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _slots(context, course, academic),
+                  _assessments(context, course),
+                  overview,
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+
+  Widget _slots(
+    BuildContext context,
+    CourseModel course,
+    AcademicViewModel academic,
+  ) {
+    final entries = academic.profile.timetable
+        .where((e) => e.courseCode == course.code)
+        .toList();
+    return ListView(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      children: [
+        Text(
+          'Lịch slot ${course.code}',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        if (course.slots.isEmpty)
+          const AppEmptyState(
+            message: 'Danh mục chưa có lịch slot chi tiết cho môn này.',
+          )
+        else
+          ...course.slots.map(
+            (slot) => AppCard(
+              child: ListTile(
+                leading: const Icon(Icons.calendar_today_outlined),
+                title: Text('Slot ${slot.number}: ${slot.title}'),
+                subtitle: Text(
+                  [slot.date, slot.room].where((s) => s.isNotEmpty).join(' · '),
+                ),
+              ),
+            ),
+          ),
+        const SizedBox(height: AppSpacing.md),
+        Text(
+          'Lịch cá nhân đã nhập',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        if (entries.isEmpty)
+          const Text('Chưa có lịch cá nhân cho môn này.')
+        else
+          ...entries.map(
+            (e) => ListTile(
+              leading: const Icon(Icons.schedule),
+              title: Text(
+                '${e.weekday == 7 ? 'Chủ nhật' : 'Thứ ${e.weekday + 1}'} · Slot ${e.startSlot}–${e.endSlot}',
+              ),
+            ),
+          ),
+        OutlinedButton.icon(
+          onPressed: () => Navigator.pushNamed(context, '/academic-profile'),
+          icon: const Icon(Icons.edit_note),
+          label: const Text('Nhập bảng điểm & lịch học'),
+        ),
+      ],
+    );
+  }
+
+  Widget _assessments(BuildContext context, CourseModel course) => ListView(
+    padding: const EdgeInsets.all(AppSpacing.md),
+    children: [
+      Text(
+        'Bài tập & Điểm thành phần',
+        style: Theme.of(context).textTheme.titleLarge,
+      ),
+      if (course.labs.isEmpty)
+        const AppEmptyState(
+          message: 'Danh mục chưa có đầu điểm/bài tập cho môn này.',
+        )
+      else
+        ...course.labs.map(
+          (lab) => AppCard(
+            child: ListTile(
+              leading: const Icon(Icons.assignment_outlined),
+              title: Text(lab.title),
+              subtitle: Text(
+                [
+                  if (lab.deadline.isNotEmpty) 'Hạn: ${lab.deadline}',
+                  if (lab.weight != null) 'Trọng số: ${lab.weight}%',
+                  'Nguồn: danh mục môn học',
+                ].join(' · '),
+              ),
+            ),
+          ),
+        ),
+      const Text(
+        'Điểm cá nhân được quản lý trong bảng điểm của bạn; không tự suy đoán điểm từ danh mục.',
+      ),
+    ],
+  );
 }

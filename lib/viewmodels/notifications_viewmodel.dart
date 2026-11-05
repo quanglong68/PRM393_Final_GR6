@@ -36,10 +36,13 @@ class NotificationsViewModel extends BaseViewModel<List<NotificationModel>> {
   StreamSubscription<Map<String, dynamic>>? _foregroundSub;
   StreamSubscription<Map<String, dynamic>>? _tapSub;
   StreamSubscription<bool>? _authSub;
+  int _loadVersion = 0;
+  String? _loadedUid;
 
   /// Set when the user taps a notification while the app runs — the shell
   /// reads and clears it to navigate to the notification's destination route.
   String? lastTappedRoute;
+  String? lastTappedArgument;
 
   /// Most recent foreground push, shown as an in-app banner (T12 requires a
   /// foreground banner alongside the center). Cleared by [dismissBanner].
@@ -57,17 +60,21 @@ class NotificationsViewModel extends BaseViewModel<List<NotificationModel>> {
 
   @override
   Future<void> loadData() async {
+    if (isDisposed) return;
+    final version = ++_loadVersion;
+    final uid = currentUserId;
+    _loadedUid = uid;
     setState(const AsyncViewState.loading());
 
     try {
       final firestore = firestoreService;
-      final uid = currentUserId;
       if (firestore == null || uid == null) {
         _items = [];
         setState(const AsyncViewState.empty());
         return;
       }
       final docs = await firestore.getNotifications(uid);
+      if (isDisposed || version != _loadVersion || uid != currentUserId) return;
       _items = docs.map(NotificationModel.fromMap).toList();
 
       if (_items.isEmpty) {
@@ -76,6 +83,7 @@ class NotificationsViewModel extends BaseViewModel<List<NotificationModel>> {
         setState(AsyncViewState.data(_items));
       }
     } catch (e) {
+      if (isDisposed || version != _loadVersion || uid != currentUserId) return;
       setState(AsyncViewState.error('Không thể tải thông báo: $e'));
     }
   }
@@ -84,7 +92,13 @@ class NotificationsViewModel extends BaseViewModel<List<NotificationModel>> {
     // Firebase Auth restores its session asynchronously — reload once the
     // signed-in state settles so the center is not stuck on the pre-restore
     // empty read.
-    _authSub = authService?.authStateChanges.listen((_) => loadData());
+    _authSub = authService?.authStateChanges.listen((_) {
+      if (currentUserId == _loadedUid) return;
+      _banner = null;
+      lastTappedRoute = null;
+      lastTappedArgument = null;
+      loadData();
+    });
 
     final messaging = messagingService;
     if (messaging == null) return;
@@ -100,10 +114,12 @@ class NotificationsViewModel extends BaseViewModel<List<NotificationModel>> {
     });
 
     // State 3: terminated cold start — route after first frame.
-    unawaited(Future(() async {
-      final initial = await messaging.takeInitialMessage();
-      if (initial != null) await _handleTappedPush(initial);
-    }));
+    unawaited(
+      Future(() async {
+        final initial = await messaging.takeInitialMessage();
+        if (initial != null) await _handleTappedPush(initial);
+      }),
+    );
   }
 
   Future<void> _handleIncomingPush(Map<String, dynamic> payload) async {
@@ -120,33 +136,54 @@ class NotificationsViewModel extends BaseViewModel<List<NotificationModel>> {
         'type': item.type,
         'read': false,
         if (item.route != null) 'route': item.route,
+        if (item.routeArgument != null) 'routeArgument': item.routeArgument,
       }, notificationId: item.id);
+      if (isDisposed || uid != currentUserId) return;
       _items.removeWhere((existing) => existing.id == item.id);
       _items.insert(0, item);
       _banner = item;
       setState(AsyncViewState.data(_items));
     } catch (e) {
+      if (isDisposed || uid != currentUserId) return;
       setLastError('Không thể lưu thông báo mới: $e');
     }
 
-    unawaited(analyticsService
-        ?.logNotificationReceived(type: item.type, action: 'foreground'));
+    unawaited(
+      analyticsService?.logNotificationReceived(
+        type: item.type,
+        action: 'foreground',
+      ),
+    );
   }
 
   Future<void> _handleTappedPush(Map<String, dynamic> payload) async {
-    final data = payload['data'];
-    final route = data is Map
-        ? data['route'] as String?
-        : payload['route'] as String?;
-    if (route != null && route.isNotEmpty) lastTappedRoute = route;
-
-    final notificationId = payload['notificationId'] as String? ??
-        (data is Map ? data['notificationId'] as String? : null);
-    await markAsRead(notificationId);
-
-    unawaited(analyticsService?.logNotificationReceived(
-        type: (data is Map ? data['type'] as String? : null) ?? 'system',
-        action: 'tap'));
+    final uid = currentUserId;
+    if (uid == null) return;
+    final item = NotificationModel.fromPush(payload).copyWith(read: true);
+    try {
+      // A notification-only push may first reach Dart when tapped. Upsert it
+      // before marking read instead of failing on a nonexistent document.
+      await firestoreService?.saveNotification(
+        uid,
+        item.toMap(),
+        notificationId: item.id,
+      );
+      if (isDisposed || uid != currentUserId) return;
+      _items.removeWhere((n) => n.id == item.id);
+      _items.insert(0, item);
+      lastTappedRoute = item.destinationRoute;
+      lastTappedArgument = item.destinationArgument;
+      setState(AsyncViewState.data(_items));
+    } catch (e) {
+      if (isDisposed || uid != currentUserId) return;
+      setLastError('Không lưu được thông báo vừa mở.');
+      lastTappedRoute = item.destinationRoute;
+      lastTappedArgument = item.destinationArgument;
+      notifyListeners();
+    }
+    unawaited(
+      analyticsService?.logNotificationReceived(type: item.type, action: 'tap'),
+    );
   }
 
   /// Marks a notification read locally and remotely. A null/unknown id is a
@@ -172,7 +209,10 @@ class NotificationsViewModel extends BaseViewModel<List<NotificationModel>> {
     }
   }
 
-  void consumeTappedRoute() => lastTappedRoute = null;
+  void consumeTappedRoute() {
+    lastTappedRoute = null;
+    lastTappedArgument = null;
+  }
 
   void dismissBanner() {
     if (_banner == null) return;

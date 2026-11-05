@@ -1,0 +1,6 @@
+{
+  "process_present_before_send": false,
+  "launcher_resumed": true,
+  "termination_method": "am kill after observed launcher; waited for pidof to become empty",
+  "timestamp_unix": 1793801593.0840495
+}

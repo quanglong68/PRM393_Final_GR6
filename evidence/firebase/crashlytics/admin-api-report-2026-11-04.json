@@ -1,0 +1,41 @@
+{
+  "project": "prm323-lab2-gr6",
+  "authenticated_admin": true,
+  "issues": [
+    {
+      "id": "37586cd1f4caa7b42f763b33b9538f95",
+      "title": "package:flutter/src/widgets/heroes.dart - Hero._allHeroesFor.inviteHero.<fn>",
+      "errorType": "FATAL",
+      "events": "3",
+      "uri": "https://console.firebase.google.com/v1/appid/project/prm323-lab2-gr6/crashlytics/app/1:510519082861:android:4cf5b64c4e2e4487c46464/issues/37586cd1f4caa7b42f763b33b9538f95?&time=1793145600000:1793836799000"
+    },
+    {
+      "id": "c1f1974b3335c6bf1ddc41a33003e9d2",
+      "title": "package:prm323_lab3/screens/sync_vault_screen.dart - _SyncVaultScreenState._testCrashlytics",
+      "errorType": "NON_FATAL",
+      "events": "2",
+      "uri": "https://console.firebase.google.com/v1/appid/project/prm323-lab2-gr6/crashlytics/app/1:510519082861:android:4cf5b64c4e2e4487c46464/issues/c1f1974b3335c6bf1ddc41a33003e9d2?&time=1793145600000:1793836799000"
+    },
+    {
+      "id": "41a0bd83a879aa676843f00ad1b3eeac",
+      "title": "package:prm323_lab3/services/report_export_service.dart - ReportExportService.exportStudyReport",
+      "errorType": "NON_FATAL",
+      "events": "1",
+      "uri": "https://console.firebase.google.com/v1/appid/project/prm323-lab2-gr6/crashlytics/app/1:510519082861:android:4cf5b64c4e2e4487c46464/issues/41a0bd83a879aa676843f00ad1b3eeac?&time=1793145600000:1793836799000"
+    },
+    {
+      "id": "c6bf5994d0d39f67b13167a72090be3b",
+      "title": "package:prm323_lab3/services/crashlytics_service.dart - CrashlyticsService.initialize.<fn>",
+      "errorType": "FATAL",
+      "events": "1",
+      "uri": "https://console.firebase.google.com/v1/appid/project/prm323-lab2-gr6/crashlytics/app/1:510519082861:android:4cf5b64c4e2e4487c46464/issues/c6bf5994d0d39f67b13167a72090be3b?&time=1793145600000:1793836799000"
+    },
+    {
+      "id": "ece9690113b884780b157ecd849ebd37",
+      "title": "io.flutter.plugins.firebase.crashlytics.FlutterFirebaseCrashlyticsPlugin.crash$lambda$0",
+      "errorType": "FATAL",
+      "events": "1",
+      "uri": "https://console.firebase.google.com/v1/appid/project/prm323-lab2-gr6/crashlytics/app/1:510519082861:android:4cf5b64c4e2e4487c46464/issues/ece9690113b884780b157ecd849ebd37?&time=1793145600000:1793836799000"
+    }
+  ]
+}

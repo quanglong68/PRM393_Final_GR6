@@ -1,0 +1,17 @@
+{
+  "flutter_tests_passed": 114,
+  "analyzer_issues": 0,
+  "apk_build": "debug success",
+  "installed": true,
+  "device": "emulator-5554",
+  "apk_sha256": "1a912a89664c7bba10293e747ba813ee75c9a02f8499221a09f023cb45938400",
+  "native_local_pdf_verified": true,
+  "consent_counts": {
+    "courses": 4,
+    "tasks": 0,
+    "notes": 0
+  },
+  "os_share_sheet_verified": true,
+  "external_recipient_chosen": false,
+  "cloud_upload_verified": false
+}

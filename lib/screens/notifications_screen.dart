@@ -33,18 +33,23 @@ class NotificationsScreen extends StatelessWidget {
         ],
       ),
       body: switch (state.state) {
-        ViewState.loading => const AppLoadingState(message: 'Đang tải thông báo...'),
+        ViewState.loading => const AppLoadingState(
+          message: 'Đang tải thông báo...',
+        ),
         ViewState.error => AppErrorState(
-            message: state.message ?? 'Không tải được thông báo.',
-            onRetry: vm.loadData,
-          ),
-        ViewState.empty => vm.currentUserId == null
-            ? const AppEmptyState(message: 'Bạn chưa đăng nhập — không có thông báo.')
-            : const AppEmptyState(
-                message:
-                    'Chưa có thông báo nào.\nĐẩy thử một push từ Firebase Console '
-                    'để mục này hiển thị dữ liệu thật.',
-              ),
+          message: state.message ?? 'Không tải được thông báo.',
+          onRetry: vm.loadData,
+        ),
+        ViewState.empty =>
+          vm.currentUserId == null
+              ? const AppEmptyState(
+                  message: 'Bạn chưa đăng nhập — không có thông báo.',
+                )
+              : const AppEmptyState(
+                  message:
+                      'Chưa có thông báo nào.\nĐẩy thử một push từ Firebase Console '
+                      'để mục này hiển thị dữ liệu thật.',
+                ),
         ViewState.data => _NotificationList(vm: vm, items: state.data ?? []),
       },
     );
@@ -58,64 +63,74 @@ class _NotificationList extends StatelessWidget {
   final List<NotificationModel> items;
 
   IconData _iconFor(String type) => switch (type) {
-        'task_due' => Icons.event_available_outlined,
-        'sync' => Icons.cloud_sync_outlined,
-        'advisor' => Icons.auto_awesome_outlined,
-        _ => Icons.notifications_none_rounded,
-      };
+    'task_due' => Icons.event_available_outlined,
+    'sync' => Icons.cloud_sync_outlined,
+    'advisor' => Icons.auto_awesome_outlined,
+    _ => Icons.notifications_none_rounded,
+  };
 
   @override
   Widget build(BuildContext context) => ListView.separated(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        itemCount: items.length,
-        separatorBuilder: (_, i) => const SizedBox(height: AppSpacing.xs),
-        itemBuilder: (context, index) {
-          final item = items[index];
-          return Opacity(
-            opacity: item.isUnread ? 1 : 0.6,
-            child: AppCard(
-              onTap: () {
-                vm.markAsRead(item.id);
-                final route = item.route;
-                if (route != null && route.isNotEmpty) {
-                  Navigator.pushNamed(context, route);
-                }
-              },
-              child: ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: CircleAvatar(
-                  backgroundColor: item.isUnread
-                      ? AppColors.primaryContainer
-                      : AppColors.skeleton,
-                  child: Icon(_iconFor(item.type),
-                      color: AppColors.primary, size: 20),
-                ),
-                title: Text(
-                  item.title.isEmpty ? '(Không tiêu đề)' : item.title,
-                  style: TextStyle(
-                    fontWeight:
-                        item.isUnread ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (item.body.isNotEmpty) Text(item.body),
-                    const SizedBox(height: 2),
-                    Text(
-                      item.receivedAt.isEmpty ? 'Gần đây' : item.receivedAt,
-                      style: const TextStyle(
-                          fontSize: 11, color: AppColors.onSurfaceVariant),
-                    ),
-                  ],
-                ),
-                trailing: item.isUnread
-                    ? const CircleAvatar(
-                        radius: 5, backgroundColor: AppColors.primary)
-                    : null,
+    padding: const EdgeInsets.all(AppSpacing.md),
+    itemCount: items.length,
+    separatorBuilder: (_, i) => const SizedBox(height: AppSpacing.xs),
+    itemBuilder: (context, index) {
+      final item = items[index];
+      return Opacity(
+        opacity: item.isUnread ? 1 : 0.6,
+        child: AppCard(
+          onTap: () {
+            vm.markAsRead(item.id);
+            final route = item.destinationRoute;
+            if (route != null && route.isNotEmpty) {
+              Navigator.pushNamed(
+                context,
+                route,
+                arguments: item.destinationArgument,
+              );
+            }
+          },
+          child: ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: CircleAvatar(
+              backgroundColor: item.isUnread
+                  ? AppColors.primaryContainer
+                  : AppColors.skeleton,
+              child: Icon(
+                _iconFor(item.type),
+                color: AppColors.primary,
+                size: 20,
               ),
             ),
-          );
-        },
+            title: Text(
+              item.title.isEmpty ? '(Không tiêu đề)' : item.title,
+              style: TextStyle(
+                fontWeight: item.isUnread ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (item.body.isNotEmpty) Text(item.body),
+                const SizedBox(height: AppSpacing.hairline),
+                Text(
+                  item.receivedAt.isEmpty ? 'Gần đây' : item.receivedAt,
+                  style: const TextStyle(
+                    fontSize: AppFontSize.caption,
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+            trailing: item.isUnread
+                ? const CircleAvatar(
+                    radius: 5,
+                    backgroundColor: AppColors.primary,
+                  )
+                : null,
+          ),
+        ),
       );
+    },
+  );
 }

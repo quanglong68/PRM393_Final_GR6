@@ -225,7 +225,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                       child: Text(
                         _attachmentName!,
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: AppFontSize.label,
                           color: AppColors.onPrimaryContainer,
                           fontWeight: FontWeight.w500,
                         ),

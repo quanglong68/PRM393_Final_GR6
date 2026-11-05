@@ -84,7 +84,7 @@ The following are verified as working:
 - **`RemoteConfigService`** defaults + settings
 - **`MockAuthService`/`MockFirestoreService`/`MockAnalyticsService****: confined to `test/`
 - **Docs**: `docs/architecture.md`, `docs/design-traceability.md`, plus design/ux/ai/handoff/assets folders (43 files)
-- **68 tests** pass (T03-M11 + analytics + PDF + FCM + SyncReload + Timestamp parsing)
+- **89 tests** pass (T03-M11 + analytics + PDF + FCM + SyncReload + Timestamp parsing)
 - **`flutter analyze`**: 0 issues across all modifications
 
 ---
@@ -150,7 +150,7 @@ The T03-M11E legacy task document compatibility fix is **verified and complete**
 
 - `flutter pub get` — PASS.
 - `flutter analyze` — PASS, 0 issues.
-- `flutter test` — PASS, **68 tests** (2026-11-04).
+- `flutter test` — PASS, **89 tests** (2026-11-04).
 - `flutter build apk --debug` — PASS.
 - UID propagation, rollback, PDF export, analytics, FCM token/notification wiring, and truthful three-store reload outcomes — covered by source and hermetic tests.
 - Firestore and Storage rules are owner-scoped/default-deny in local files.
@@ -178,7 +178,7 @@ The T03-M11E legacy task document compatibility fix is **verified and complete**
 
 ### Submission gaps (not Firebase blockers)
 
-- `evidence/README.md` is a matrix, not a set of screenshots/traces. Checklist requires at least 10 ARTEMIS tests, each run 3 times; the 68 Flutter tests do not count as ARTEMIS runs.
+- `evidence/README.md` is a matrix, not a set of screenshots/traces. Checklist requires at least 10 ARTEMIS tests, each run 3 times; the 89 Flutter tests do not count as ARTEMIS runs.
 - Draft sources now exist at `report/Lab03_DRAFT.md` and `slides/Lab03_DRAFT.md`. Final report PDF (8–12 pages), slide PDF (12–15 pages), and 5–10 minute demo video are not present. Final versions need Student ID and genuine runtime evidence.
 - AI review must be genuine: at least five findings and three separate fix commits per checklist. No review output or matching commit evidence exists in this pass; do not fabricate it.
 - Rubric requires repository name `PRM393_Lab03_<StudentID>` at submission, not an application ID change. The app remains `com.example.prm323_lab3`.

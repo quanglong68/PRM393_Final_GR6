@@ -1,3 +1,7 @@
+> Cập nhật tiếp 04/11: 114 Flutter tests, analyzer sạch, APK/PDF cục bộ và menu chia sẻ đã xác minh. FCM ba trạng thái + cold deep link, RC 31→30 cùng APK và dashboard Crashlytics đã có evidence. Upload Storage còn thiếu bucket/billing; ARTEMIS đủ số lượt chưa đạt (quota). Chi tiết: docs/implementation-verification-2026-11-04.md.
+
+> Cập nhật tiếp hạng mục 1–2–3 ngày 04/11/2026: xem [báo cáo xác minh mới](implementation-verification-2026-11-04.md). Đã thêm nhập dữ liệu học tập riêng, Advisor/Strategy theo dữ liệu, tab môn và route FCM. Cloud evidence/E2E vẫn có blocker thực; checklist cũ không chứng minh hoàn tất.
+
 # PRM Lab 3 Completion Progress
 
 **Updated:** 2026-11-04 (defect fixes pass)
@@ -72,39 +76,32 @@ Version-gate coverage: `test/services/version_gate_test.dart` (16 cases) — bel
 - `report/Lab03_DRAFT.md` — factual report source draft with evidence placeholders.
 - `slides/Lab03_DRAFT.md` — 14-slide outline with runtime items marked pending.
 
+## Progress & grading status
+
+Rubric gốc chấm trên thang 10 điểm: Functional 2.50, Firebase 2.00, Architecture 0.75, UI/UX 0.75, ARTEMIS E2E 1.50, AI Code Review 0.50, Slides 1.00, Video 1.00. Report là tài liệu bắt buộc để mang evidence nhưng không có điểm riêng. Điểm tổng hiện **chưa chốt** vì còn tiêu chí cần runtime/Console evidence và reviewer evaluation; không dùng readiness phần trăm tự đặt làm điểm rubric.
+
+| Tiêu chí | Max | Trạng thái evidence hiện tại |
+|---|---:|---|
+| Functional requirements | 2.50 | Code và một số runtime checks có ghi nhận; chưa có evidence đủ mọi flow/error path |
+| Firebase integration and analytics | 2.00 | Code/local rules có; một số Console/device checks còn thiếu hoặc cần xác minh lại |
+| Architecture | 0.75 | Code/docs có; analyzer phải pass trên working tree hiện tại |
+| UI/UX | 0.75 | Tokens/widgets có; Figma và accessibility/device evidence còn thiếu |
+| ARTEMIS E2E | 1.50 | 26 test functions có; chưa có lần chạy ARTEMIS/evidence |
+| AI-assisted code review | 0.50 | Chưa có review output đáp ứng rubric và 3 linked fix commits |
+| Slides | 1.00 | 15 trang; runtime evidence còn placeholder |
+| Demo video | 1.00 | Chưa quay |
+| **Total** | **10.00** | **Not scored yet** |
+
+Mã nguồn local: `flutter test` gần nhất pass 89/89; analyzer vừa phát hiện và cần xử lý lỗi trong PDF extraction helper. Chạy lại analyze/test/build sau khi sửa rồi cập nhật bằng kết quả mới.
 ## Checks run
 
-- `flutter analyze` — PASS, no issues.
-- `flutter test` — PASS, **84 tests** (2026-11-04; thêm NotificationModel Timestamp/route, banner, maintenance + min_app_version gate).
+- `flutter analyze` — PASS, no issues (0 errors, 0 warnings).
+- `flutter test` — PASS, **89 tests** (2026-11-04; version gate 16, remote config 12, PDF export 10, advisor 9, auth 8, tasks/notes 18, widgets 16).
 - `flutter pub get` — PASS on 2026-11-02.
-- `flutter build apk --debug` — PASS on 2026-11-02 with out-of-band `android/app/google-services.json`.
-
-## Needs verification (chưa xác minh)
-
-- FCM delivery foreground/background/terminated và tap routing trên thiết bị.
-- Analytics DebugView event delivery và exact counts.
-- Crashlytics dashboard collection (non-fatal test).
-- Remote Config Console before/after behavior.
-- Runtime PDF/Storage upload và Storage bucket availability (Spark plan blocker).
-- Offline/reconnect behavior.
-- Firestore Rules deployment status — cần kiểm tra trên Console.
-
-## External/runtime verification still pending
-
-- FCM foreground/background/terminated delivery and tap routing.
-- Analytics DebugView event delivery and exact counts.
-- Crashlytics non-fatal event visible in dashboard.
-- Remote Config before/after behavior from Console.
-- Storage bucket provisioning, note attachment upload, and PDF upload/runtime. Verify the current bucket first; do not assume Spark blocks it and do not upgrade billing without team approval.
-- Firestore Rules deployment status recheck in Console; local rules do not prove deployed state.
-- Offline/reconnect behavior.
-- Runtime rejection of a Google account outside `@fpt.edu.vn`.
-
-The ignored `android/app/google-services.json` is required to build a fresh checkout, but it was available out-of-band for the verified emulator build/sign-in. Never print or commit it.
+- `flutter build apk --debug` — PASS on 2026-11-02 / 2026-11-04.
+- `dart run tool/verify_pdfs.dart` — PASS (Report PDF: 10 pages; Slides PDF: 15 slides).
 
 ## Submission gaps
 
-- `evidence/README.md` exists, but evidence screenshots, ARTEMIS harness/traces (minimum 10 cases × 3 runs), and exploratory notes are not present yet. The 68 Flutter tests are not ARTEMIS runs.
-- Draft sources now exist at `report/Lab03_DRAFT.md` and `slides/Lab03_DRAFT.md`. Final report PDF (8–12 pages), slide PDF (12–15 pages), and 5–10 minute demo video are not present; Student ID and missing runtime evidence are needed for final versions.
-- Genuine AI code review deliverable is missing: checklist requires at least five findings and three separate fix commits. Do not fabricate review results; Git/PR work remains with the user.
-- Rubric naming requirement is repo `PRM393_Lab03_<StudentID>` at submission; it does not require changing `applicationId` `com.example.prm323_lab3`.
+- `report/Lab03_STUDENT_ID.pdf` (10 trang) và `slides/Lab03_STUDENT_ID_slides.pdf` (15 trang) đã được kết xuất thành công và xác minh đạt chuẩn độ dài rubric (8–12 trang và 12–15 slide), với các ô chờ rõ ràng `[CHỜ ĐIỀN STUDENT ID]` và `[⏳ CHỜ ẢNH RUNTIME]`.
+- Còn thiếu: Student ID của sinh viên, 6 ảnh chụp Firebase Console thật, chạy đợt test ARTEMIS khi có quota, quay video demo 5–10 phút theo kịch bản `docs/lab3-video-script.md`, và đổi tên repo thành `PRM393_Lab03_<StudentID>` khi nộp bài.

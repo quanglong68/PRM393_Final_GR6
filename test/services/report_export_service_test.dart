@@ -28,24 +28,27 @@ void main() {
   ];
   final tasks = [
     const TaskModel(
-        id: 't1',
-        title: 'Lab 3 checklist',
-        courseCode: 'PRM323',
-        dueDate: '15/12/2024',
-        isCompleted: true),
+      id: 't1',
+      title: 'Lab 3 checklist',
+      courseCode: 'PRM323',
+      dueDate: '15/12/2024',
+      isCompleted: true,
+    ),
     const TaskModel(
-        id: 't2',
-        title: 'Ôn thi final',
-        courseCode: 'PRM323',
-        dueDate: '20/12/2024'),
+      id: 't2',
+      title: 'Ôn thi final',
+      courseCode: 'PRM323',
+      dueDate: '20/12/2024',
+    ),
   ];
   final notes = [
     const NoteModel(
-        id: 'n1',
-        title: 'Note Firestore rules',
-        content: '...',
-        courseCode: 'PRM323',
-        updatedAt: '01/11/2026'),
+      id: 'n1',
+      title: 'Note Firestore rules',
+      content: '...',
+      courseCode: 'PRM323',
+      updatedAt: '01/11/2026',
+    ),
   ];
 
   group('ReportExportService', () {
@@ -66,24 +69,46 @@ void main() {
       );
     });
 
-    test('success flow uploads to reports/{uid}/… with PDF content type',
-        () async {
-      final result = await exporter.exportStudyReport(
-        userId: 'uid_123',
-        courses: courses,
-        tasks: tasks,
-        notes: notes,
-      );
+    test(
+      'local PDF generation works without Storage or cloud metadata',
+      () async {
+        storage.shouldFailUpload = true;
+        firestore.shouldFailReportSave = true;
+        final bytes = await exporter.generateLocalStudyReport(
+          userId: 'local-owner',
+          courses: courses,
+          tasks: tasks,
+          notes: notes,
+          generatedAt: DateTime(2026, 11, 4, 21),
+        );
+        expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+        expect(bytes.length, greaterThan(1024));
+        expect(storage.uploads, isEmpty);
+        expect(firestore.reports, isEmpty);
+        expect(analytics.loggedEvents, isEmpty);
+      },
+    );
 
-      expect(storage.uploads, hasLength(1));
-      final upload = storage.uploads.single;
-      expect(upload['path'], startsWith('reports/uid_123/study_report_'));
-      expect(upload['path'], endsWith('.pdf'));
-      expect(upload['contentType'], 'application/pdf');
-      expect(result.downloadUrl, contains('reports/uid_123'));
-      expect(result.bytes, greaterThan(1024));
-      expect(result.pdfBytes.length, result.bytes);
-    });
+    test(
+      'success flow uploads to reports/{uid}/… with PDF content type',
+      () async {
+        final result = await exporter.exportStudyReport(
+          userId: 'uid_123',
+          courses: courses,
+          tasks: tasks,
+          notes: notes,
+        );
+
+        expect(storage.uploads, hasLength(1));
+        final upload = storage.uploads.single;
+        expect(upload['path'], startsWith('reports/uid_123/study_report_'));
+        expect(upload['path'], endsWith('.pdf'));
+        expect(upload['contentType'], 'application/pdf');
+        expect(result.downloadUrl, contains('reports/uid_123'));
+        expect(result.bytes, greaterThan(1024));
+        expect(result.pdfBytes.length, result.bytes);
+      },
+    );
 
     test('progress callback receives upload fractions in order', () async {
       final seen = <double>[];
@@ -126,24 +151,26 @@ void main() {
       expect(meta['storagePath'], startsWith('reports/uid_123/'));
     });
 
-    test('export_report event fires exactly once with success params',
-        () async {
-      await exporter.exportStudyReport(
-        userId: 'uid_123',
-        courses: courses,
-        tasks: tasks,
-        notes: notes,
-      );
+    test(
+      'export_report event fires exactly once with success params',
+      () async {
+        await exporter.exportStudyReport(
+          userId: 'uid_123',
+          courses: courses,
+          tasks: tasks,
+          notes: notes,
+        );
 
-      final events = analytics.loggedEvents
-          .where((e) => e['name'] == 'export_report')
-          .toList();
-      expect(events, hasLength(1));
-      final params = events.single['parameters'] as Map<String, Object>;
-      expect(params['status'], 'success');
-      expect(params['file_size_kb'], greaterThan(0));
-      expect(params['duration_ms'], isA<int>());
-    });
+        final events = analytics.loggedEvents
+            .where((e) => e['name'] == 'export_report')
+            .toList();
+        expect(events, hasLength(1));
+        final params = events.single['parameters'] as Map<String, Object>;
+        expect(params['status'], 'success');
+        expect(params['file_size_kb'], greaterThan(0));
+        expect(params['duration_ms'], isA<int>());
+      },
+    );
 
     test('storage failure rethrows and logs export_report=failed', () async {
       storage.shouldFailUpload = true;
@@ -167,8 +194,7 @@ void main() {
       expect(firestore.reports, isEmpty);
     });
 
-    test('metadata failure also rethrows and marks the event failed',
-        () async {
+    test('metadata failure also rethrows and marks the event failed', () async {
       firestore.shouldFailReportSave = true;
 
       await expectLater(
@@ -189,24 +215,26 @@ void main() {
   });
 
   group('ReportPdfService (real generator)', () {
-    test('produces a valid PDF from real models with Vietnamese content',
-        () async {
-      final service = ReportPdfService();
-      final bytes = await service.buildStudyReport(
-        generatedAt: DateTime(2026, 10, 31, 9, 30),
-        courses: courses,
-        tasks: tasks,
-        notes: notes,
-        uidHint: '…6789abcd',
-      );
+    test(
+      'produces a valid PDF from real models with Vietnamese content',
+      () async {
+        final service = ReportPdfService();
+        final bytes = await service.buildStudyReport(
+          generatedAt: DateTime(2026, 10, 31, 9, 30),
+          courses: courses,
+          tasks: tasks,
+          notes: notes,
+          uidHint: '…6789abcd',
+        );
 
-      // PDF header + EOF marker prove the document is structurally valid.
-      final header = String.fromCharCodes(bytes.take(5));
-      expect(header, '%PDF-');
-      final tail = String.fromCharCodes(bytes.skip(bytes.length - 6));
-      expect(tail.trimRight(), endsWith('%%EOF'));
-      expect(bytes.length, greaterThan(1024));
-    });
+        // PDF header + EOF marker prove the document is structurally valid.
+        final header = String.fromCharCodes(bytes.take(5));
+        expect(header, '%PDF-');
+        final tail = String.fromCharCodes(bytes.skip(bytes.length - 6));
+        expect(tail.trimRight(), endsWith('%%EOF'));
+        expect(bytes.length, greaterThan(1024));
+      },
+    );
 
     test('handles empty datasets without crashing', () async {
       final service = ReportPdfService();

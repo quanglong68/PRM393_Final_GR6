@@ -3,8 +3,10 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'firebase_options.dart';
+import 'firebase/firebase_options.dart';
 import 'screens/advisor_screen.dart';
+import 'screens/academic_profile_screen.dart';
+import 'viewmodels/academic_viewmodel.dart';
 import 'screens/course_detail_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/note_editor_screen.dart';
@@ -27,7 +29,10 @@ import 'services/firestore_service.dart';
 import 'services/messaging_service.dart';
 import 'services/remote_config_service.dart';
 import 'services/report_export_service.dart';
+import 'services/report_media_storage_service.dart';
 import 'services/storage_service.dart';
+import 'theme/app_colors.dart';
+import 'theme/app_spacing.dart';
 import 'theme/app_theme.dart';
 import 'viewmodels/advisor_viewmodel.dart';
 import 'viewmodels/auth_viewmodel.dart';
@@ -67,14 +72,18 @@ Future<void> main() async {
     FirebaseMessaging.onBackgroundMessage(fcmBackgroundHandler);
   } catch (e) {
     _firebaseInitError = e;
-    debugPrint('[Firebase] Initialization FAILED — showing blocking error screen: $e');
+    debugPrint(
+      '[Firebase] Initialization FAILED — showing blocking error screen: $e',
+    );
   }
 
-  runApp(FptuSecondBrainApp(
-    initError: _firebaseInitError,
-    crashlyticsService: _sharedCrashlytics,
-    remoteConfigService: _sharedRemoteConfig,
-  ));
+  runApp(
+    FptuSecondBrainApp(
+      initError: _firebaseInitError,
+      crashlyticsService: _sharedCrashlytics,
+      remoteConfigService: _sharedRemoteConfig,
+    ),
+  );
 }
 
 CrashlyticsService? _sharedCrashlytics;
@@ -120,121 +129,140 @@ class FptuSecondBrainApp extends StatelessWidget {
   }
 
   Widget _buildProvisionedApp() => MultiProvider(
-        providers: [
-          // ── Core Service Layer ──
-          // Firebase is guaranteed available here: main() either initialized it
-          // or routed to FirebaseConfigErrorApp. No silent mock fallback.
-          Provider<AuthService>(
-            create: (_) => authService ?? FirebaseAuthService(),
-          ),
-          Provider<FirestoreService>(
-            create: (_) => firestoreService ?? FirebaseFirestoreService(),
-          ),
-          Provider<StorageService>(
-            create: (_) => storageService ?? FirebaseStorageService(),
-          ),
-          Provider<AnalyticsService>(
-            create: (_) => analyticsService ?? FirebaseAnalyticsService(),
-          ),
-          // Push transport. Nullable on purpose: hermetic widget tests run
-          // without a real Firebase app, so we must NOT construct
-          // FirebaseMessagingService there — consumers handle a null
-          // MessagingService by disabling push (never by faking one).
-          Provider<MessagingService?>(
-            create: (_) {
-              if (messagingService != null) return messagingService;
-              if (!_usesRealComposition) return null;
-              return FirebaseMessagingService()..attach();
-            },
-          ),
-          Provider<CrashlyticsService>(
-            create: (_) => crashlyticsService ?? CrashlyticsService(),
-          ),
-          Provider<RemoteConfigService>(
-            create: (_) => remoteConfigService ?? RemoteConfigService(),
-          ),
-          Provider<ReportExportService>(
-            create: (ctx) => ReportExportService(
-              storageService: ctx.read<StorageService>(),
-              firestoreService: ctx.read<FirestoreService>(),
-              analyticsService: ctx.read<AnalyticsService>(),
-            ),
-          ),
+    providers: [
+      // ── Core Service Layer ──
+      // Firebase is guaranteed available here: main() either initialized it
+      // or routed to FirebaseConfigErrorApp. No silent mock fallback.
+      Provider<AuthService>(
+        create: (_) => authService ?? FirebaseAuthService(),
+      ),
+      Provider<FirestoreService>(
+        create: (_) => firestoreService ?? FirebaseFirestoreService(),
+      ),
+      Provider<StorageService>(
+        create: (_) => storageService ?? FirebaseStorageService(),
+      ),
+      Provider<AnalyticsService>(
+        create: (_) => analyticsService ?? FirebaseAnalyticsService(),
+      ),
+      // Push transport. Nullable on purpose: hermetic widget tests run
+      // without a real Firebase app, so we must NOT construct
+      // FirebaseMessagingService there — consumers handle a null
+      // MessagingService by disabling push (never by faking one).
+      Provider<MessagingService?>(
+        create: (_) {
+          if (messagingService != null) return messagingService;
+          if (!_usesRealComposition) return null;
+          return FirebaseMessagingService()..attach();
+        },
+      ),
+      Provider<CrashlyticsService>(
+        create: (_) => crashlyticsService ?? CrashlyticsService(),
+      ),
+      ChangeNotifierProvider<RemoteConfigService>(
+        create: (_) => remoteConfigService ?? RemoteConfigService(),
+      ),
+      Provider<ReportExportService>(
+        create: (ctx) {
+          const mediaUrl = String.fromEnvironment('REPORT_MEDIA_URL');
+          final useMedia = _usesRealComposition && mediaUrl.isNotEmpty;
+          return ReportExportService(
+            storageService: useMedia
+                ? ReportMediaStorageService(Uri.parse(mediaUrl))
+                : ctx.read<StorageService>(),
+            storageProvider: useMedia ? 'Cloudinary' : 'Firebase Cloud Storage',
+            firestoreService: ctx.read<FirestoreService>(),
+            analyticsService: ctx.read<AnalyticsService>(),
+            crashlyticsService: ctx.read<CrashlyticsService>(),
+          );
+        },
+      ),
 
-          // ── ViewModel Layer ──
-          ChangeNotifierProvider<AuthViewModel>(
-            create: (ctx) => AuthViewModel(
-              authService: ctx.read<AuthService>(),
-              analyticsService: ctx.read<AnalyticsService>(),
-              crashlyticsService: ctx.read<CrashlyticsService>(),
-              messagingService: ctx.read<MessagingService?>(),
-              firestoreService: ctx.read<FirestoreService>(),
-            ),
-          ),
-          ChangeNotifierProvider<NotificationsViewModel>(
-            create: (ctx) => NotificationsViewModel(
-              authService: ctx.read<AuthService>(),
-              firestoreService: ctx.read<FirestoreService>(),
-              messagingService: ctx.read<MessagingService?>(),
-              analyticsService: ctx.read<AnalyticsService>(),
-            ),
-          ),
-          ChangeNotifierProvider<RoadmapViewModel>(
-            create: (ctx) => RoadmapViewModel(
-              authService: ctx.read<AuthService>(),
-              firestoreService: ctx.read<FirestoreService>(),
-              analyticsService: ctx.read<AnalyticsService>(),
-            ),
-          ),
-          ChangeNotifierProvider<TasksViewModel>(
-            create: (ctx) => TasksViewModel(
-              authService: ctx.read<AuthService>(),
-              firestoreService: ctx.read<FirestoreService>(),
-              analyticsService: ctx.read<AnalyticsService>(),
-            ),
-          ),
-          ChangeNotifierProvider<NotesViewModel>(
-            create: (ctx) => NotesViewModel(
-              authService: ctx.read<AuthService>(),
-              firestoreService: ctx.read<FirestoreService>(),
-              storageService: ctx.read<StorageService>(),
-              analyticsService: ctx.read<AnalyticsService>(),
-            ),
-          ),
-          ChangeNotifierProvider<AdvisorViewModel>(
-            create: (ctx) => AdvisorViewModel(
-              remoteConfigService: ctx.read<RemoteConfigService>(),
-              analyticsService: ctx.read<AnalyticsService>(),
-              authService: ctx.read<AuthService>(),
-            ),
-          ),
-        ],
-        child: Builder(
-          builder: (ctx) => MaterialApp(
-            title: 'FPTU Second Brain',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.light(),
-            navigatorObservers:
-                ctx.read<AnalyticsService>().navigatorObservers,
-            home: const AuthGate(),
-            routes: {
-              '/home': (_) => const AppShell(),
-              '/sign-in': (_) => const SignInScreen(),
-              '/course-detail': (ctx) => CourseDetailScreen(
-                    courseId:
-                        ModalRoute.of(ctx)!.settings.arguments as String? ?? '',
-                  ),
-              '/note-editor': (ctx) => NoteEditorScreen(
-                    noteId: ModalRoute.of(ctx)!.settings.arguments as String?,
-                  ),
-              '/advisor': (_) => const AdvisorScreen(),
-              '/strategy-sim': (_) => const StrategySimScreen(),
-              '/sync-vault': (_) => const SyncVaultScreen(),
-              '/notifications': (_) => const NotificationsScreen(),
-            },
-          ),
+      // ── ViewModel Layer ──
+      ChangeNotifierProvider<AuthViewModel>(
+        create: (ctx) => AuthViewModel(
+          authService: ctx.read<AuthService>(),
+          analyticsService: ctx.read<AnalyticsService>(),
+          crashlyticsService: ctx.read<CrashlyticsService>(),
+          messagingService: ctx.read<MessagingService?>(),
+          firestoreService: ctx.read<FirestoreService>(),
         ),
-      );
+      ),
+      ChangeNotifierProvider<NotificationsViewModel>(
+        create: (ctx) => NotificationsViewModel(
+          authService: ctx.read<AuthService>(),
+          firestoreService: ctx.read<FirestoreService>(),
+          messagingService: ctx.read<MessagingService?>(),
+          analyticsService: ctx.read<AnalyticsService>(),
+        ),
+      ),
+      ChangeNotifierProvider<RoadmapViewModel>(
+        create: (ctx) => RoadmapViewModel(
+          authService: ctx.read<AuthService>(),
+          firestoreService: ctx.read<FirestoreService>(),
+          analyticsService: ctx.read<AnalyticsService>(),
+        ),
+      ),
+      ChangeNotifierProvider<TasksViewModel>(
+        create: (ctx) => TasksViewModel(
+          authService: ctx.read<AuthService>(),
+          firestoreService: ctx.read<FirestoreService>(),
+          analyticsService: ctx.read<AnalyticsService>(),
+        ),
+      ),
+      ChangeNotifierProvider<NotesViewModel>(
+        create: (ctx) => NotesViewModel(
+          authService: ctx.read<AuthService>(),
+          firestoreService: ctx.read<FirestoreService>(),
+          storageService: ctx.read<StorageService>(),
+          analyticsService: ctx.read<AnalyticsService>(),
+        ),
+      ),
+      ChangeNotifierProvider<AcademicViewModel>(
+        create: (ctx) => AcademicViewModel(
+          authService: ctx.read<AuthService>(),
+          firestoreService: ctx.read<FirestoreService>(),
+        ),
+      ),
+      ChangeNotifierProvider<AdvisorViewModel>(
+        create: (ctx) => AdvisorViewModel(
+          academicViewModel: ctx.read<AcademicViewModel>(),
+          remoteConfigService: ctx.read<RemoteConfigService>(),
+          analyticsService: ctx.read<AnalyticsService>(),
+          authService: ctx.read<AuthService>(),
+        ),
+      ),
+    ],
+    child: Builder(
+      builder: (ctx) => MaterialApp(
+        // Drop pushed private screens as well as tab state on identity change.
+        key: ValueKey(ctx.watch<AuthViewModel>().currentUserId),
+        title: 'FPTU Second Brain',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light(),
+        navigatorObservers: ctx.read<AnalyticsService>().navigatorObservers,
+        home: const AuthGate(),
+        routes: {
+          '/home': (_) => const AppShell(),
+          '/sign-in': (_) => const SignInScreen(),
+          '/course-detail': (ctx) => CourseDetailScreen(
+            courseId: ModalRoute.of(ctx)!.settings.arguments as String? ?? '',
+          ),
+          '/note-editor': (ctx) => NoteEditorScreen(
+            noteId: ModalRoute.of(ctx)!.settings.arguments as String?,
+          ),
+          '/academic-profile': (_) => const AcademicProfileScreen(),
+          '/advisor': (_) => const AdvisorScreen(),
+          '/strategy-sim': (_) => const StrategySimScreen(),
+          '/sync-vault': (_) => const SyncVaultScreen(),
+          '/notifications': (_) => const NotificationsScreen(),
+          '/roadmap': (_) => const RoadmapScreen(),
+          '/tasks': (_) => const TasksScreen(),
+          '/notes': (_) => const NotesScreen(),
+        },
+      ),
+    ),
+  );
 }
 
 /// Blocking full-screen error shown when Firebase failed to initialize.
@@ -247,38 +275,47 @@ class FirebaseConfigErrorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-        title: 'FPTU Second Brain',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light(),
-        home: Scaffold(
-          body: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.cloud_off_rounded,
-                      size: 64, color: Color(0xFFB3261E)),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Không thể kết nối Firebase',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Ứng dụng yêu cầu cấu hình Firebase hợp lệ '
-                    '(google-services.json + firebase_options.dart).\n\n'
-                    '$initError',
-                    style: const TextStyle(fontSize: 13, color: Colors.black87),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+    title: 'FPTU Second Brain',
+    debugShowCheckedModeBanner: false,
+    theme: AppTheme.light(),
+    home: Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.cloud_off_rounded,
+                size: 64,
+                color: AppColors.error,
               ),
-            ),
+              const SizedBox(height: 16),
+              const Text(
+                'Không thể kết nối Firebase',
+                style: TextStyle(
+                  fontSize: AppFontSize.heading,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Ứng dụng yêu cầu cấu hình Firebase hợp lệ '
+                '(google-services.json + firebase_options.dart).\n\n'
+                '$initError',
+                style: const TextStyle(
+                  fontSize: AppFontSize.dense,
+                  color: AppColors.onSurface,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 /// Authentication Gate: routes to [AppShell] when authenticated,
@@ -320,15 +357,14 @@ class _AuthGateState extends State<AuthGate> {
     final message = blockedBefore
         ? 'Ứng dụng vẫn cần cập nhật lên phiên bản ${rc.minAppVersion}.'
         : 'Ứng dụng vẫn đang bảo trì.';
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
   Widget build(BuildContext context) {
     final authVm = context.watch<AuthViewModel>();
-    // Remote Config is a plain service, not a Listenable: [setState] in
-    // [_recheck] is what makes the gate re-read these getters after a fetch.
-    final rc = context.read<RemoteConfigService>();
+    final rc = context.watch<RemoteConfigService>();
 
     if (rc.isVersionBelowMinimum) {
       return VersionBlockedScreen(
@@ -369,43 +405,46 @@ class VersionBlockedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.system_update_rounded, size: 64),
-                const SizedBox(height: 16),
-                const Text(
-                  'Cần cập nhật ứng dụng',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Phiên bản hiện tại $currentVersion thấp hơn mức tối thiểu '
-                  '$minimumVersion. Vui lòng cập nhật từ Google Play để tiếp tục.',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                checking
-                    ? const CircularProgressIndicator()
-                    : TextButton(
-                        onPressed: onRecheck,
-                        child: const Text('Thử lại'),
-                      ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Cấu hình: Remote Config `min_app_version`.',
-                  style: TextStyle(fontSize: 12),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+    body: Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.system_update_rounded, size: 64),
+            const SizedBox(height: 16),
+            const Text(
+              'Cần cập nhật ứng dụng',
+              style: TextStyle(
+                fontSize: AppFontSize.heading,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
             ),
-          ),
+            const SizedBox(height: 8),
+            Text(
+              'Phiên bản hiện tại $currentVersion thấp hơn mức tối thiểu '
+              '$minimumVersion. Vui lòng cập nhật từ Google Play để tiếp tục.',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            checking
+                ? const CircularProgressIndicator()
+                : TextButton(
+                    onPressed: onRecheck,
+                    child: const Text('Thử lại'),
+                  ),
+            const SizedBox(height: 8),
+            const Text(
+              'Cấu hình: Remote Config `min_app_version`.',
+              style: TextStyle(fontSize: AppFontSize.label),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 }
 
 /// Shown instead of [AppShell] when Remote Config `maintenance_mode` is on.
@@ -423,37 +462,40 @@ class MaintenanceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.construction_rounded, size: 64),
-                const SizedBox(height: 16),
-                const Text(
-                  'Ứng dụng đang bảo trì',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Vui lòng quay lại sau. Cấu hình: Remote Config '
-                  '`maintenance_mode`.',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                checking
-                    ? const CircularProgressIndicator()
-                    : TextButton(
-                        onPressed: onRecheck,
-                        child: const Text('Thử lại'),
-                      ),
-              ],
+    body: Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.construction_rounded, size: 64),
+            const SizedBox(height: 16),
+            const Text(
+              'Ứng dụng đang bảo trì',
+              style: TextStyle(
+                fontSize: AppFontSize.heading,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
             ),
-          ),
+            const SizedBox(height: 8),
+            const Text(
+              'Vui lòng quay lại sau. Cấu hình: Remote Config '
+              '`maintenance_mode`.',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            checking
+                ? const CircularProgressIndicator()
+                : TextButton(
+                    onPressed: onRecheck,
+                    child: const Text('Thử lại'),
+                  ),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 }
 
 /// Root shell that manages bottom navigation between the 4 main tabs.
@@ -480,9 +522,10 @@ class _AppShellState extends State<AppShell> {
     final route = vm.lastTappedRoute;
     if (route == null || _routingTap) return;
     _routingTap = true;
+    final argument = vm.lastTappedArgument;
     vm.consumeTappedRoute();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (mounted) Navigator.pushNamed(context, route);
+      if (mounted) Navigator.pushNamed(context, route, arguments: argument);
       _routingTap = false;
     });
   }
@@ -521,9 +564,13 @@ class _AppShellState extends State<AppShell> {
                 onOpen: () {
                   notificationsVm.dismissBanner();
                   notificationsVm.markAsRead(banner.id);
-                  final route = banner.route;
+                  final route = banner.destinationRoute;
                   if (route != null && route.isNotEmpty) {
-                    Navigator.pushNamed(context, route);
+                    Navigator.pushNamed(
+                      context,
+                      route,
+                      arguments: banner.destinationArgument,
+                    );
                   }
                 },
                 onDismiss: notificationsVm.dismissBanner,

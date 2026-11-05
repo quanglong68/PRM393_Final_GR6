@@ -63,3 +63,5 @@ __pycache__/
 venv/
 .pytest_cache/
 e2e_test/results_run*.xml
+
+/admin-web/node_modules/

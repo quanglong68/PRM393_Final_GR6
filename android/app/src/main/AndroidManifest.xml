@@ -7,6 +7,8 @@
         android:label="prm323_lab3"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- Explicit debug test opt-in is persisted by the native SDK. -->
+        <meta-data android:name="firebase_crashlytics_collection_enabled" android:value="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

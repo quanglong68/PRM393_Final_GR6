@@ -6,7 +6,7 @@ import 'firestore_service.dart';
 /// Cloud Firestore implementation with offline persistence enabled.
 class FirebaseFirestoreService implements FirestoreService {
   FirebaseFirestoreService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance {
+    : _firestore = firestore ?? FirebaseFirestore.instance {
     _initPersistence();
   }
 
@@ -18,7 +18,9 @@ class FirebaseFirestoreService implements FirestoreService {
         persistenceEnabled: true,
         cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
       );
-      debugPrint('[Firestore] Offline persistence enabled with unlimited cache.');
+      debugPrint(
+        '[Firestore] Offline persistence enabled with unlimited cache.',
+      );
     } catch (e) {
       debugPrint('[Firestore] Persistence config warning: $e');
     }
@@ -34,6 +36,7 @@ class FirebaseFirestoreService implements FirestoreService {
           .orderBy('semester')
           .get(const GetOptions(source: Source.serverAndCache));
 
+      debugPrint('[Firestore] Course catalog returned ${snapshot.docs.length} documents.');
       return snapshot.docs.map((doc) => {'id': doc.id, ...doc.data()}).toList();
     } catch (e) {
       debugPrint('[Firestore] getCourses error: $e');
@@ -75,6 +78,18 @@ class FirebaseFirestoreService implements FirestoreService {
   // ──────────────────────── Tasks ────────────────────────
 
   @override
+  Future<void> saveAcademicProfile(
+    String userId,
+    Map<String, dynamic> data,
+  ) async {
+    if (userId.isEmpty) throw ArgumentError('Missing owner UID');
+    await _firestore.collection('users').doc(userId).set({
+      ...data,
+      'academicUpdatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  @override
   Future<List<Map<String, dynamic>>> getTasks(String userId) async {
     try {
       final snapshot = await _firestore
@@ -89,28 +104,16 @@ class FirebaseFirestoreService implements FirestoreService {
       // For legacy documents (old .add()): doc.data()['id'] differs from snapshot.id;
       // we use snapshot.id as the canonical ID and preserve the original data.id
       // as a legacy reference field.
-      final doc = snapshot.docs.firstOrNull;
-      if (doc == null) return [];
-
-      final data = doc.data();
-      final firestoreId = doc.id;
-      final dataId = data['id'] as String?;
-      final taskId = dataId != null && dataId.isNotEmpty && dataId == firestoreId
-          ? firestoreId
-          : firestoreId; // always prefer Firestore document ID as canonical
-
-      // Build the map: include the canonical task ID (Firestore document ID)
-      // and optionally the original data id as legacyId for legacy documents.
-      // We explicitly do NOT spread data['id'] into the result, because that
-      // would overwrite the canonical id with the data field id — which is
-      // the root cause of the not-found error when legacy documents have a
-      // different data.id than the Firestore document ID.
-      final result = <String, dynamic>{
-        'id': taskId,
-        if (dataId != null && dataId != firestoreId) 'legacyId': dataId,
-      }..addAll(data..remove('id'));
-
-      return [result];
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        final dataId = data['id'];
+        return <String, dynamic>{
+          ...data,
+          'id': doc.id,
+          if (dataId is String && dataId.isNotEmpty && dataId != doc.id)
+            'legacyId': dataId,
+        };
+      }).toList();
     } catch (e) {
       debugPrint('[Firestore] getTasks error: $e');
       rethrow;
@@ -136,10 +139,10 @@ class FirebaseFirestoreService implements FirestoreService {
           .collection('tasks')
           .doc(taskId)
           .set({
-        ...task,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+            ...task,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
     } catch (e) {
       debugPrint('[Firestore] addTask error: $e');
       rethrow;
@@ -150,17 +153,16 @@ class FirebaseFirestoreService implements FirestoreService {
   Future<void> updateTask(String taskId, Map<String, dynamic> data) async {
     try {
       final userId = data['userId'] as String?;
-      if (userId == null) throw ArgumentError('Update data must include userId');
+      if (userId == null) {
+        throw ArgumentError('Update data must include userId');
+      }
 
       await _firestore
           .collection('users')
           .doc(userId)
           .collection('tasks')
           .doc(taskId)
-          .update({
-        ...data,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+          .update({...data, 'updatedAt': FieldValue.serverTimestamp()});
     } catch (e) {
       // T03-M11C temporary capture block removed: root cause was the legacy
       // task ID mismatch fixed in T03-M11D/M11E (canonical doc IDs).
@@ -211,8 +213,16 @@ class FirebaseFirestoreService implements FirestoreService {
 
       final noteId = note['id'] as String?;
       final noteRef = noteId != null && noteId.isNotEmpty
-          ? _firestore.collection('users').doc(userId).collection('notes').doc(noteId)
-          : _firestore.collection('users').doc(userId).collection('notes').doc();
+          ? _firestore
+                .collection('users')
+                .doc(userId)
+                .collection('notes')
+                .doc(noteId)
+          : _firestore
+                .collection('users')
+                .doc(userId)
+                .collection('notes')
+                .doc();
 
       await noteRef.set({
         ...note,
@@ -244,17 +254,16 @@ class FirebaseFirestoreService implements FirestoreService {
 
   @override
   Future<void> saveReportMetadata(
-      String userId, Map<String, dynamic> metadata) async {
+    String userId,
+    Map<String, dynamic> metadata,
+  ) async {
     try {
       await _firestore
           .collection('users')
           .doc(userId)
           .collection('sync')
           .doc('report_${DateTime.now().millisecondsSinceEpoch}')
-          .set({
-        ...metadata,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+          .set({...metadata, 'createdAt': FieldValue.serverTimestamp()});
       debugPrint('[Firestore] Saved report metadata for $userId');
     } catch (e) {
       debugPrint('[Firestore] saveReportMetadata error: $e');
@@ -283,8 +292,10 @@ class FirebaseFirestoreService implements FirestoreService {
 
   @override
   Future<void> saveNotification(
-      String userId, Map<String, dynamic> data,
-      {String? notificationId}) async {
+    String userId,
+    Map<String, dynamic> data, {
+    String? notificationId,
+  }) async {
     try {
       final ref = _firestore
           .collection('users')
@@ -302,7 +313,10 @@ class FirebaseFirestoreService implements FirestoreService {
   }
 
   @override
-  Future<void> markNotificationRead(String userId, String notificationId) async {
+  Future<void> markNotificationRead(
+    String userId,
+    String notificationId,
+  ) async {
     try {
       await _firestore
           .collection('users')
@@ -320,18 +334,16 @@ class FirebaseFirestoreService implements FirestoreService {
   Future<void> registerToken(String userId, String token) async {
     try {
       // Deterministic doc id (hash of token) keeps one row per device token.
-      final tokenId = token.length > 24
-          ? token.substring(0, 24)
-          : token;
+      final tokenId = token.length > 24 ? token.substring(0, 24) : token;
       await _firestore
           .collection('users')
           .doc(userId)
           .collection('tokens')
           .doc(tokenId)
           .set({
-        'token': token,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+            'token': token,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
       debugPrint('[Firestore] Registered FCM token for $userId');
     } catch (e) {
       debugPrint('[Firestore] registerToken error: $e');

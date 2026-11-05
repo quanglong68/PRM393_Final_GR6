@@ -1,60 +1,45 @@
-"""Flow 2 — Quản lý Deadline & Undo (TC-F2-*) + close-out nợ M11E (TC-V1)."""
-
+"""Verified Lab 3 cases; observations asserted from TaskResult.output JSON."""
 import pytest
-
-from conftest import require_artemis, skip_without_adb
-
+from conftest import APP_PACKAGE, require_artemis, skip_without_adb
+from observations import equals, contains_text
 pytestmark = [skip_without_adb, pytest.mark.e2e]
 
-UNIQUE = "E2E-F2 "  # prefix để nhận diện task do harness tạo
-
 
 @require_artemis
-async def test_TC_F2_01_toggle_task(artemis, evidence_shot):
-    """Checkbox → gạch ngang + Snackbar HOÀN TÁC."""
-    result = await artemis.run(
-        f"Ở tab 'Việc cần làm': tạo task mới tiêu đề '{UNIQUE}toggle'. Sau đó tick checkbox task đó. "
-        "Xác nhận task gạch ngang/chuyển nhóm 'Đã xong' và có snackbar hoàn tác; trả về chữ snackbar."
+async def test_TC_F2_01_toggle_task(artemis, auth_account, unique_name):
+    observed = await artemis.run(
+        'From Home open Việc cần làm, create a NEW task named {fixture}; tick its checkbox. Report exact task title, checked state, and the literal snackbar action. Do not touch existing tasks.'.replace("{fixture}", unique_name),
+        {'task_title': 'literal title', 'checked': 'boolean', 'undo_label': 'literal action'},
     )
-    assert result.succeeded, f"ARTEMIS fail: {result.error or result.status}"
-    evidence_shot("TC-F2-01")
-
+    equals(observed,'task_title',unique_name)
+    equals(observed,'checked',True)
+    equals(observed,'undo_label','Hoàn tác')
 
 @require_artemis
-async def test_TC_F2_02_undo_within_8s(artemis, evidence_shot):
-    """Nhánh recovery: HOÀN TÁC trong 8s trả task về chưa xong."""
-    result = await artemis.run(
-        f"Ở tab 'Việc cần làm' với task '{UNIQUE}toggle' vừa hoàn thành: "
-        "chạm nút HOÀN TÁC trên snackbar trong vòng 8 giây. "
-        "Xác nhận task trở lại nhóm chưa xong và trả về vị trí/nhãn nhìn thấy."
+async def test_TC_F2_02_undo_within_8s(artemis, auth_account, unique_name):
+    observed = await artemis.run(
+        'Create your OWN new task {fixture}, initially unchecked. Tick it and tap Hoàn tác in one immediate action burst before the 8-second snackbar expires. End with that task unchecked; never depend on a prior case.'.replace("{fixture}", unique_name),
+        {'task_title': 'literal title', 'checked_after_undo': 'boolean'},
     )
-    assert result.succeeded, f"ARTEMIS fail: {result.error or result.status}"
-    evidence_shot("TC-F2-02")
-
+    equals(observed,'task_title',unique_name)
+    equals(observed,'checked_after_undo',False)
 
 @require_artemis
-async def test_TC_V1_update_existing_task(artemis, device_state, logcat, evidence_shot):
-    """NỢ M11E CLOSE-OUT: sửa task ĐÃ TỒN tại → updateTask pass, log không exception."""
-    logcat.start("TC-V1")
-    result = await artemis.run(
-        f"Mở tab 'Việc cần làm', chạm vào nội dung task bắt đầu bằng '{UNIQUE}' (không phải checkbox), "
-        "đổi tiêu đề thêm ' EDITED', bấm 'Lưu việc cần làm'. "
-        "Xác nhận danh sách hiện tiêu đề mới và KHÔNG có banner lỗi."
+async def test_TC_V1_update_existing_task(artemis, auth_account, unique_name, logcat):
+    logcat.start('TC-V1')
+    observed = await artemis.run(
+        'Create your own task {fixture}. Open its content/edit sheet, append EDITED, press Cập nhật việc cần làm, then reload through Sync Vault manual sync. Return to Tasks and report its literal persisted title.'.replace("{fixture}", unique_name),
+        {'task_title': 'literal title after reload'},
     )
-    log_text = logcat.stop_and_text()
-    assert result.succeeded, f"ARTEMIS fail: {result.error or result.status}"
-    assert "FirebaseException" not in log_text, f"Log chứa exception:\n{log_text[-800:]}"
-    assert "editTask error" not in log_text, f"editTask báo lỗi:\n{log_text[-800:]}"
-    evidence_shot("TC-V1")
-
+    equals(observed,'task_title',unique_name+' EDITED')
+    text=logcat.stop_and_text()
+    assert 'editTask error' not in text and 'FATAL EXCEPTION' not in text
 
 @require_artemis
-async def test_TC_F2_05_add_task_id_consistency(artemis, evidence_shot):
-    """Task mới xuất hiện lại sau manual sync (doc ID canonical — M11D/E)."""
-    result = await artemis.run(
-        f"Tạo task '{UNIQUE}canonical' qua nút 'Thêm việc'. "
-        "Vào Cài đặt & Đồng bộ, chạm 'Đồng bộ ngay bây giờ' và xác nhận dialog. "
-        "Quay lại 'Việc cần làm': xác nhận task '{UNIQUE}canonical' vẫn còn; trả về dòng hiển thị của nó."
+async def test_TC_F2_05_add_task_id_consistency(artemis, auth_account, unique_name):
+    observed = await artemis.run(
+        'Create your own task {fixture}. Open Sync Vault and Kích hoạt đồng bộ Vault ngay, confirm if prompted, wait for sync result, return to Tasks. Report that task title and occurrence count after reload.'.replace("{fixture}", unique_name),
+        {'task_title': 'literal title', 'occurrence_count': 'integer'},
     )
-    assert result.succeeded, f"ARTEMIS fail: {result.error or result.status}"
-    evidence_shot("TC-F2-05")
+    equals(observed,'task_title',unique_name)
+    equals(observed,'occurrence_count',1)

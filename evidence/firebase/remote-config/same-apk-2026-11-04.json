@@ -1,0 +1,9 @@
+{
+  "apk_sha256": "39cbb0495d993609e50b5220d46843bc864c2a04a3f1a7511e0698a3b001eccb",
+  "app_version": "1.0.0",
+  "device": "emulator-5554",
+  "rebuild_between_config_changes": false,
+  "observed_interval_before_restore": 31,
+  "observed_interval_after_manual_refresh": 30,
+  "verified_native_ui_both_values": true
+}

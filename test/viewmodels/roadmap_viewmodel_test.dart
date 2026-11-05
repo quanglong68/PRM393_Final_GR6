@@ -9,18 +9,19 @@ void main() {
   group('RoadmapViewModel Tests', () {
     late RoadmapViewModel viewModel;
 
-    setUp(() {
+    setUp(() async {
       final auth = MockAuthService();
       final firestore = MockFirestoreService();
       viewModel = RoadmapViewModel(
         authService: auth,
         firestoreService: firestore,
       );
+      await viewModel.loadData();
+      addTearDown(auth.dispose);
+      addTearDown(viewModel.dispose);
     });
 
     test('Loads default semester 5 courses on initialization', () async {
-      await Future<void>.delayed(const Duration(milliseconds: 200));
-
       expect(viewModel.allCourses.isNotEmpty, isTrue);
       expect(viewModel.allCourses.any((c) => c.code == 'PRM323'), isTrue);
       expect(viewModel.allCourses.any((c) => c.code == 'SWP391'), isTrue);

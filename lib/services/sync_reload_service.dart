@@ -22,23 +22,22 @@ class SyncReloadService {
     required TasksViewModel tasks,
     required NotesViewModel notes,
   }) async {
-    final stores = <({String name, Future<void> Function() reload, AsyncViewState<dynamic> Function() state})>[
-      (
-        name: 'Roadmap',
-        reload: roadmap.loadData,
-        state: () => roadmap.state,
-      ),
-      (
-        name: 'Tasks',
-        reload: tasks.loadData,
-        state: () => tasks.state,
-      ),
-      (
-        name: 'Notes',
-        reload: notes.loadData,
-        state: () => notes.state,
-      ),
-    ];
+    final stores =
+        <
+          ({
+            String name,
+            Future<void> Function() reload,
+            AsyncViewState<dynamic> Function() state,
+          })
+        >[
+          (
+            name: 'Roadmap',
+            reload: roadmap.loadData,
+            state: () => roadmap.state,
+          ),
+          (name: 'Tasks', reload: tasks.loadData, state: () => tasks.state),
+          (name: 'Notes', reload: notes.loadData, state: () => notes.state),
+        ];
 
     await Future.wait(stores.map((store) => store.reload()));
 
@@ -47,6 +46,11 @@ class SyncReloadService {
       if (state.state == ViewState.error) {
         return SyncReloadResult.failure(
           '${store.name}: ${state.message ?? 'không thể tải dữ liệu.'}',
+        );
+      }
+      if (state.state == ViewState.loading) {
+        return SyncReloadResult.failure(
+          '${store.name}: dữ liệu đang tải lại. Vui lòng thử lại.',
         );
       }
     }

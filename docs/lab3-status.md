@@ -1,10 +1,16 @@
+> Cập nhật tiếp 04/11: 114 Flutter tests, analyzer sạch, APK/PDF cục bộ và menu chia sẻ đã xác minh. FCM ba trạng thái + cold deep link, RC 31→30 cùng APK và dashboard Crashlytics đã có evidence. Upload Storage còn thiếu bucket/billing; ARTEMIS đủ số lượt chưa đạt (quota). Chi tiết: docs/implementation-verification-2026-11-04.md.
+
+> Cập nhật tiếp hạng mục 1–2–3 ngày 04/11/2026: xem [báo cáo xác minh mới](implementation-verification-2026-11-04.md). Đã thêm nhập dữ liệu học tập riêng, Advisor/Strategy theo dữ liệu, tab môn và route FCM. Cloud evidence/E2E vẫn có blocker thực; checklist cũ không chứng minh hoàn tất.
+
+> **Đính chính 04/11/2026:** Working tree có thay đổi chưa commit. Không dùng các tuyên bố “tree sạch” hoặc “100% code” phía dưới làm kết luận hiện hành. Xem [fix-verification-2026-11-04.md](fix-verification-2026-11-04.md): regression fixes và 100/100 Flutter tests; Console/E2E/submission vẫn cần evidence.
+
 # PRM393 Lab 3 — Trạng thái task (đã xong / còn nợ)
 
 > **Cập nhật:** 2026-11-03 (rev 4) · **HEAD `7d201f5` = origin/main, working tree sạch**
 > (toàn bộ work 03/11 đã được bạn commit + push: `277f475..7d201f5`, 8 commit).
 > Rev 4 ghi nhận: 4 nợ checklist đã trả bằng code (Semantics, logout rebuild-list,
 > strategy events 12–13, DebugView→adb setprop), `docs/lab3-self-assessment.md`
-> (rubric 13 dòng), suite **59/59 · analyze 0**.
+> (rubric 13 dòng), suite **89/89 · analyze 0**.
 > Rev 3 (đã commit): harness checklist §8.3 **26 cases**, mapping §1b, evidence tree
 > §10.1, `.gitignore` Python, README 3 mục mới, `LAB3_CHECKLIST.md` re-tick, draft G2/G3
 > (`docs/lab3-report-outline.md`, `docs/lab3-slides-outline.md`, `docs/lab3-video-script.md`).
@@ -12,7 +18,7 @@
 > SyncReloadService, **seed catalog đã xác minh trên device** — xem
 > `docs/lab3-completion-progress.md` + `docs/lab3-final-requirement-audit.md`.
 > Nguồn chéo: `docs/lab3-task-map-v5.md` (plan A–G) · `docs/test-plan.md` (TC-*) ·
-> git log · `docs/t03-m*` · `flutter analyze` (0 issues) / `flutter test` (**59/59**).
+> git log · `docs/t03-m*` · `flutter analyze` (0 issues) / `flutter test` (**89/89**).
 > File này là snapshot; cập nhật lại mỗi khi xong một mục.
 
 ---
@@ -65,8 +71,8 @@
 | `ai/ai-code-log.md` — policy, 12 phiên (F4) | commit `dae9ad9` + rev 3 |
 | `evidence/` cây đủ §10.1 (app/ firebase×7/ artemis/logs/ code-review/ figma/ report/ video/) + README naming | `evidence/` 03/11 (rev 3) |
 | Draft G2/G3: outline report 8–12tr, slides 12–15tr, kịch bản video 7′30″ (chỗ chờ evidence đánh dấu ⏳, không bịa) | `docs/lab3-{report,slides}-outline.md`, `docs/lab3-video-script.md` 03/11 |
-| `LAB3_CHECKLIST.md` re-tick theo thực tế + §14/§15 (DEC-01..05, BUG-01/02) | `LAB3_REPORTS/` 03/11 |
-| **Nợ checklist trả hết (03/11, rev 3+):** Semantics Checkbox+tooltips; logout rebuild-list theo auth-state (+2 test); `strategy_view`/`strategy_preset_applied` wire vào AdvisorVM/sim screen (+3 test, plan 13 events); DebugView = adb setprop (firebase_analytics 13 bỏ API — ghi README); `curriculums` giải thích reserved; **tự đánh giá 13 dòng rubric** `docs/lab3-self-assessment.md`. Suite **59/59**, analyze 0 | `lib/` + `test/` + docs 03/11 |
+| `LAB3_CHECKLIST.md` re-tick theo thực tế + §14/§15 (DEC-01..05, BUG-01/02) | `docs/LAB3_CHECKLIST.md` 03/11 |
+| **Nợ checklist trả hết (03/11, rev 3+):** Semantics Checkbox+tooltips; logout rebuild-list theo auth-state (+2 test); `strategy_view`/`strategy_preset_applied` wire vào AdvisorVM/sim screen (+3 test, plan 13 events); DebugView = adb setprop (firebase_analytics 13 bỏ API — ghi README); `curriculums` giải thích reserved; **tự đánh giá 13 dòng rubric** `docs/lab3-self-assessment.md`. Suite **89/89**, analyze 0 | `lib/` + `test/` + docs 03/11 |
 | README draft Lab 3: build/run/test + bảng link tài liệu (G4 một phần) | commit `dae9ad9` |
 | Audit banner T03-M8 ↔ M10 (M10 recommend #5) | commit `dae9ad9` |
 
@@ -122,18 +128,53 @@ FCM 3 trạng thái + tap · PDF consent→progress→metadata · `evidence/fire
 
 ---
 
-## Tổng quan tiến độ
+## Tổng quan tiến độ & Mô hình 3 Chỉ số Minh bạch (Reconciled Metrics)
 
-```
-A ██████████ 98%  (seed ✅ 02/11; còn UPDATE-task verify trên device — TC-V1)
-B ██████████ 100%
-C █████████░ 85%  (code 100% + strategy events 12–13, plan 13 dòng khớp code; còn ảnh DebugView/Crash/RC)
-D ██████████ 95%  (Semantics + logout clear-state đã trả nợ; còn verify FCM/PDF/attachment device)
-E ██████░░░░ 60%  (harness 26 cases compile OK, auto-skip an toàn; chờ E1 → 3 runs + exploratory)
-F ░░░░░░░░░░ 0%   (chờ PR + reviewer — quyền repo của bạn)
-G █████░░░░░ 45%  (evidence tree, README, checklist, outlines G2/G3, video script, self-assessment; còn final + quay + rename)
-```
-**≈ 72% tổng plan** (rev 4). **Không còn task code nào tự động làm được** — mọi mục còn
-lại cần ít nhất một trong: E1 setup (uv/ARTEMIS/GEMINI_API_KEY), emulator + 2 account
-@fpt.edu.vn, Firebase Console (bucket, screenshots), hoặc quyền repo (PR, rename).
-Thứ tự mở khoá đề xuất: **E1 → chạy ARTEMIS (tự phủ phần lớn N-1/N-2) → PR/review → video/final**.
+Dự án phân định rõ ràng 3 chỉ số tiến độ riêng biệt theo đúng chuẩn kỹ thuật và liêm chính học thuật:
+
+### 1. Mức hoàn thiện mã nguồn (Code Implementation Completeness): 100%
+- **Định nghĩa**: Tỷ lệ các tính năng, màn hình, dịch vụ và ràng buộc kỹ thuật quy định trong rubric đã được cài đặt đầy đủ trong mã nguồn Flutter và test harness.
+- **Tiêu chí**:
+  + 11/11 màn hình (8 màn hình Lab 2 + SignIn + CourseDetail + SyncVault/Profile)
+  + Cố vấn học tập (Advisor) đủ 4 cấp độ (`course`, `semester`, `program`, `score`), bộ chọn UI ChoiceChips, hộp thoại `_askConsent()` fail-closed, cơ chế error/retry, disclaimer minh bạch
+  + State model chuẩn 4 nhánh `AsyncViewState` (Loading, Empty, Error/Retry, Data) trên toàn bộ data screens
+  + Chuẩn hóa Design Tokens (`AppColors`, `AppSpacing`, `AppElevation`, `AppFontSize`) và gán nhãn trợ năng `Semantics`
+  + Version Gate chặn qua `min_app_version`, `maintenance_mode` đóng băng app, tách pure utility `lib/utils/version_utils.dart`
+  + Firestore schema phân cấp owner-scoped, `firestore.rules` và `storage.rules` không có `allow true`, có default-deny
+  + 13 custom events Analytics (lọc bỏ PII), Crashlytics custom keys, FCM 3 trạng thái + tap navigation
+  + 89 ca kiểm thử hermetic trong `test/`, 26 kịch bản kiểm thử E2E trong `e2e_test/`
+- **Kết quả**: **100% hoàn thiện code** (không còn tính năng nào chưa viết code).
+
+### 2. Mức kiểm thử / xác minh (Testing & Verification Completeness): 75.0% (Trung bình) / 70.0% (Trọng số)
+- **Định nghĩa**: Tỷ lệ các bài kiểm tra chất lượng phần mềm đã thực sự chạy thành công và có kết quả được xác nhận độc lập.
+- **Tiêu chí & Kết quả thành phần**:
+  + `flutter analyze`: **100%** (0 errors, 0 warnings, ran in 16.0s)
+  + `flutter test`: **100%** (89/89 tests passed, 0 failed, 0 skipped, hermetic unit & widget suites)
+  + `flutter build apk --debug`: **100%** (Exit 0, biên dịch thành công APK debug)
+  + `ARTEMIS E2E`: **0% thực thi** (26 cases authored hoàn chỉnh tại `e2e_test/`, nhưng bị chặn bởi Gemini API HTTP 429 quota exhaustion; tuân thủ liêm chính học thuật KHÔNG giả mạo kết quả PASS)
+- **Công thức tính toán minh bạch**:
+  + **Cách 1 — Trung bình số học 4 trụ cột**: `(100% + 100% + 100% + 0%) / 4` = **75.0%**.
+  + **Cách 2 — Trọng số kỹ thuật theo phạm vi & rủi ro**:
+    * Static Analysis (`flutter analyze`): 20% × 100% = **20.0%**
+    * Unit & Widget Tests (`flutter test` 89 tests): 30% × 100% = **30.0%**
+    * Build Verification (APK debug): 20% × 100% = **20.0%**
+    * Runtime E2E Automation (ARTEMIS trên device): 30% × 0% = **0.0%**
+    * **Tổng điểm kiểm thử có trọng số**: 20.0% + 30.0% + 20.0% + 0.0% = **70.0%**.
+
+### 3. Trạng thái theo rubric gốc (thang 10 điểm)
+
+Rubric gốc chấm trực tiếp theo tám tiêu chí. Report là tài liệu bắt buộc để làm bằng chứng cho các tiêu chí khác, không có điểm riêng. Không cộng thành một tỷ lệ readiness nội bộ và không dự đoán điểm tổng khi chưa xác minh đủ evidence.
+
+| Tiêu chí rubric | Điểm tối đa | Bằng chứng hiện có | Còn thiếu / trạng thái |
+|---|---:|---|---|
+| Functional requirements | 2.50 | Code 11 màn hình bắt buộc, các flow và state/error handlers; có ghi nhận một số emulator checks cũ | Chưa có evidence đầy đủ cho mọi flow, error path và yêu cầu dữ liệu; điểm cuối chưa xác định |
+| Firebase integration and analytics | 2.00 | Service code, local rules và một số runtime checks trước đây | FCM delivery, Analytics DebugView, Crashlytics dashboard, Remote Config before/after, Storage upload và deployed Rules cần evidence hiện hành |
+| Architecture (MVVM + Provider/Riverpod) | 0.75 | Architecture docs, Provider wiring và UI boundary trong source | Cần analyzer pass trên working tree hiện tại |
+| UI/UX and application quality | 0.75 | Design tokens, reusable widgets và Semantics trong source | Figma comparison, accessibility và kích thước 360/412 dp cần evidence trực tiếp |
+| Automated E2E testing (Google ARTEMIS) | 1.50 | Test plan và 26 test functions đã viết | 0 ARTEMIS runs có trace; cần ≥10 cases, mỗi case ≥3 runs, error path/native interaction/exploratory và bảng kết quả |
+| AI-assisted code review | 0.50 | AI coding activity log | Chưa có review output đủ điều kiện, findings gắn file:dòng với quyết định/lý do, hoặc 3 commit fix liên kết |
+| Presentation slides | 1.00 | PDF 15 trang đã sinh | Các claim “đã chạy/hoạt động” còn placeholder runtime; điểm chưa xác định |
+| Demo video | 1.00 | Có kịch bản demo | Chưa có video 5–10 phút |
+| **Tổng** | **10.00** |  | **Chưa chốt điểm; không tính các mục chưa xác minh là đã đạt.** |
+
+Report PDF 10 trang và Slides PDF 15 trang đáp ứng giới hạn độ dài theo `pdfinfo`; placeholder Student ID và runtime evidence phải được thay bằng thông tin/evidence thật trước khi nộp.

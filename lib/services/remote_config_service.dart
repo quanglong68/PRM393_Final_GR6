@@ -2,42 +2,16 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
 
+import '../utils/version_utils.dart';
+
+// Re-exported so existing call sites keep importing one file (rubric §2 puts
+// pure helpers under `lib/utils/`).
+export '../utils/version_utils.dart' show compareVersions, isOutdatedVersion;
+
 /// Version of this build. Must match `version:` in `pubspec.yaml`; a test
 /// asserts that, so the forced-update gate cannot silently drift (no
 /// `package_info_plus` dependency is needed for one constant).
 const String kAppVersion = '1.0.0';
-
-/// Compares dotted numeric versions (`1.2.3`, optional `-tag` / `+build`).
-/// Missing segments count as 0, so `1.0` == `1.0.0`.
-int compareVersions(String a, String b) {
-  final left = _numericSegments(a);
-  final right = _numericSegments(b);
-  // Unparsable input yields 0 (equal) — see [isVersionBelowMinimum].
-  if (left == null || right == null) return 0;
-  for (var i = 0; i < 3; i++) {
-    final l = i < left.length ? left[i] : 0;
-    final r = i < right.length ? right[i] : 0;
-    if (l != r) return l.compareTo(r);
-  }
-  return 0;
-}
-
-/// True when [current] is older than [minimum]. Fails **open**: an empty or
-/// malformed `minimum` from Remote Config never locks users out of the app.
-bool isOutdatedVersion(String current, String minimum) =>
-    compareVersions(current, minimum) < 0;
-
-List<int>? _numericSegments(String raw) {
-  final core = raw.trim().split('+').first.split('-').first;
-  if (core.isEmpty) return null;
-  final parts = <int>[];
-  for (final segment in core.split('.')) {
-    final value = int.tryParse(segment.trim());
-    if (value == null) return null;
-    parts.add(value);
-  }
-  return parts;
-}
 
 /// Firebase Remote Config service.
 ///
@@ -50,18 +24,27 @@ List<int>? _numericSegments(String raw) {
 ///
 /// Defaults mirror `firebase/remote-config-defaults.json` (the committed,
 /// externalized copy required by audit M-09).
-class RemoteConfigService {
+class RemoteConfigService extends ChangeNotifier {
   /// [overrides] lets tests pose as a given Remote Config state without a
   /// Firebase app or a Console deploy (see `test/services/version_gate_test.dart`).
   RemoteConfigService({
     FirebaseRemoteConfig? remoteConfig,
     Map<String, dynamic>? overrides,
-  })  : _remoteConfig = remoteConfig ??
-            (Firebase.apps.isNotEmpty ? FirebaseRemoteConfig.instance : null),
-        _overrides = overrides ?? const {};
+  }) : _remoteConfig =
+           remoteConfig ??
+           (Firebase.apps.isNotEmpty ? FirebaseRemoteConfig.instance : null),
+       _overrides = overrides ?? const {};
 
   final FirebaseRemoteConfig? _remoteConfig;
   final Map<String, dynamic> _overrides;
+  String? lastFetchError;
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 
   /// Override → live Remote Config → committed default.
   T _value<T>(String key, T Function(FirebaseRemoteConfig) read) {
@@ -84,7 +67,9 @@ class RemoteConfigService {
   Future<void> initialize() async {
     final client = _remoteConfig;
     if (client == null) {
-      debugPrint('[RemoteConfig] No Firebase App initialized, using fallback defaults.');
+      debugPrint(
+        '[RemoteConfig] No Firebase App initialized, using fallback defaults.',
+      );
       return;
     }
 
@@ -108,13 +93,20 @@ class RemoteConfigService {
 
   Future<bool> fetchAndActivate() async {
     final client = _remoteConfig;
-    if (client == null) return false;
+    if (client == null) {
+      lastFetchError = 'Remote Config chưa được kết nối.';
+      return false;
+    }
 
     try {
       final updated = await client.fetchAndActivate();
+      lastFetchError = null;
+      if (!_disposed) notifyListeners();
       debugPrint('[RemoteConfig] fetchAndActivate: updated = $updated');
       return updated;
     } catch (e) {
+      lastFetchError = 'Không tải được cấu hình. Đang giữ giá trị hiện hành.';
+      if (!_disposed) notifyListeners();
       debugPrint('[RemoteConfig] fetchAndActivate error: $e');
       return false;
     }
@@ -125,7 +117,9 @@ class RemoteConfigService {
       _value('maintenance_mode', (c) => c.getBool('maintenance_mode'));
 
   bool get isAiAdvisorEnabled => _value(
-      'feature_ai_advisor_enabled', (c) => c.getBool('feature_ai_advisor_enabled'));
+    'feature_ai_advisor_enabled',
+    (c) => c.getBool('feature_ai_advisor_enabled'),
+  );
 
   String get minAppVersion =>
       _value('min_app_version', (c) => c.getString('min_app_version'));
@@ -135,5 +129,7 @@ class RemoteConfigService {
       isOutdatedVersion(kAppVersion, minAppVersion);
 
   int get vaultSyncIntervalMins => _value(
-      'vault_sync_interval_mins', (c) => c.getInt('vault_sync_interval_mins'));
+    'vault_sync_interval_mins',
+    (c) => c.getInt('vault_sync_interval_mins'),
+  );
 }

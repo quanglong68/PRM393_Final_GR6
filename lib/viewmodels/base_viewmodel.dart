@@ -9,6 +9,19 @@ import '../models/app_state.dart';
 class BaseViewModel<T> extends ChangeNotifier {
   AsyncViewState<T> _state = const AsyncViewState.loading();
   String? _lastError;
+  bool _disposed = false;
+  bool get isDisposed => _disposed;
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 
   AsyncViewState<T> get state => _state;
 

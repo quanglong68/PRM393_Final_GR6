@@ -12,10 +12,14 @@ abstract class FirestoreService {
   /// seeded demo data.
   Future<Map<String, dynamic>?> getUserProfile(String userId);
 
+  /// Merge user-entered transcript/timetable without replacing other profile fields.
+  Future<void> saveAcademicProfile(String userId, Map<String, dynamic> data);
+
   // ── Tasks ──
   Future<List<Map<String, dynamic>>> getTasks(String userId);
   Future<void> addTask(Map<String, dynamic> task);
   Future<void> updateTask(String taskId, Map<String, dynamic> data);
+
   /// Deletes [taskId] from [userId]'s subcollection. Fails if the item is
   /// missing or the remote write is rejected.
   Future<void> deleteTask(String userId, String taskId);
@@ -31,13 +35,15 @@ abstract class FirestoreService {
   // ── Report metadata (PDF export) ──
   /// Stores a generated study-report's metadata under
   /// `users/{userId}/sync/{reportId}` so exports are auditable.
-  Future<void> saveReportMetadata(
-      String userId, Map<String, dynamic> metadata);
+  Future<void> saveReportMetadata(String userId, Map<String, dynamic> metadata);
 
   // ── Notification Center ──
   Future<List<Map<String, dynamic>>> getNotifications(String userId);
-  Future<void> saveNotification(String userId, Map<String, dynamic> data,
-      {String? notificationId});
+  Future<void> saveNotification(
+    String userId,
+    Map<String, dynamic> data, {
+    String? notificationId,
+  });
   Future<void> markNotificationRead(String userId, String notificationId);
 
   // ── FCM device tokens ──

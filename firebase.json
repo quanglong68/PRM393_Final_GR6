@@ -4,5 +4,8 @@
   },
   "storage": {
     "rules": "firebase/storage.rules"
+  },
+  "remoteconfig": {
+    "template": "firebase/remote-config-template.json"
   }
 }

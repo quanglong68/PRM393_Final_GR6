@@ -1,0 +1,14 @@
+--------- beginning of crash
+E/AndroidRuntime(15799): FATAL EXCEPTION: main
+E/AndroidRuntime(15799): Process: com.example.prm323_lab3, PID: 15799
+E/AndroidRuntime(15799): io.flutter.plugins.firebase.crashlytics.FirebaseCrashlyticsTestCrash: This is a test crash caused by calling .crash() in Dart.
+E/AndroidRuntime(15799): 	at io.flutter.plugins.firebase.crashlytics.FlutterFirebaseCrashlyticsPlugin.crash$lambda$0(FlutterFirebaseCrashlyticsPlugin.kt:82)
+E/AndroidRuntime(15799): 	at io.flutter.plugins.firebase.crashlytics.FlutterFirebaseCrashlyticsPlugin$$ExternalSyntheticLambda12.run(D8$$SyntheticClass:0)
+E/AndroidRuntime(15799): 	at android.os.Handler.handleCallback(Handler.java:959)
+E/AndroidRuntime(15799): 	at android.os.Handler.dispatchMessage(Handler.java:100)
+E/AndroidRuntime(15799): 	at android.os.Looper.loopOnce(Looper.java:232)
+E/AndroidRuntime(15799): 	at android.os.Looper.loop(Looper.java:317)
+E/AndroidRuntime(15799): 	at android.app.ActivityThread.main(ActivityThread.java:8705)
+E/AndroidRuntime(15799): 	at java.lang.reflect.Method.invoke(Native Method)
+E/AndroidRuntime(15799): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+E/AndroidRuntime(15799): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:886)

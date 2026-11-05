@@ -122,7 +122,7 @@ class SignInScreen extends StatelessWidget {
                 Text(
                   'Bằng cách đăng nhập, bạn đồng ý với Điều khoản dịch vụ và Chính sách quyền riêng tư của FPTU Second Brain.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontSize: 12,
+                        fontSize: AppFontSize.label,
                         color: AppColors.onSurfaceVariant,
                       ),
                   textAlign: TextAlign.center,
@@ -151,7 +151,7 @@ class SignInScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.hairline),
                 Text(
                   subtitle,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(

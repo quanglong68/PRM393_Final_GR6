@@ -16,6 +16,7 @@ abstract final class AppColors {
   static const background = Color(0xFFF4F7FB);
   static const surface = Color(0xFFFFFFFF);
   static const onSurface = Color(0xFF17233B);
+  static const onPrimary = Color(0xFFFFFFFF);
   static const onSurfaceVariant = Color(0xFF526176);
   static const outline = Color(0xFFC8D2E0);
   static const skeleton = Color(0xFFE2E8F0);

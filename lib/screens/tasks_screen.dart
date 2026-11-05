@@ -17,11 +17,15 @@ class TasksScreen extends StatelessWidget {
   /// Add-or-edit bottom sheet. [existing] non-null switches to edit mode and
   /// pre-fills the current values (D3: task edit UI). No hardcoded persona
   /// defaults — an empty add sheet starts blank.
-  void _showTaskSheet(BuildContext context, TasksViewModel vm,
-      {TaskModel? existing}) {
+  void _showTaskSheet(
+    BuildContext context,
+    TasksViewModel vm, {
+    TaskModel? existing,
+  }) {
     final titleController = TextEditingController(text: existing?.title ?? '');
-    final courseController =
-        TextEditingController(text: existing?.courseCode ?? '');
+    final courseController = TextEditingController(
+      text: existing?.courseCode ?? '',
+    );
     final dateController = TextEditingController(text: existing?.dueDate ?? '');
     var priority = existing?.priority ?? 'medium';
 
@@ -43,8 +47,10 @@ class TasksScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(existing == null ? 'Thêm việc cần làm mới' : 'Sửa việc cần làm',
-                  style: Theme.of(ctx).textTheme.titleLarge),
+              Text(
+                existing == null ? 'Thêm việc cần làm mới' : 'Sửa việc cần làm',
+                style: Theme.of(ctx).textTheme.titleLarge,
+              ),
               const SizedBox(height: AppSpacing.md),
               AppTextField(
                 controller: titleController,
@@ -75,28 +81,24 @@ class TasksScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.sm),
               Row(
                 children: [
-                  Text('Độ ưu tiên',
-                      style: Theme.of(ctx).textTheme.bodyMedium),
+                  Text('Độ ưu tiên', style: Theme.of(ctx).textTheme.bodyMedium),
                   const SizedBox(width: AppSpacing.sm),
                   ChoiceChip(
                     label: const Text('Thấp'),
                     selected: priority == 'low',
-                    onSelected: (_) =>
-                        setSheetState(() => priority = 'low'),
+                    onSelected: (_) => setSheetState(() => priority = 'low'),
                   ),
                   const SizedBox(width: AppSpacing.xs),
                   ChoiceChip(
                     label: const Text('Trung bình'),
                     selected: priority == 'medium',
-                    onSelected: (_) =>
-                        setSheetState(() => priority = 'medium'),
+                    onSelected: (_) => setSheetState(() => priority = 'medium'),
                   ),
                   const SizedBox(width: AppSpacing.xs),
                   ChoiceChip(
                     label: const Text('Cao'),
                     selected: priority == 'high',
-                    onSelected: (_) =>
-                        setSheetState(() => priority = 'high'),
+                    onSelected: (_) => setSheetState(() => priority = 'high'),
                   ),
                 ],
               ),
@@ -122,16 +124,19 @@ class TasksScreen extends StatelessWidget {
                           courseCode: courseController.text.trim(),
                           dueDate: dateController.text.trim(),
                         );
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  if (!ok && ctx.mounted) {
+                  if (!ctx.mounted) return;
+                  if (!ok) {
                     ScaffoldMessenger.of(ctx).showSnackBar(
                       SnackBar(
                         content: Text(
-                            vm.lastError ?? 'Không thể lưu việc cần làm.'),
+                          vm.lastError ?? 'Không thể lưu việc cần làm.',
+                        ),
                         backgroundColor: AppColors.error,
                       ),
                     );
+                    return;
                   }
+                  Navigator.pop(ctx);
                 },
               ),
             ],
@@ -190,24 +195,29 @@ class TasksScreen extends StatelessWidget {
           // Task List Body
           Expanded(
             child: switch (state.state) {
-              ViewState.loading =>
-                  const AppLoadingState(message: 'Đang tải việc cần làm...'),
+              ViewState.loading => const AppLoadingState(
+                message: 'Đang tải việc cần làm...',
+              ),
               ViewState.error => AppErrorState(
-                  message: state.message ?? 'Lỗi tải dữ liệu',
-                  onRetry: () => tasksVm.loadData(),
-                ),
+                message: state.message ?? 'Lỗi tải dữ liệu',
+                onRetry: () => tasksVm.loadData(),
+              ),
               ViewState.empty => AppEmptyState(
-                  message: 'Không có việc cần làm nào.',
-                  actionLabel: 'Thêm công việc',
-                  onAction: () => _showTaskSheet(context, tasksVm),
-                ),
-              ViewState.data =>
-                  _buildTaskList(context, tasksVm, tasksVm.filteredTasks),
+                message: 'Không có việc cần làm nào.',
+                actionLabel: 'Thêm công việc',
+                onAction: () => _showTaskSheet(context, tasksVm),
+              ),
+              ViewState.data => _buildTaskList(
+                context,
+                tasksVm,
+                tasksVm.filteredTasks,
+              ),
             },
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'tasks-add',
         onPressed: () => _showTaskSheet(context, tasksVm),
         icon: const Icon(Icons.add),
         label: const Text('Thêm việc'),
@@ -217,6 +227,55 @@ class TasksScreen extends StatelessWidget {
 
   /// Runs the delete and, if the remote write failed, reports it. The
   /// ViewModel restores the item so the list never shows a silent success.
+  Future<void> _toggleWithUndo(
+    BuildContext context,
+    TasksViewModel vm,
+    TaskModel task,
+  ) async {
+    final uid = vm.currentUserId;
+    final ok = await vm.setTaskCompletion(task.id, !task.isCompleted);
+    if (!context.mounted || uid != vm.currentUserId) return;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    if (!ok) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(vm.lastError ?? 'Không thể cập nhật việc cần làm.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          task.isCompleted
+              ? 'Đã chuyển về chưa xong.'
+              : 'Đã hoàn thành công việc.',
+        ),
+        duration: const Duration(seconds: 8),
+        action: SnackBarAction(
+          label: 'Hoàn tác',
+          onPressed: () async {
+            if (uid != vm.currentUserId) return;
+            final restored = await vm.setTaskCompletion(
+              task.id,
+              task.isCompleted,
+            );
+            if (!restored && context.mounted && uid == vm.currentUserId) {
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(vm.lastError ?? 'Không thể hoàn tác.'),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+          },
+        ),
+      ),
+    );
+  }
+
   Future<void> _deleteTaskWithFeedback(
     BuildContext context,
     TasksViewModel vm,
@@ -262,13 +321,11 @@ class TasksScreen extends StatelessWidget {
               alignment: Alignment.centerRight,
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               color: AppColors.errorContainer,
-              child:
-                  const Icon(Icons.delete_outline, color: AppColors.error),
+              child: const Icon(Icons.delete_outline, color: AppColors.error),
             ),
-            onDismissed: (_) =>
-                _deleteTaskWithFeedback(context, vm, task.id),
+            onDismissed: (_) => _deleteTaskWithFeedback(context, vm, task.id),
             child: AppCard(
-              onTap: () => vm.toggleTask(task.id),
+              onTap: () => _showTaskSheet(context, vm, existing: task),
               child: ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: Semantics(
@@ -276,7 +333,7 @@ class TasksScreen extends StatelessWidget {
                   label: 'Hoàn thành: ${task.title}',
                   child: Checkbox(
                     value: task.isCompleted,
-                    onChanged: (_) => vm.toggleTask(task.id),
+                    onChanged: (_) => _toggleWithUndo(context, vm, task),
                   ),
                 ),
                 title: Text(
@@ -295,7 +352,9 @@ class TasksScreen extends StatelessWidget {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 1),
+                        horizontal: 6,
+                        vertical: 1,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primaryContainer,
                         borderRadius: BorderRadius.circular(AppRadius.xs),
@@ -304,7 +363,7 @@ class TasksScreen extends StatelessWidget {
                         task.courseCode,
                         style: const TextStyle(
                           color: AppColors.onPrimaryContainer,
-                          fontSize: 11,
+                          fontSize: AppFontSize.caption,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -313,7 +372,7 @@ class TasksScreen extends StatelessWidget {
                     Text(
                       'Hạn: ${task.dueDate}',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: AppFontSize.label,
                         color: isHigh && !task.isCompleted
                             ? AppColors.error
                             : AppColors.onSurfaceVariant,
@@ -325,8 +384,11 @@ class TasksScreen extends StatelessWidget {
                   ],
                 ),
                 trailing: PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert,
-                      size: 20, color: AppColors.onSurfaceVariant),
+                  icon: const Icon(
+                    Icons.more_vert,
+                    size: 20,
+                    color: AppColors.onSurfaceVariant,
+                  ),
                   onSelected: (value) {
                     if (value == 'edit') {
                       _showTaskSheet(context, vm, existing: task);
@@ -349,10 +411,14 @@ class TasksScreen extends StatelessWidget {
                       child: ListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,
-                        leading: Icon(Icons.delete_outline,
-                            color: AppColors.error),
-                        title:
-                            Text('Xóa', style: TextStyle(color: AppColors.error)),
+                        leading: Icon(
+                          Icons.delete_outline,
+                          color: AppColors.error,
+                        ),
+                        title: Text(
+                          'Xóa',
+                          style: TextStyle(color: AppColors.error),
+                        ),
                       ),
                     ),
                   ],

@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../viewmodels/advisor_viewmodel.dart';
+import '../viewmodels/academic_viewmodel.dart';
+import '../models/app_state.dart';
+import '../widgets/app_states.dart';
 import '../widgets/app_components.dart';
 
 class StrategySimScreen extends StatelessWidget {
@@ -11,141 +14,159 @@ class StrategySimScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final advisorVm = context.watch<AdvisorViewModel>();
-
-    final semGpa = advisorVm.predictedSemesterGpa;
-    final isHonors = advisorVm.reachesHonorsTarget;
-
+    final vm = context.watch<AcademicViewModel>();
+    final advisor = context.read<AdvisorViewModel>();
     return Scaffold(
       appBar: CustomAppBar(
         title: 'Mô phỏng Chiến lược & GPA',
         onBack: () => Navigator.pop(context),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        children: [
-          // Target Status Card
-          AppCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      body: switch (vm.state.state) {
+        ViewState.loading => const AppLoadingState(
+          message: 'Đang tải dữ liệu học tập...',
+        ),
+        ViewState.error => AppErrorState(
+          message: vm.state.message ?? 'Không tải được dữ liệu.',
+          onRetry: vm.loadData,
+        ),
+        ViewState.empty => const AppEmptyState(
+          message: 'Đăng nhập để lập kế hoạch.',
+        ),
+        ViewState.data => ListView(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          children: [
+            const AppCard(
+              child: Text(
+                'Dữ liệu môn từ danh mục Firebase; bảng điểm/lịch học do bạn nhập. Các điểm dự kiến bên dưới chỉ là kịch bản, không ghi đè bảng điểm.',
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            OutlinedButton.icon(
+              onPressed: () =>
+                  Navigator.pushNamed(context, '/academic-profile'),
+              icon: const Icon(Icons.edit_note),
+              label: const Text('Nhập bảng điểm & lịch học'),
+            ),
+            if (vm.profile.transcript.isEmpty)
+              const AppEmptyState(
+                message: 'Chưa có bảng điểm thật. Nhập dữ liệu để tính GPA tích lũy và xem môn học lại.',
+              ),
+            if (vm.profile.timetable.isEmpty)
+              const Text(
+                'Chưa có thời khóa biểu: chưa thể kết luận kế hoạch không trùng lịch.',
+              ),
+            const SizedBox(height: AppSpacing.md),
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Mục tiêu học tập (kịch bản mô phỏng)', style: Theme.of(context).textTheme.titleLarge),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.xs,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isHonors ? AppColors.successContainer : AppColors.warningContainer,
-                        borderRadius: BorderRadius.circular(AppRadius.xs),
-                      ),
-                      child: Text(
-                        isHonors ? 'Đạt loại Giỏi 🎉' : 'Chưa đạt mục tiêu',
-                        style: TextStyle(
-                          color: isHonors ? AppColors.success : AppColors.warning,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ],
+                _buildMetricTile(
+                  context,
+                  title: 'GPA bảng điểm hiện hành',
+                  value:
+                      vm.profile.cumulativeGpa?.toStringAsFixed(2) ?? 'Chưa có',
+                  subtitle: 'Từ kết quả hiện hành do bạn nhập',
+                  color: AppColors.primary,
                 ),
-                const SizedBox(height: AppSpacing.md),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildMetricTile(
-                        context,
-                        title: 'GPA kỳ 5 (kịch bản)',
-                        value: semGpa.toStringAsFixed(2),
-                        subtitle: '11 tín chỉ · Mốc Giỏi: ≥ 8.00',
-                        color: isHonors ? AppColors.success : AppColors.warning,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  isHonors
-                      ? '✓ Kịch bản này đạt ngưỡng 8.0 — đủ điều kiện điểm cho danh hiệu Sinh viên Giỏi.'
-                      : '⚠️ Kịch bản này dưới ngưỡng 8.0. Tăng điểm môn SWP391 (5 tín chỉ trọng số cao) sẽ kéo GPA kỳ lên mạnh nhất.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: isHonors ? AppColors.success : AppColors.warning,
-                  ),
+                _buildMetricTile(
+                  context,
+                  title: 'GPA kỳ dự kiến',
+                  value: vm.plannedGpa?.toStringAsFixed(2) ?? 'Chưa đặt',
+                  subtitle: '${vm.plannedCredits} tín chỉ đã chọn',
+                  color: AppColors.primary,
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-
-          Text('Điều chỉnh điểm số dự kiến kỳ 5', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: AppSpacing.sm),
-
-          // Course 1: PRM323
-          _buildScoreSlider(
-            context,
-            code: 'PRM323',
-            name: 'Lập trình Di động Flutter (3 TC)',
-            value: advisorVm.prmScore,
-            onChanged: (val) => advisorVm.updateSimulation(prm: val),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-
-          // Course 2: SWP391
-          _buildScoreSlider(
-            context,
-            code: 'SWP391',
-            name: 'Dự án Phát triển PM (5 TC - Quan trọng nhất)',
-            value: advisorVm.swpScore,
-            isImportant: true,
-            onChanged: (val) => advisorVm.updateSimulation(swp: val),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-
-          // Course 3: SWR302
-          _buildScoreSlider(
-            context,
-            code: 'SWR302',
-            name: 'Kỹ thuật Yêu cầu PM (3 TC)',
-            value: advisorVm.swrScore,
-            onChanged: (val) => advisorVm.updateSimulation(swr: val),
-          ),
-
-          const SizedBox(height: AppSpacing.lg),
-
-          // Presets buttons
-          Text('Kịch bản mẫu nhanh', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: AppSpacing.xs),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    advisorVm.applyPreset(
-                        preset: 'gioi_8_5', prm: 8.5, swp: 8.5, swr: 8.5);
-                  },
-                  child: const Text('Kịch bản Giỏi (8.5)'),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Mục tiêu cá nhân: ${vm.profile.targetGpa.toStringAsFixed(2)}. Đây không phải kết luận về danh hiệu học tập.',
+            ),
+            if (vm.semesters.isNotEmpty)
+              Wrap(
+                spacing: AppSpacing.xs,
+                children: [
+                  for (final semester in vm.semesters)
+                    ChoiceChip(
+                      label: Text('Kỳ $semester'),
+                      selected: vm.selectedSemester == semester,
+                      onSelected: (_) => vm.selectSemester(semester),
+                    ),
+                ],
+              ),
+            const SizedBox(height: AppSpacing.sm),
+            if (vm.semesterCourses.isEmpty)
+              const AppEmptyState(message: 'Danh mục chưa có môn cho kỳ này.'),
+            for (final course in vm.semesterCourses) ...[
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${course.code} · ${course.name} · ${course.credits} tín chỉ',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    Text(
+                      vm.isRetake(course)
+                          ? 'Học lại: bảng điểm đánh dấu chưa qua.'
+                          : 'Môn trong danh mục.',
+                    ),
+                    if (vm.missingPrerequisites(course).isNotEmpty)
+                      Text(
+                        'Chưa xác nhận tiên quyết: ${vm.missingPrerequisites(course).join(', ')}',
+                      ),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text('Đưa ${course.code} vào kế hoạch'),
+                      value: vm.plannedGrade(course.code) != null,
+                      onChanged: (value) {
+                        vm.setPlannedGrade(
+                          course.code,
+                          value == true ? 5 : null,
+                        );
+                        advisor.applyPreset(preset: 'course_selection');
+                      },
+                    ),
+                    if (vm.plannedGrade(course.code) != null)
+                      _buildScoreSlider(
+                        context,
+                        code: course.code,
+                        name: 'Điểm dự kiến ${course.code}',
+                        value: vm.plannedGrade(course.code)!,
+                        onChanged: (value) =>
+                            vm.setPlannedGrade(course.code, value),
+                      ),
+                  ],
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    advisorVm.applyPreset(
-                        preset: 'dot_pha', prm: 9.0, swp: 8.5, swr: 8.0);
-                  },
-                  child: const Text('Kịch bản Đột phá'),
-                ),
-              ),
+              const SizedBox(height: AppSpacing.sm),
             ],
-          ),
-        ],
-      ),
+            Text(
+              'Đối chiếu thời khóa biểu',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            if (vm.profile.timetable.isEmpty)
+              const Text('Chưa có lịch học để kiểm tra.')
+            else if (vm.plannedCourses.isEmpty)
+              const Text('Chọn môn để kiểm tra trùng slot.')
+            else if (vm.conflicts.isEmpty)
+              const Text(
+                'Không thấy trùng slot trong lịch đã nhập. Những môn chưa có lịch vẫn cần kiểm tra.',
+              )
+            else
+              ...vm.conflicts.map(
+                (conflict) => Text(
+                  'Trùng lịch: $conflict',
+                  style: const TextStyle(color: AppColors.error),
+                ),
+              ),
+            const SizedBox(height: AppSpacing.sm),
+            for (final entry in vm.profile.timetable)
+              Text(
+                '${entry.courseCode}: ${entry.weekday == 7 ? 'Chủ nhật' : 'Thứ ${entry.weekday + 1}'}, slot ${entry.startSlot}–${entry.endSlot}',
+              ),
+          ],
+        ),
+      },
     );
   }
 
@@ -155,31 +176,36 @@ class StrategySimScreen extends StatelessWidget {
     required String value,
     required String subtitle,
     required Color color,
-  }) =>
-      Container(
-        padding: const EdgeInsets.all(AppSpacing.sm),
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(color: AppColors.outline),
+  }) => Container(
+    padding: const EdgeInsets.all(AppSpacing.sm),
+    decoration: BoxDecoration(
+      color: AppColors.background,
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      border: Border.all(color: AppColors.outline),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: Theme.of(context).textTheme.bodyMedium),
+        const SizedBox(height: AppSpacing.hairline),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: AppFontSize.displayLarge,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: Theme.of(context).textTheme.bodyMedium),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: color,
-              ),
-            ),
-            Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.onSurfaceVariant)),
-          ],
+        Text(
+          subtitle,
+          style: const TextStyle(
+            fontSize: AppFontSize.caption,
+            color: AppColors.onSurfaceVariant,
+          ),
         ),
-      );
+      ],
+    ),
+  );
 
   Widget _buildScoreSlider(
     BuildContext context, {
@@ -188,42 +214,41 @@ class StrategySimScreen extends StatelessWidget {
     required double value,
     required ValueChanged<double> onChanged,
     bool isImportant = false,
-  }) =>
-      AppCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  }) => AppCard(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    name,
-                    style: TextStyle(
-                      fontWeight: isImportant ? FontWeight.w700 : FontWeight.w600,
-                      color: isImportant ? AppColors.primary : AppColors.onSurface,
-                    ),
-                  ),
+            Expanded(
+              child: Text(
+                name,
+                style: TextStyle(
+                  fontWeight: isImportant ? FontWeight.w700 : FontWeight.w600,
+                  color: isImportant ? AppColors.primary : AppColors.onSurface,
                 ),
-                Text(
-                  value.toStringAsFixed(1),
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: isImportant ? AppColors.primary : AppColors.onSurface,
-                  ),
-                ),
-              ],
+              ),
             ),
-            Slider(
-              value: value,
-              min: 5.0,
-              max: 10.0,
-              divisions: 50,
-              label: value.toStringAsFixed(1),
-              onChanged: onChanged,
+            Text(
+              value.toStringAsFixed(1),
+              style: TextStyle(
+                fontSize: AppFontSize.displaySmall,
+                fontWeight: FontWeight.w700,
+                color: isImportant ? AppColors.primary : AppColors.onSurface,
+              ),
             ),
           ],
         ),
-      );
+        Slider(
+          value: value,
+          min: 0.0,
+          max: 10.0,
+          divisions: 100,
+          label: value.toStringAsFixed(1),
+          onChanged: onChanged,
+        ),
+      ],
+    ),
+  );
 }

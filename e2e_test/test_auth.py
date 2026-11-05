@@ -1,53 +1,34 @@
-"""TC-01 Sign-In native, TC-02 Auth routing, TC-12 Logout (checklist §8.2)."""
-
+"""Verified Lab 3 cases; observations asserted from TaskResult.output JSON."""
 import pytest
-
 from conftest import APP_PACKAGE, require_artemis, skip_without_adb
-
+from observations import equals, contains_text
 pytestmark = [skip_without_adb, pytest.mark.e2e]
 
 
 @require_artemis
-async def test_TC_01_google_signin_native(artemis, device_state, logcat, evidence_shot):
-    """Tương tác Android gốc: picker Google hệ thống + account @fpt.edu.vn (S-10)."""
-    device_state("shell", "am", "force-stop", APP_PACKAGE)
-    logcat.start("TC-01")
-    result = await artemis.run(
-        f"Mở app {APP_PACKAGE}. Nếu thấy nút 'Đăng nhập với Google': chạm, "
-        "chọn tài khoản @fpt.edu.vn trong picker hệ thống, chờ về Home. "
-        "Nếu đang sẵn Home thì đăng xuất rồi đăng nhập lại. "
-        "Trả về tên hiển thị trên Home sau khi sign-in."
+async def test_TC_01_google_signin_native(artemis, auth_account):
+    observed = await artemis.run(
+        'From Home sign out and sign in through the native Google picker using the configured dedicated @fpt.edu.vn account already on this device. Do not enter credentials. End at Home and report the actual tab labels and whether the account picker was shown.',
+        {'picker_seen': 'boolean', 'tabs': 'array of literal tab labels'},
     )
-    log_text = logcat.stop_and_text()
-    assert result.succeeded, f"ARTEMIS fail: {result.error or result.status}"
-    assert "invalid-domain" not in log_text, "Account test không phải @fpt.edu.vn — sửa .env TEST_ACCOUNT_EMAIL"
-    assert "Sign-In succeeded" in log_text, f"Không thấy log sign-in thành công:\n{log_text[-600:]}"
-    evidence_shot("TC-01")
-
+    equals(observed, 'picker_seen', True)
+    assert set(['Trang chủ','Lộ trình','Việc cần làm','Ghi chú']).issubset(set(observed['tabs']))
 
 @require_artemis
-async def test_TC_02_auth_routing(device_state, artemis, evidence_shot):
-    """Chưa đăng nhập → Sign-in screen; có phiên → Home (routing đúng, không crash)."""
-    device_state("shell", "pm", "clear", "notifications", APP_PACKAGE)
-    result = await artemis.run(
-        f"Mở app {APP_PACKAGE} (cold start). Mô tả màn hình đầu tiên thấy: "
-        "'Đăng nhập với Google' (chưa phiên) hay 'Chào ...' Home (đã phiên)."
+async def test_TC_02_auth_routing(artemis):
+    observed = await artemis.run(
+        'Cold-start the app without clearing data. Report whether the actual screen is signed_in or signed_out and the actual primary action. Do not change authentication.',
+        {'auth_state': 'signed_in or signed_out'},
     )
-    assert result.succeeded, f"ARTEMIS fail: {result.error or result.status}"
-    answer = str(getattr(result, "answer", "") or "")
-    assert ("Đăng nhập" in answer) or ("Chào" in answer), (
-        f"Màn đầu không thuộc 2 nhánh routing hợp lệ: {answer}"
-    )
-    evidence_shot("TC-02")
-
+    assert observed['auth_state'] in {'signed_in','signed_out'}
+    assert any(text in observed['visible_text'] for text in ['Chào','Đăng nhập với Google'])
 
 @require_artemis
-async def test_TC_12_logout_clears_state(artemis, evidence_shot):
-    """Đăng xuất → về Sign-in; đăng nhập lại dữ liệu user còn nguyên (Firestore, không local cache giả)."""
-    result = await artemis.run(
-        f"Trong app {APP_PACKAGE} đang đăng nhập: tìm nút 'Đăng xuất' (Home/Settings), xác nhận, "
-        "chờ về màn 'Đăng nhập với Google'. Sau đó đăng nhập lại bằng account @fpt.edu.vn, "
-        "mở tab 'Việc cần làm' và xác nhận task 'E2E-F2' (nếu từng tạo) vẫn còn."
+async def test_TC_12_logout_clears_state(artemis, auth_account):
+    observed = await artemis.run(
+        'Starting signed in, sign out and verify the Google sign-in button and absence of private note/task content. Then restore the same dedicated test account through the native picker and end on Home. Do not rely on a task from any previous case.',
+        {'signed_out_button': 'literal intermediate sign-in button', 'private_content_after_logout': 'boolean', 'restored_home': 'boolean'},
     )
-    assert result.succeeded, f"ARTEMIS fail: {result.error or result.status}"
-    evidence_shot("TC-12")
+    equals(observed,'signed_out_button','Đăng nhập với Google')
+    equals(observed,'private_content_after_logout',False)
+    equals(observed,'restored_home',True)

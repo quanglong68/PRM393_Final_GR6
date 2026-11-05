@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-04",
+  "plugin": "Firebase 1.2.0",
+  "cli_version": "15.34.2",
+  "npm_cache_repaired": true,
+  "cli_session_revoked_and_reauthenticated": true,
+  "project": "prm323-lab2-gr6",
+  "project_read": "success ACTIVE",
+  "remote_config_template": "denied / CLI failed to get template",
+  "crashlytics_top_issues": "HTTP 403 caller does not have permission",
+  "storage_probe": "HTTP 404 object/bucket not found; read-only nonexistent object probe cannot distinguish object absence from bucket absence",
+  "iam_policy_read": "permission denied",
+  "note": "Plugin installation does not change Google Cloud IAM roles. No billing/IAM/rules/Remote Config deployment changed."
+}

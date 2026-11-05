@@ -2,6 +2,11 @@ import 'package:prm323_lab3/services/firestore_service.dart';
 
 /// In-memory Mock implementation of [FirestoreService] for testing.
 class MockFirestoreService implements FirestoreService {
+  @override
+  Future<void> saveAcademicProfile(
+    String userId,
+    Map<String, dynamic> data,
+  ) async {}
   final List<Map<String, dynamic>> _courses = [
     {
       'id': 'PRM323',
@@ -49,23 +54,21 @@ class MockFirestoreService implements FirestoreService {
       List.from(_courses);
 
   @override
-  Future<Map<String, dynamic>?> getCourse(String courseId) async =>
-      _courses.cast<Map<String, dynamic>?>().firstWhere(
-            (c) => c?['id'] == courseId,
-            orElse: () => null,
-          );
+  Future<Map<String, dynamic>?> getCourse(String courseId) async => _courses
+      .cast<Map<String, dynamic>?>()
+      .firstWhere((c) => c?['id'] == courseId, orElse: () => null);
 
   @override
   Future<Map<String, dynamic>?> getUserProfile(String userId) async => {
-        'passedCourses': [
-          'PRO192',
-          'CSD201',
-          'MAD101',
-          'OSG202',
-          'NWC203c',
-          'SSG104',
-        ],
-      };
+    'passedCourses': [
+      'PRO192',
+      'CSD201',
+      'MAD101',
+      'OSG202',
+      'NWC203c',
+      'SSG104',
+    ],
+  };
 
   @override
   Future<List<Map<String, dynamic>>> getTasks(String userId) async =>
@@ -73,7 +76,10 @@ class MockFirestoreService implements FirestoreService {
 
   @override
   Future<void> addTask(Map<String, dynamic> task) async {
-    _tasks.add({'id': 'task_${DateTime.now().millisecondsSinceEpoch}', ...task});
+    _tasks.add({
+      'id': 'task_${DateTime.now().millisecondsSinceEpoch}',
+      ...task,
+    });
   }
 
   @override
@@ -113,19 +119,26 @@ class MockFirestoreService implements FirestoreService {
 
   @override
   Future<void> saveReportMetadata(
-      String userId, Map<String, dynamic> metadata) async {}
+    String userId,
+    Map<String, dynamic> metadata,
+  ) async {}
 
   @override
   Future<List<Map<String, dynamic>>> getNotifications(String userId) async =>
       const [];
 
   @override
-  Future<void> saveNotification(String userId, Map<String, dynamic> data,
-      {String? notificationId}) async {}
+  Future<void> saveNotification(
+    String userId,
+    Map<String, dynamic> data, {
+    String? notificationId,
+  }) async {}
 
   @override
   Future<void> markNotificationRead(
-      String userId, String notificationId) async {}
+    String userId,
+    String notificationId,
+  ) async {}
 
   @override
   Future<void> registerToken(String userId, String token) async {}

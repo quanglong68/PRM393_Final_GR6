@@ -4,6 +4,7 @@ import '../models/course_model.dart';
 import '../models/note_model.dart';
 import '../models/task_model.dart';
 import 'analytics_service.dart';
+import 'crashlytics_service.dart';
 import 'firestore_service.dart';
 import 'report_pdf_service.dart';
 import 'storage_service.dart';
@@ -34,15 +35,42 @@ class ReportExportService {
     required StorageService storageService,
     required FirestoreService firestoreService,
     required AnalyticsService analyticsService,
-  })  : _pdf = pdfService ?? ReportPdfService(),
-        _storage = storageService,
-        _firestore = firestoreService,
-        _analytics = analyticsService;
+    CrashlyticsService? crashlyticsService,
+    this.storageProvider = 'Firebase Cloud Storage',
+  }) : _pdf = pdfService ?? ReportPdfService(),
+       _storage = storageService,
+       _firestore = firestoreService,
+       _analytics = analyticsService,
+       _crashlytics = crashlyticsService;
 
+  final String storageProvider;
   final ReportPdfService _pdf;
   final StorageService _storage;
   final FirestoreService _firestore;
   final AnalyticsService _analytics;
+  final CrashlyticsService? _crashlytics;
+
+  Future<Uint8List> downloadStudyReport(String path) async =>
+      Uint8List.fromList(await _storage.downloadFile(path));
+
+  /// Builds a real PDF without contacting Storage or creating cloud metadata.
+  Future<Uint8List> generateLocalStudyReport({
+    required String userId,
+    required List<CourseModel> courses,
+    required List<TaskModel> tasks,
+    required List<NoteModel> notes,
+    DateTime? generatedAt,
+  }) async => Uint8List.fromList(
+    await _pdf.buildStudyReport(
+      generatedAt: generatedAt ?? DateTime.now(),
+      courses: courses,
+      tasks: tasks,
+      notes: notes,
+      uidHint: userId.length > 8
+          ? '…${userId.substring(userId.length - 8)}'
+          : userId,
+    ),
+  );
 
   /// Generates and uploads the report. [onProgress] receives 0.0–1.0.
   ///
@@ -57,18 +85,17 @@ class ReportExportService {
     DateTime? generatedAt,
   }) async {
     final startedAt = DateTime.now();
-    final timestamp = startedAt;
+    final timestamp = generatedAt ?? startedAt;
     final fileName = 'study_report_${timestamp.millisecondsSinceEpoch}.pdf';
     final path = 'reports/$userId/$fileName';
 
     try {
-      final bytes = await _pdf.buildStudyReport(
+      final bytes = await generateLocalStudyReport(
+        userId: userId,
         generatedAt: timestamp,
         courses: courses,
         tasks: tasks,
         notes: notes,
-        // Short opaque hint only — no email/name in the document body.
-        uidHint: userId.length > 8 ? '…${userId.substring(userId.length - 8)}' : userId,
       );
 
       final downloadUrl = await _storage.uploadFile(
@@ -81,6 +108,7 @@ class ReportExportService {
       await _firestore.saveReportMetadata(userId, {
         'fileName': fileName,
         'storagePath': path,
+        'storageProvider': storageProvider,
         'downloadUrl': downloadUrl,
         'sizeBytes': bytes.length,
         'generatedAt': timestamp.toIso8601String(),
@@ -102,7 +130,16 @@ class ReportExportService {
         downloadUrl: downloadUrl,
         pdfBytes: Uint8List.fromList(bytes),
       );
-    } catch (e) {
+    } catch (e, stack) {
+      try {
+        await _crashlytics?.recordError(
+          StateError("Study report export failed (${e.runtimeType})"),
+          stack,
+          reason: "report_export",
+        );
+      } catch (_) {
+        // Preserve the export failure even when diagnostics are unavailable.
+      }
       await _analytics.logExportReport(
         status: 'failed',
         fileSizeKb: 0,

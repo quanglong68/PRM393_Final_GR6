@@ -1,0 +1,6 @@
+{
+  "test": "FCM foreground; most recently registered token after emulator reinstall",
+  "at": "2026-11-04T12:04:11.303676+00:00",
+  "http": 403,
+  "error": "Permission 'cloudmessaging.messages.create' denied on resource '//cloudresourcemanager.googleapis.com/projects/prm323-lab2-gr6' (or it may not exist). Remediate access with this Troubleshooter URL or share it with your administrator - https://console.cloud.google.com/iam-admin/troubleshooter/summary;errorId=CiQwMWExYTY3Mi0wNTU0LTcyYWYtOTQzOC1mMGNlNDRlYjVlMmMSGHByb2plY3RzL3BybTMyMy1sYWIyLWdyNg%3D%3D ."
+}

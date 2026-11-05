@@ -5,7 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
-import '../firebase_options.dart';
+import '../firebase/firebase_options.dart';
 import 'firebase_firestore_service.dart';
 import 'messaging_service.dart';
 
@@ -22,17 +22,19 @@ Future<void> _persistBackgroundMessage(RemoteMessage message) async {
   if (uid == null || uid.isEmpty) return;
 
   final notificationId = _notificationIdFor(message);
-  await FirebaseFirestoreService().saveNotification(
-    uid,
-    {
-      'title': message.notification?.title ?? message.data['title'] ?? '',
-      'body': message.notification?.body ?? message.data['body'] ?? '',
-      'type': message.data['type'] ?? 'system',
-      'read': false,
-      'route': message.data['route'],
-    },
-    notificationId: notificationId,
-  );
+  await FirebaseFirestoreService().saveNotification(uid, {
+    'title': message.notification?.title ?? message.data['title'] ?? '',
+    'body': message.notification?.body ?? message.data['body'] ?? '',
+    'type': message.data['type'] ?? 'system',
+    'read': false,
+    'route': message.data['route'],
+    'routeArgument':
+        message.data['routeArgument'] ??
+        message.data['courseId'] ??
+        message.data['course_id'] ??
+        message.data['noteId'] ??
+        message.data['note_id'],
+  }, notificationId: notificationId);
 }
 
 /// Top-level background/terminated handler. Must be a top-level (or static)
@@ -58,11 +60,11 @@ Future<void> fcmBackgroundHandler(RemoteMessage message) async {
 /// Normalizes a [RemoteMessage] into the plain-map contract of
 /// [MessagingService] so callers never depend on firebase types.
 Map<String, dynamic> _payloadOf(RemoteMessage message) => {
-      'title': message.notification?.title ?? '',
-      'body': message.notification?.body ?? '',
-      'data': message.data,
-      'notificationId': _notificationIdFor(message),
-    };
+  'title': message.notification?.title ?? message.data['title'] ?? '',
+  'body': message.notification?.body ?? message.data['body'] ?? '',
+  'data': message.data,
+  'notificationId': _notificationIdFor(message),
+};
 
 /// Firebase Cloud Messaging implementation of [MessagingService].
 ///
@@ -71,11 +73,12 @@ Map<String, dynamic> _payloadOf(RemoteMessage message) => {
 /// tests inject a fake instead (no mock fallbacks inside the message path).
 class FirebaseMessagingService implements MessagingService {
   FirebaseMessagingService({FirebaseMessaging? messaging})
-      : _messaging = messaging ?? FirebaseMessaging.instance;
+    : _messaging = messaging ?? FirebaseMessaging.instance;
 
   final FirebaseMessaging _messaging;
 
-  final _foregroundController = StreamController<Map<String, dynamic>>.broadcast();
+  final _foregroundController =
+      StreamController<Map<String, dynamic>>.broadcast();
   final _tapController = StreamController<Map<String, dynamic>>.broadcast();
   final _tokenController = StreamController<String>.broadcast();
 
@@ -137,7 +140,9 @@ class FirebaseMessagingService implements MessagingService {
       _foregroundController.add(_payloadOf(message));
     });
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      debugPrint('[FCM] Notification tapped (background): ${message.messageId}');
+      debugPrint(
+        '[FCM] Notification tapped (background): ${message.messageId}',
+      );
       _tapController.add(_payloadOf(message));
     });
     // ignore: deprecated_member_use

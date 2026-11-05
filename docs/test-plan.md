@@ -6,9 +6,9 @@ Updated: 2026-11-03. This document separates Flutter automated tests, emulator o
 
 | Check | Last observed result | Notes |
 |---|---|---|
-| `flutter analyze` | PASS, 0 issues (2026-11-02) | Source/static analysis only |
-| `flutter test` | PASS, 68 tests (2026-11-04) | Hermetic unit/widget tests; not ARTEMIS E2E runs |
-| `flutter build apk --debug` | PASS (2026-11-02) | Used ignored, out-of-band `android/app/google-services.json` |
+| `flutter analyze` | PASS, 0 issues (2026-11-04) | Source/static analysis only |
+| `flutter test` | PASS, 89 tests (2026-11-04) | Hermetic unit/widget tests; not ARTEMIS E2E runs |
+| `flutter build apk --debug` | PASS (2026-11-04) | Built build\app\outputs\flutter-apk\app-debug.apk |
 
 Automated coverage includes UID propagation, task/note write rollback and persistence calls, NoteModel Firestore Timestamp parsing, manual sync outcomes, analytics wiring, report export service, and FCM token/notification logic. These tests do not prove Firebase Console delivery or deployed Rules behavior.
 

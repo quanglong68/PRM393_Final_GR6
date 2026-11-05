@@ -23,18 +23,25 @@ abstract class AnalyticsService {
   Future<void> logLoginSuccess({required String method}) =>
       logEvent('login_success', parameters: {'method': method});
 
+  Future<void> logLogout() => logEvent('logout');
+
   /// Event 2: Course detail opened (fires once per open, not per rebuild)
-  Future<void> logCourseView({required String courseId, required String code}) =>
-      logEvent('course_view',
-          parameters: {'course_id': courseId, 'code': code});
+  Future<void> logCourseView({
+    required String courseId,
+    required String code,
+  }) => logEvent(
+    'course_view',
+    parameters: {'course_id': courseId, 'code': code},
+  );
 
   /// Event 3: Prerequisite check (fires on explicit check, not from build)
   Future<void> logPrerequisiteCheck({
     required String courseId,
     required bool isEligible,
-  }) =>
-      logEvent('prerequisite_check',
-          parameters: {'course_id': courseId, 'is_eligible': isEligible ? 1 : 0});
+  }) => logEvent(
+    'prerequisite_check',
+    parameters: {'course_id': courseId, 'is_eligible': isEligible ? 1 : 0},
+  );
 
   /// Event 4: Curriculum search (fires once per committed query)
   Future<void> logSearchCourse({required String query}) =>
@@ -66,21 +73,24 @@ abstract class AnalyticsService {
     required String status,
     required int fileSizeKb,
     required int durationMs,
-  }) =>
-      logEvent('export_report', parameters: {
-        'status': status,
-        'file_size_kb': fileSizeKb,
-        'duration_ms': durationMs,
-      });
+  }) => logEvent(
+    'export_report',
+    parameters: {
+      'status': status,
+      'file_size_kb': fileSizeKb,
+      'duration_ms': durationMs,
+    },
+  );
 
   /// Event 11: Push notification handled (Lab 3 T12).
   /// [action] is 'foreground' | 'tap'; carries no message contents (PII rule).
   Future<void> logNotificationReceived({
     required String type,
     required String action,
-  }) =>
-      logEvent('notification_received',
-          parameters: {'type': type, 'action': action});
+  }) => logEvent(
+    'notification_received',
+    parameters: {'type': type, 'action': action},
+  );
 
   /// Event 12: Strategy Simulator opened (guide v5 §6.4 "xem strategy").
   /// [source] is 'advisor' (entry via GPA button) or 'direct'.

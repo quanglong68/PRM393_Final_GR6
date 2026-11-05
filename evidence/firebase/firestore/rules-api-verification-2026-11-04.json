@@ -1,0 +1,9 @@
+[
+  {
+    "release": "projects/prm323-lab2-gr6/releases/cloud.firestore",
+    "file": "firebase/firestore.rules",
+    "localMatch": false,
+    "remoteCharacters": 2230,
+    "codeMatchIgnoringComments": true
+  }
+]

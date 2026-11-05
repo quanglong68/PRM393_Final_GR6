@@ -77,7 +77,7 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       ChoiceChip(
-                        label: const Text('Kỳ 5 (Hiện tại)'),
+                        label: const Text('Kỳ 5 (Đang xem)'),
                         selected: roadmapVm.selectedSemester == 5,
                         onSelected: (selected) {
                           if (selected) roadmapVm.selectSemester(5);
@@ -102,23 +102,29 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
           // Body Content based on ViewState
           Expanded(
             child: switch (state.state) {
-              ViewState.loading => const AppLoadingState(message: 'Đang tải danh sách môn học...'),
+              ViewState.loading => const AppLoadingState(
+                message: 'Đang tải danh sách môn học...',
+              ),
               ViewState.error => AppErrorState(
-                  message: state.message ?? 'Đã có lỗi xảy ra',
-                  onRetry: () => roadmapVm.loadData(),
-                ),
+                message: state.message ?? 'Đã có lỗi xảy ra',
+                onRetry: () => roadmapVm.loadData(),
+              ),
               ViewState.empty => AppEmptyState(
-                  message: 'Không tìm thấy môn học nào phù hợp với bộ lọc.',
-                  actionLabel: 'Xóa bộ lọc',
-                  onAction: () {
-                    _searchController.clear();
-                    roadmapVm.setSearchQuery('');
-                    if (roadmapVm.filterPrerequisitesOnly) {
-                      roadmapVm.togglePrerequisiteFilter();
-                    }
-                  },
-                ),
-              ViewState.data => _buildCourseList(context, roadmapVm, state.data ?? []),
+                message: 'Không tìm thấy môn học nào phù hợp với bộ lọc.',
+                actionLabel: 'Xóa bộ lọc',
+                onAction: () {
+                  _searchController.clear();
+                  roadmapVm.setSearchQuery('');
+                  if (roadmapVm.filterPrerequisitesOnly) {
+                    roadmapVm.togglePrerequisiteFilter();
+                  }
+                },
+              ),
+              ViewState.data => _buildCourseList(
+                context,
+                roadmapVm,
+                state.data ?? [],
+              ),
             },
           ),
         ],
@@ -178,7 +184,7 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
                         style: const TextStyle(
                           color: AppColors.onPrimaryContainer,
                           fontWeight: FontWeight.w700,
-                          fontSize: 12,
+                          fontSize: AppFontSize.label,
                         ),
                       ),
                     ),
@@ -189,15 +195,19 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
-                    const Icon(Icons.chevron_right, color: AppColors.onSurfaceVariant),
+                    const Icon(
+                      Icons.chevron_right,
+                      color: AppColors.onSurfaceVariant,
+                    ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  '${course.credits} tín chỉ · Slot ${course.completedSlots}/${course.totalSlots} (${(course.progress * 100).toInt()}%)',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.onSurfaceVariant,
-                      ),
+                  course.totalSlots > 0
+                      ? '${course.credits} tín chỉ · Slot ${course.completedSlots}/${course.totalSlots} (${(course.progress * 100).toInt()}%)'
+                      : '${course.credits} tín chỉ · Chưa có dữ liệu slot',
+                  style: Theme.of(context).textTheme.bodyMedium
+                      ?.copyWith(color: AppColors.onSurfaceVariant),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 // Progress bar
@@ -208,7 +218,9 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
                     minHeight: 6,
                     backgroundColor: AppColors.skeleton,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      course.progress >= 1.0 ? AppColors.success : AppColors.primary,
+                      course.progress >= 1.0
+                          ? AppColors.success
+                          : AppColors.primary,
                     ),
                   ),
                 ),
@@ -219,19 +231,25 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
                   Row(
                     children: [
                       Icon(
-                        isEligible ? Icons.check_circle_outline : Icons.warning_amber_rounded,
+                        isEligible
+                            ? Icons.check_circle_outline
+                            : Icons.warning_amber_rounded,
                         size: 16,
-                        color: isEligible ? AppColors.success : AppColors.warning,
+                        color: isEligible
+                            ? AppColors.success
+                            : AppColors.warning,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSpacing.xxs),
                       Expanded(
                         child: Text(
                           isEligible
                               ? 'Đủ điều kiện tiên quyết (${course.prerequisites.join(', ')})'
                               : 'Chưa đủ điều kiện: Cần học trước ${missing.join(', ')}',
                           style: TextStyle(
-                            fontSize: 12,
-                            color: isEligible ? AppColors.success : AppColors.warning,
+                            fontSize: AppFontSize.label,
+                            color: isEligible
+                                ? AppColors.success
+                                : AppColors.warning,
                             fontWeight: FontWeight.w500,
                           ),
                         ),

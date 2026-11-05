@@ -1,0 +1,11 @@
+{
+  "case": "test_TC_11_remote_config_values_visible[run1]",
+  "trace_id": "bcfd68cb-c26d-497d-be9b-9e05b2e95eba",
+  "device": "emulator-5554",
+  "started_at": "2026-11-04T12:46:50.798298+00:00",
+  "instruction": "From Home open Sync Vault, read Firebase Remote Config card. Report exact maintenance_mode boolean, min_app_version string and AI feature flag. Do not infer from defaults and do not claim Console before/after verification.",
+  "status": "failed",
+  "error": null,
+  "output": null,
+  "duration_seconds": 161.377
+}

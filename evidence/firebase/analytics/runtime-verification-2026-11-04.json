@@ -1,0 +1,20 @@
+{
+  "device": "emulator-5554",
+  "avd": "Pixel_7_API_35_Google_Play",
+  "debug_mode_enabled": true,
+  "debugview_device": "sdk_gphone64_x86_64",
+  "custom_events_verified_in_console": [
+    "export_report_local"
+  ],
+  "console_parameter_verified": {
+    "course_count": 4
+  },
+  "native_event_parameters": {
+    "file_size_kb": 21,
+    "course_count": 4,
+    "task_count": 0,
+    "note_count": 0
+  },
+  "native_http_response": 204,
+  "all_planned_events_verified": false
+}

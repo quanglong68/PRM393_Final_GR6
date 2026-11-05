@@ -1,12 +1,44 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:prm323_lab3/viewmodels/advisor_viewmodel.dart';
+import 'package:prm323_lab3/viewmodels/academic_viewmodel.dart';
+
+import '../helpers/fake_firestore_service.dart';
+import '../helpers/mock_auth_service.dart';
 
 void main() {
   group('AdvisorViewModel & GPA Strategy Simulator Tests', () {
     late AdvisorViewModel viewModel;
 
-    setUp(() {
-      viewModel = AdvisorViewModel();
+    setUp(() async {
+      final auth = MockAuthService(initialUserId: 'test-owner');
+      final store = FakeFirestoreService()
+        ..courses.addAll([
+          {
+            'id': 'SWP391',
+            'code': 'SWP391',
+            'name': 'Test project',
+            'credits': 5,
+            'semester': 5,
+            'major': 'SE',
+          },
+          {
+            'id': 'PRM323',
+            'code': 'PRM323',
+            'name': 'Test mobile',
+            'credits': 3,
+            'semester': 5,
+            'major': 'SE',
+          },
+        ]);
+      final academic = AcademicViewModel(
+        authService: auth,
+        firestoreService: store,
+      );
+      await academic.loadData();
+      viewModel = AdvisorViewModel(academicViewModel: academic);
+      addTearDown(auth.dispose);
+      addTearDown(academic.dispose);
+      addTearDown(viewModel.dispose);
     });
 
     test('Initializes with default Semester 5 assumptions', () {
@@ -45,6 +77,7 @@ void main() {
     });
 
     test('Generates specialized advice for SWP391 keyword queries', () async {
+      viewModel.grantConsent();
       await viewModel.askQuestion('Chiến lược học môn SWP391 thế nào?');
 
       expect(viewModel.messages.length, greaterThanOrEqualTo(2));
@@ -53,6 +86,55 @@ void main() {
       expect(lastMsg.text, contains('SWP391'));
       // 5 credits — highest weight in Semester 5; strategy copy mentions it.
       expect(lastMsg.text, contains('tín chỉ'));
+    });
+
+    test('Exposes the four rubric §6.4 consultation levels', () {
+      expect(
+        AdvisorLevel.values.map((l) => l.id),
+        containsAll(<String>['course', 'semester', 'program', 'score']),
+      );
+      expect(AdvisorLevel.fromId('score'), AdvisorLevel.score);
+      // Unknown/missing slug falls back to course rather than throwing.
+      expect(AdvisorLevel.fromId('nope'), AdvisorLevel.course);
+      expect(AdvisorLevel.fromId(null), AdvisorLevel.course);
+    });
+
+    test('Each level produces a distinct answer', () async {
+      viewModel.grantConsent();
+      final answers = <String>{};
+      for (final level in AdvisorLevel.values) {
+        await viewModel.askQuestion('Tư vấn cho tôi', level: level);
+        answers.add(viewModel.messages.last.text);
+        expect(viewModel.messages.last.level, level);
+      }
+      expect(answers.length, AdvisorLevel.values.length);
+    });
+
+    test(
+      'Without consent no question is sent and no bubble is added',
+      () async {
+        final before = viewModel.messages.length;
+        await viewModel.askQuestion('Chiến lược SWP391?');
+        expect(viewModel.messages.length, before);
+        expect(viewModel.hasConsent, isFalse);
+        expect(viewModel.isLoading, isFalse);
+      },
+    );
+
+    test('grantConsent unlocks asking and is idempotent', () async {
+      viewModel.grantConsent();
+      viewModel.grantConsent();
+      expect(viewModel.hasConsent, isTrue);
+      await viewModel.askQuestion('Chiến lược SWP391?');
+      expect(viewModel.messages.last.sender, 'ai');
+    });
+
+    test('selectLevel drives the default level of the next question', () async {
+      viewModel.grantConsent();
+      viewModel.selectLevel(AdvisorLevel.score);
+      await viewModel.askQuestion('GPA của tôi?');
+      expect(viewModel.messages.last.level, AdvisorLevel.score);
+      expect(viewModel.selectedLevel, AdvisorLevel.score);
     });
   });
 }

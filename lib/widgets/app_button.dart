@@ -32,13 +32,18 @@ class AppButton extends StatelessWidget {
     } else {
       button = FilledButton(
         onPressed: isLoading ? null : onPressed,
-        child: isLoading
-            ? const _ButtonSpinner()
-            : Text(label),
+        child: isLoading ? const _ButtonSpinner() : Text(label),
       );
     }
 
-    return isExpanded ? SizedBox(width: double.infinity, child: button) : button;
+    return Semantics(
+      button: true,
+      enabled: !isLoading && onPressed != null,
+      label: label,
+      child: isExpanded
+          ? SizedBox(width: double.infinity, child: button)
+          : button,
+    );
   }
 }
 
@@ -68,13 +73,17 @@ class AppOutlinedButton extends StatelessWidget {
         label: Text(label),
       );
     } else {
-      button = OutlinedButton(
-        onPressed: onPressed,
-        child: Text(label),
-      );
+      button = OutlinedButton(onPressed: onPressed, child: Text(label));
     }
 
-    return isExpanded ? SizedBox(width: double.infinity, child: button) : button;
+    return Semantics(
+      button: true,
+      enabled: onPressed != null,
+      label: label,
+      child: isExpanded
+          ? SizedBox(width: double.infinity, child: button)
+          : button,
+    );
   }
 }
 
@@ -83,8 +92,8 @@ class _ButtonSpinner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const SizedBox(
-        width: AppSpacing.lg,
-        height: AppSpacing.lg,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      );
+    width: AppSpacing.lg,
+    height: AppSpacing.lg,
+    child: CircularProgressIndicator(strokeWidth: 2),
+  );
 }

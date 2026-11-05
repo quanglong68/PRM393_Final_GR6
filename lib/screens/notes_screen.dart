@@ -53,22 +53,29 @@ class _NotesScreenState extends State<NotesScreen> {
           // Content
           Expanded(
             child: switch (state.state) {
-              ViewState.loading => const AppLoadingState(message: 'Đang tải ghi chú...'),
+              ViewState.loading => const AppLoadingState(
+                message: 'Đang tải ghi chú...',
+              ),
               ViewState.error => AppErrorState(
-                  message: state.message ?? 'Lỗi tải ghi chú',
-                  onRetry: () => notesVm.loadData(),
-                ),
+                message: state.message ?? 'Lỗi tải ghi chú',
+                onRetry: () => notesVm.loadData(),
+              ),
               ViewState.empty => AppEmptyState(
-                  message: 'Chưa có ghi chú nào trong Vault.',
-                  actionLabel: 'Tạo ghi chú đầu tiên',
-                  onAction: () => Navigator.pushNamed(context, '/note-editor'),
-                ),
-              ViewState.data => _buildNoteList(context, notesVm, notesVm.filteredNotes),
+                message: 'Chưa có ghi chú nào trong Vault.',
+                actionLabel: 'Tạo ghi chú đầu tiên',
+                onAction: () => Navigator.pushNamed(context, '/note-editor'),
+              ),
+              ViewState.data => _buildNoteList(
+                context,
+                notesVm,
+                notesVm.filteredNotes,
+              ),
             },
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'notes-add',
         onPressed: () => Navigator.pushNamed(context, '/note-editor'),
         icon: const Icon(Icons.add),
         label: const Text('Tạo ghi chú'),
@@ -141,7 +148,10 @@ class _NotesScreenState extends State<NotesScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.micro,
+                          vertical: AppSpacing.hairline,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primaryContainer,
                           borderRadius: BorderRadius.circular(AppRadius.xs),
@@ -151,7 +161,7 @@ class _NotesScreenState extends State<NotesScreen> {
                           style: const TextStyle(
                             color: AppColors.onPrimaryContainer,
                             fontWeight: FontWeight.w600,
-                            fontSize: 11,
+                            fontSize: AppFontSize.caption,
                           ),
                         ),
                       ),
@@ -163,9 +173,14 @@ class _NotesScreenState extends State<NotesScreen> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete_outline, size: 20, color: AppColors.onSurfaceVariant),
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          size: 20,
+                          color: AppColors.onSurfaceVariant,
+                        ),
                         tooltip: 'Xóa ghi chú',
-                        onPressed: () => _deleteNoteWithFeedback(context, vm, note.id),
+                        onPressed: () =>
+                            _deleteNoteWithFeedback(context, vm, note.id),
                       ),
                     ],
                   ),
@@ -174,9 +189,8 @@ class _NotesScreenState extends State<NotesScreen> {
                     note.content,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.onSurfaceVariant,
-                        ),
+                    style: Theme.of(context).textTheme.bodyMedium
+                        ?.copyWith(color: AppColors.onSurfaceVariant),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Row(
@@ -185,7 +199,7 @@ class _NotesScreenState extends State<NotesScreen> {
                       Text(
                         note.updatedAt,
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: AppFontSize.label,
                           color: AppColors.onSurfaceVariant,
                         ),
                       ),
@@ -193,11 +207,13 @@ class _NotesScreenState extends State<NotesScreen> {
                         Row(
                           children: note.tags.map((tag) {
                             return Padding(
-                              padding: const EdgeInsets.only(left: 4),
+                              padding: const EdgeInsets.only(
+                                left: AppSpacing.xxs,
+                              ),
                               child: Text(
                                 '#$tag',
                                 style: const TextStyle(
-                                  fontSize: 11,
+                                  fontSize: AppFontSize.caption,
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.w500,
                                 ),

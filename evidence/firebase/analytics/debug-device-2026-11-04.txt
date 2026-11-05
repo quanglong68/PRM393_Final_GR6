@@ -1,0 +1,16 @@
+I/FA      ( 8424): Faster debug mode event logging enabled. To disable, run:
+D/FA      ( 8424): Debug-level message logging enabled
+V/FA-SVC  ( 1021): Uploading data. app, uncompressed size, data: com.example.prm323_lab3, 7373, 
+V/FA-SVC  ( 1021): Successful upload. Got network response. code, size: 204, 0
+V/FA-SVC  ( 1021): Uploading data. app, uncompressed size, data: com.example.prm323_lab3, 1428, 
+V/FA-SVC  ( 1021): Successful upload. Got network response. code, size: 204, 0
+V/FA-SVC  ( 1021): Uploading data. app, uncompressed size, data: com.example.prm323_lab3, 744, 
+V/FA-SVC  ( 1021): Successful upload. Got network response. code, size: 204, 0
+V/FA-SVC  ( 1021): Logging event: origin=app,name=export_report_local,params=Bundle[{file_size_kb=21, note_count=0, ga_event_origin(_o)=app, ga_screen_class(_sc)=MainActivity, ga_screen_id(_si)=5285875997592538792, ga_screen(_sn)=/sync-vault, task_count=0, course_count=4}]
+V/FA-SVC  ( 1021): Uploading data. app, uncompressed size, data: com.example.prm323_lab3, 765, 
+V/FA-SVC  ( 1021):       name: export_report_local
+V/FA-SVC  ( 1021): Successful upload. Got network response. code, size: 204, 0
+V/FA-SVC  ( 1021): Uploading data. app, uncompressed size, data: com.example.prm323_lab3, 696, 
+V/FA-SVC  ( 1021): Successful upload. Got network response. code, size: 204, 0
+V/FA-SVC  ( 1021): Uploading data. app, uncompressed size, data: com.example.prm323_lab3, 725, 
+V/FA-SVC  ( 1021): Successful upload. Got network response. code, size: 204, 0

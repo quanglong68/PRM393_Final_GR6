@@ -16,6 +16,18 @@ class AdvisorScreen extends StatefulWidget {
 class _AdvisorScreenState extends State<AdvisorScreen> {
   final _inputController = TextEditingController();
   final _scrollController = ScrollController();
+  bool _contextLoaded = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_contextLoaded) return;
+    _contextLoaded = true;
+    final course = ModalRoute.of(context)?.settings.arguments;
+    if (course is String && course.isNotEmpty) {
+      _inputController.text = 'Tư vấn môn $course';
+    }
+  }
 
   @override
   void dispose() {
@@ -24,19 +36,58 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
     super.dispose();
   }
 
-  void _sendMessage(AdvisorViewModel vm, String text) {
-    if (text.trim().isEmpty) return;
-    vm.askQuestion(text.trim());
-    _inputController.clear();
+  /// Share consent (rubric §6.4): shown before the first question. Returns
+  /// false when the user declines — the question is then not sent at all.
+  Future<bool> _askConsent() async {
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Chia sẻ dữ liệu hỏi đáp'),
+        content: const Text(
+          'Câu hỏi của bạn và cấp tư vấn đang chọn (môn học / kỳ học / '
+          'chương trình / điểm số) sẽ được dùng để tạo câu trả lời và ghi một '
+          'sự kiện ẩn danh vào Firebase Analytics.\n\n'
+          'Không gửi: tên, email, mã số sinh viên, bảng điểm thật hay nội dung '
+          'ghi chú cá nhân. Câu trả lời hiện được tổng hợp từ bộ quy tắc học vụ '
+          'trong app, không phải từ mô hình AI trực tuyến.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Không gửi'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Đồng ý và gửi'),
+          ),
+        ],
+      ),
+    );
+    return accepted ?? false;
+  }
 
+  Future<void> _sendMessage(AdvisorViewModel vm, String text) async {
+    if (text.trim().isEmpty) return;
+
+    if (!vm.hasConsent) {
+      final ok = await _askConsent();
+      if (!ok) return;
+      vm.grantConsent();
+    }
+
+    vm.askQuestion(text.trim(), level: vm.selectedLevel);
+    _inputController.clear();
+    _scrollToEnd();
+  }
+
+  void _scrollToEnd() {
     Future.delayed(const Duration(milliseconds: 100), () {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
+      if (!mounted || !_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
     });
   }
 
@@ -46,9 +97,14 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
 
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'AI Academic Advisor',
+        title: 'Cố vấn học tập',
         onBack: () => Navigator.pop(context),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_note),
+            tooltip: 'Dữ liệu học tập',
+            onPressed: () => Navigator.pushNamed(context, '/academic-profile'),
+          ),
           IconButton(
             icon: const Icon(Icons.calculate_outlined),
             tooltip: 'Mô phỏng GPA',
@@ -66,7 +122,11 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.construction_outlined, size: 64, color: AppColors.warning),
+                    const Icon(
+                      Icons.construction_outlined,
+                      size: 64,
+                      color: AppColors.warning,
+                    ),
                     const SizedBox(height: AppSpacing.md),
                     Text(
                       'Tính năng đang bảo trì',
@@ -74,7 +134,7 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     const Text(
-                      'Tính năng Cố vấn học tập AI tạm thời ngừng phục vụ theo cấu hình từ xa (Firebase Remote Config).',
+                      'Tính năng Cố vấn học tập tạm thời ngừng phục vụ theo cấu hình từ xa (Firebase Remote Config).',
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: AppSpacing.lg),
@@ -97,23 +157,55 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.auto_awesome, size: 18, color: AppColors.primary),
+                      const Icon(
+                        Icons.auto_awesome,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
                       const SizedBox(width: AppSpacing.xs),
                       const Expanded(
                         child: Text(
                           'Mốc Sinh viên Giỏi: GPA tích lũy ≥ 8.0',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: AppFontSize.label,
                             fontWeight: FontWeight.w600,
                             color: AppColors.onPrimaryContainer,
                           ),
                         ),
                       ),
                       TextButton(
-                        onPressed: () => Navigator.pushNamed(context, '/strategy-sim'),
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/strategy-sim'),
                         child: const Text('Mô phỏng →'),
                       ),
                     ],
+                  ),
+                ),
+
+                // Consultation level selector (rubric §6.4 — 4 levels)
+                Semantics(
+                  label: 'Chọn cấp tư vấn',
+                  container: true,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.xs,
+                    ),
+                    child: Wrap(
+                      spacing: AppSpacing.xs,
+                      runSpacing: AppSpacing.xxs,
+                      children: [
+                        for (final level in AdvisorLevel.values)
+                          ChoiceChip(
+                            label: Text(level.label),
+                            selected: advisorVm.selectedLevel == level,
+                            onSelected: advisorVm.isLoading
+                                ? null
+                                : (_) => advisorVm.selectLevel(level),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
 
@@ -130,8 +222,9 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                         child: Row(
-                          mainAxisAlignment:
-                              isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+                          mainAxisAlignment: isUser
+                              ? MainAxisAlignment.end
+                              : MainAxisAlignment.start,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             if (!isUser) ...[
@@ -153,8 +246,12 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(AppSpacing.md),
                                 decoration: BoxDecoration(
-                                  color: isUser ? AppColors.primary : AppColors.surface,
-                                  borderRadius: BorderRadius.circular(AppRadius.md),
+                                  color: isUser
+                                      ? AppColors.primary
+                                      : AppColors.surface,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
                                   border: isUser
                                       ? null
                                       : Border.all(color: AppColors.outline),
@@ -162,7 +259,9 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
                                 child: Text(
                                   msg.text,
                                   style: TextStyle(
-                                    color: isUser ? Colors.white : AppColors.onSurface,
+                                    color: isUser
+                                        ? AppColors.onPrimary
+                                        : AppColors.onSurface,
                                     height: 1.4,
                                   ),
                                 ),
@@ -178,7 +277,7 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
                 // Loading Indicator if AI is thinking
                 if (advisorVm.isLoading)
                   const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 4),
+                    padding: EdgeInsets.symmetric(vertical: AppSpacing.xxs),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -188,7 +287,10 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                         SizedBox(width: AppSpacing.sm),
-                        Text('AI đang suy nghĩ...', style: TextStyle(fontSize: 12)),
+                        Text(
+                          'Đang tổng hợp câu trả lời...',
+                          style: TextStyle(fontSize: AppFontSize.label),
+                        ),
                       ],
                     ),
                   ),
@@ -198,17 +300,24 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
                 if (advisorVm.errorMessage != null && !advisorVm.isLoading)
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.xs,
+                    ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline,
-                            size: 18, color: AppColors.error),
+                        const Icon(
+                          Icons.error_outline,
+                          size: 18,
+                          color: AppColors.error,
+                        ),
                         const SizedBox(width: AppSpacing.xs),
                         Expanded(
                           child: Text(
                             advisorVm.errorMessage!,
                             style: const TextStyle(
-                                fontSize: 12, color: AppColors.error),
+                              fontSize: AppFontSize.label,
+                              color: AppColors.error,
+                            ),
                           ),
                         ),
                         TextButton.icon(
@@ -223,26 +332,34 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
                 // Quick Prompt Chips
                 Container(
                   color: AppColors.background,
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: 4,
+                  ),
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
                         ActionChip(
                           label: const Text('Chiến lược SWP391?'),
-                          onPressed: () => _sendMessage(advisorVm, 'Chiến lược SWP391?'),
+                          onPressed: () =>
+                              _sendMessage(advisorVm, 'Chiến lược SWP391?'),
                         ),
                         const SizedBox(width: AppSpacing.xs),
                         ActionChip(
                           label: const Text('Duy trì điểm cao PRM323?'),
-                          onPressed: () =>
-                              _sendMessage(advisorVm, 'Duy trì điểm cao PRM323?'),
+                          onPressed: () => _sendMessage(
+                            advisorVm,
+                            'Duy trì điểm cao PRM323?',
+                          ),
                         ),
                         const SizedBox(width: AppSpacing.xs),
                         ActionChip(
                           label: const Text('Mục tiêu GPA Giỏi?'),
-                          onPressed: () =>
-                              _sendMessage(advisorVm, 'Làm sao để đạt GPA Giỏi (>= 8.0)?'),
+                          onPressed: () => _sendMessage(
+                            advisorVm,
+                            'Làm sao để đạt GPA Giỏi (>= 8.0)?',
+                          ),
                         ),
                       ],
                     ),
@@ -262,7 +379,7 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
                         child: TextField(
                           controller: _inputController,
                           decoration: const InputDecoration(
-                            hintText: 'Hỏi AI Advisor bất kỳ điều gì về kỳ 5...',
+                            hintText: 'Hỏi về dữ liệu học tập của bạn...',
                             isDense: true,
                           ),
                           onSubmitted: (val) => _sendMessage(advisorVm, val),
@@ -272,7 +389,8 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
                       IconButton.filled(
                         icon: const Icon(Icons.send_rounded),
                         tooltip: 'Gửi câu hỏi',
-                        onPressed: () => _sendMessage(advisorVm, _inputController.text),
+                        onPressed: () =>
+                            _sendMessage(advisorVm, _inputController.text),
                       ),
                     ],
                   ),

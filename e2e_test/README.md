@@ -1,56 +1,45 @@
-# e2e_test — ARTEMIS E2E harness (PRM393 Lab 3, Phase E)
+# ARTEMIS E2E — cập nhật 04/11/2026
 
-Driver: [google/artemis](https://github.com/google/artemis) qua `artemis-client`
-(SDK Python), thiết bị Android/AVD điều khiển bằng ADB. 16 ca test ánh xạ
-`docs/test-plan.md` (TC-F1/F2/F3, TC-V1/V5, TC-S, exploratory).
+SDK được pin tại commit `351ca8422f7b5b54e80a9c1ce03a222e02415b6b`; host đang cài ở `C:/Users/duong/tools/artemis`.
+Có 26 ca: 25 regression × 3 lượt và 1 exploratory = 76 mục thu thập. Collection không phải kết quả chạy thiết bị.
 
-## Setup một lần (E1 — cần bạn làm)
+## Chạy trên Windows
 
-```powershell
-# 1. Cài uv (guide tr.2 yêu cầu): 
-powershell -c "irm https://astral.sh/uv/install.ps1|iex"
-
-# 2.Clone + chạy ARTEMIS host (server device automation, model API đa phương thức):
-git clone https://github.com/google/artemis.git
-cd artemis
-./start.sh            # tự cài ADB/scrcpy/ffmpeg + bật http://localhost:8000
-
-# 3. Bản này:
-cd ..\prm323-lab2-gr6\e2e_test
-copy .env.example .env    # điền GEMINI_API_KEY, DEVICE_SERIAL, TEST_ACCOUNT_EMAIL
-uv sync
-
-# 4. Bật emulator (Pixel AVD, đã add account @fpt.edu.vn + phụ) và cài debug APK:
-cd .. && flutter run -d emulator-5554   # hoặc flutter install APK debug đã build
-```
-
-> **ADB path:** harness mặc định `~/AppData/Local/Android/Sdk/platform-tools/adb.exe`;
-> override bằng `ADB=...` trong `.env` nếu SDK ở chỗ khác. Thêm thư mục đó vào PATH
-> để `adb devices` chạy được từ mọi shell.
-
-## Chạy
+Tại thư mục repository, sau khi ARTEMIS host có quota và emulator sẵn sàng:
 
 ```powershell
-uv run pytest -m e2e -v                  # 1 lượt (≈25–40 phút, profile flash)
-uv run pytest -m e2e -v --junitxml=results_run1.xml   # ghi pass-rate; chạy lặp 3 lần (E3)
-uv run pytest -m e2e -k EXPLORATORY -v   # riêng phiên exploratory 15–30′ (guide tr.23)
+& e2e_test/.venv/Scripts/python.exe -m pytest e2e_test --collect-only -q
+& e2e_test/.venv/Scripts/python.exe -m pytest e2e_test -m "e2e and not exploratory" --runs 3 -v
+& e2e_test/.venv/Scripts/python.exe -m pytest e2e_test -m exploratory --runs 1 -v
 ```
 
-Evidence tự đổ về `../evidence/artemis/`: `TC-*.png` (screencap qua adb),
-`logs/*.log` (logcat flutter), `exploratory-summary.md`.
+Máy hiện đã có venv riêng và pytest/pytest-asyncio/pytest-timeout/artemis-client. Để tái tạo môi trường dùng `uv sync` trong `e2e_test` với dependency đã pin.
 
-## Quy ước
+Key mô hình nằm trong `.env` của **host ARTEMIS**, không cần chép key sang repository. Sau đổi key, nạp lại host/MCP. `.env` của harness chỉ cần địa chỉ host, serial và tài khoản thử riêng.
 
-- **Assertion trên giá trị quan sát được** (chữ trên màn, nội dung log), không chỉ
-  `result.succeeded` — guide tr.23.
-- Task/note do harness tạo prefix `E2E` — dọn bằng cách xóa thủ công sau batch
-  (harness không xóa để tránh cuộc chiến race với rules).
-- Ca fail < 3/3 runs → điều tra rồi ghi §3 `docs/test-plan.md`, đánh dấu `flaky`
-  bằng `@pytest.mark.flaky` chỉ sau khi đã ghi chú.
-- `.env` **không commit** (API key); `results_run*.xml` không commit.
+Các ca đổi tài khoản/tạo dữ liệu yêu cầu `TEST_ACCOUNT_EMAIL` thuộc `@fpt.edu.vn` và `E2E_ALLOW_AUTH_CHANGES=1`. Nếu chưa có tài khoản thử riêng, chúng SKIP; không đăng xuất tài khoản cá nhân đang lưu. Ca tạo dữ liệu chỉ sửa fixture E2E có tên duy nhất của chính nó.
 
-## Trạng thái
+## Bằng chứng và tính đúng
 
-Harness **chưa từng chạy** — mọi pass rate chờ E1. Nếu API `artemis_client` đổi
-so với repo google/artemis tại thời điểm bạn cài, sửa theo README của repo đó
-(chỗ gọi: `conftest.py` fixtures `artemis`/`pro_artemis`).
+- Mỗi lượt lưu `admitted.json`, `result.json`, screenshot riêng dưới `evidence/artemis/runs/`; không ghi đè lượt trước.
+- Assertion đọc JSON `TaskResult.output` và giá trị thực; trạng thái SUCCESS đơn lẻ không đủ.
+- SDK timeout 390 giây, poll 5 giây, pytest timeout 480 giây. Exploratory có timeout riêng và phải quan sát ít nhất 15 phút.
+- Ca offline luôn khôi phục trạng thái mạng ban đầu bằng fixture `finally` của pytest, kể cả task lỗi.
+- `results-*.json/md` có số lượt chạy, đạt/trượt/bỏ qua, thời gian trung bình. Bỏ qua hoặc hỏng hạ tầng không phải PASS.
+- Quota 429 thì chẩn đoán, xử lý quota rồi mới chạy lại; không lặp toàn bộ bộ test để tạo hàng loạt lỗi giống nhau.
+- Còn thiếu scrcpy tùy chọn: hiện chưa có video replay. Không khẳng định đủ evidence video.
+
+Ngày 04/11: các trace trước bị quota; ca SDK sau restart còn gặp 429/503. Chưa đạt tiêu chí >=10 ca ×3 và exploratory.
+
+
+## Chẩn đoán bổ sung tối 04/11
+
+- Host trả `TaskResult.output=None` kể cả Flash completed. Adapter chỉ nhận JSON từ hành động **cuối cùng** `report_task_status` với status completed của đúng session qua API steps; không suy đoán từ stdout. Lưu `terminal-report.json`; kiểm tra text từ UIAutomator độc lập (`native-final-text.txt`) và screenshot trước assertion.
+- Khởi động riêng từng ca, chờ UI Home/sign-in thực tối đa 60 giây; không tap cửa sổ chưa sẵn sàng. Encoding ADB là UTF-8; pytest timeout 480 giây gồm startup và SDK390 giây.
+- 7 parser/adapter unit tests đạt; 76 mục collect. **Chưa có E2E PASS**: một run SDK completed nhưng harness phát hiện output bị thiếu, các run khác gặp quota/ANR. Không đổi kết quả cũ thành PASS sau khi sửa adapter.
+- Gemini 2.5 Flash có thể generate nhưng key/project vẫn bị hạn mức 20 request/ngày/model. Cần quota phù hợp cho >=10 ca ×3 và exploratory; thay key trong cùng project free-tier không bảo đảm tăng quota. Không tự bật billing.
+- Host ARTEMIS đã đổi default và history chunk model sang gemini-2.5-flash, có backup cấu hình trước đổi trong TEMP; chi tiết tại docs/implementation-verification-2026-11-04.md. Không chép key vào harness.
+
+## Ngày 05/11/2026
+
+TC_11 có 1 PASS trên Pixel 7 emulator. Dữ liệu được xác minh bằng terminal report cùng hierarchy độc lập. Xem [kết quả](../evidence/artemis/results-20261105T103204181722Z.md). Khi chấm, kết nối Android thật, kiểm tra `adb devices -l`, đặt `DEVICE_SERIAL` theo serial máy thật và chạy lại. Batch đủ 3 lượt mỗi ca và exploratory vẫn cần thu.

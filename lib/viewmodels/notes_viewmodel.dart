@@ -21,7 +21,12 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
     // Identity switch = note list rebuild — logout never leaves the previous
     // user's notes visible (Lab 3 §5.2). See TasksViewModel for the same rule.
     _authSub = authService?.authStateChanges.listen((_) {
-      if (currentUserId != _loadedUid) loadData();
+      if (currentUserId != _loadedUid) {
+        _searchQuery = "";
+        _isSaving = false;
+        clearLastError();
+        loadData();
+      }
     });
   }
 
@@ -30,6 +35,7 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
   final StorageService? storageService;
   final AnalyticsService? analyticsService;
   StreamSubscription<bool>? _authSub;
+  int _loadVersion = 0;
   String? _loadedUid;
 
   /// Authenticated UID, or null when no identity is available. Used for all
@@ -60,11 +66,13 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
 
   @override
   Future<void> loadData() async {
+    if (isDisposed) return;
+    final version = ++_loadVersion;
+    final uid = currentUserId;
     setState(const AsyncViewState.loading());
 
     try {
       final firestore = firestoreService;
-      final uid = currentUserId;
       _loadedUid = uid;
       if (firestore == null || uid == null) {
         // No backend / no identity: empty state — never seeded mock notes.
@@ -73,6 +81,7 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
         return;
       }
       final docs = await firestore.getNotes(uid);
+      if (isDisposed || version != _loadVersion || uid != currentUserId) return;
       _allNotes = docs.map(NoteModel.fromMap).toList();
 
       if (_allNotes.isEmpty) {
@@ -81,6 +90,7 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
         setState(AsyncViewState.data(filteredNotes));
       }
     } catch (e) {
+      if (isDisposed || version != _loadVersion || uid != currentUserId) return;
       setState(AsyncViewState.error('Không thể tải danh sách ghi chú: $e'));
     }
   }
@@ -128,18 +138,19 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
     // Storage rules only accept image/*, application/pdf, text/plain —
     // reject others here with a clear message instead of PERMISSION_DENIED.
     if (contentType == 'application/octet-stream') {
-      setLastError(
-          'Định dạng tệp chưa được hỗ trợ (chỉ nhận PDF, ảnh, .txt).');
+      setLastError('Định dạng tệp chưa được hỗ trợ (chỉ nhận PDF, ảnh, .txt).');
       return null;
     }
 
-    final sanitizedName =
-        fileName.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+    final sanitizedName = fileName.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
     final path =
         'notes/$uid/${DateTime.now().millisecondsSinceEpoch}_$sanitizedName';
     try {
-      final url = await storage.uploadFile(path, bytes,
-          contentType: contentType);
+      final url = await storage.uploadFile(
+        path,
+        bytes,
+        contentType: contentType,
+      );
       debugPrint('[Notes] Attachment uploaded to $path');
       return url;
     } catch (e) {
@@ -206,15 +217,14 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
       _isSaving = true;
       notifyListeners();
       try {
-        await firestore.saveNote({
-          ...note.toMap(),
-          'userId': uid!,
-        });
+        await firestore.saveNote({...note.toMap(), 'userId': uid!});
       } catch (e) {
+        if (isDisposed || uid != currentUserId) return false;
         if (isNew) {
           _allNotes.removeWhere((n) => n.id == noteId);
         } else if (oldNote != null) {
-          _allNotes[oldIndex] = oldNote;
+          final restoreIndex = _allNotes.indexWhere((n) => n.id == noteId);
+          if (restoreIndex != -1) _allNotes[restoreIndex] = oldNote;
         } else {
           _allNotes.removeWhere((n) => n.id == noteId);
         }
@@ -222,10 +232,13 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
         setLastError('Không thể lưu ghi chú. Kiểm tra kết nối và thử lại.');
         return false;
       } finally {
-        _isSaving = false;
-        notifyListeners();
+        if (uid == currentUserId) {
+          _isSaving = false;
+          notifyListeners();
+        }
       }
     }
+    if (isDisposed || uid != currentUserId) return false;
     clearLastError();
 
     analyticsService?.logNoteCreate(contentLength: content.length);
@@ -253,12 +266,16 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
       try {
         await firestore.deleteNote(uid!, noteId);
       } catch (e) {
-        _allNotes.insert(index, removed);
+        if (isDisposed || uid != currentUserId) return false;
+        if (!_allNotes.any((n) => n.id == noteId)) {
+          _allNotes.insert(index.clamp(0, _allNotes.length), removed);
+        }
         setState(AsyncViewState.data(filteredNotes));
         setLastError('Không thể xóa ghi chú. Kiểm tra kết nối và thử lại.');
         return false;
       }
     }
+    if (isDisposed || uid != currentUserId) return false;
     clearLastError();
     return true;
   }

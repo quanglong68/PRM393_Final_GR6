@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-05",
+  "device": "emulator-5554",
+  "hardware_device_verified": false,
+  "apk_sha256": "32a09e045269cfa3e9dd69f4d10c2b8306372bd54d876b2aa1efe1d1723473fc",
+  "build_flag": "REPORT_MEDIA_URL=http://127.0.0.1:8788",
+  "flutter_tests_passed": 114,
+  "analyzer_issues": 0,
+  "node_http_tests_passed": 2,
+  "apk_installed_and_started": true,
+  "cloudinary_consent_native": true,
+  "cancelled_before_upload": true,
+  "cloudinary_live_upload_verified": false,
+  "artemis_remote_config_dev_passes": 1
+}

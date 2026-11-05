@@ -5,23 +5,42 @@ import 'package:flutter/foundation.dart';
 /// Firebase Crashlytics service for monitoring errors and unhandled exceptions.
 class CrashlyticsService {
   CrashlyticsService({FirebaseCrashlytics? crashlytics})
-      : _crashlytics = crashlytics ??
-            (Firebase.apps.isNotEmpty ? FirebaseCrashlytics.instance : null);
+    : _crashlytics =
+          crashlytics ??
+          (Firebase.apps.isNotEmpty ? FirebaseCrashlytics.instance : null);
 
   final FirebaseCrashlytics? _crashlytics;
+
+  Future<void> enableCollection() async {
+    final client = _crashlytics;
+    if (client == null) throw StateError('Crashlytics chưa được kết nối.');
+    await client.setCrashlyticsCollectionEnabled(true);
+  }
+
+  Future<void> testCrash() async {
+    await enableCollection();
+    _crashlytics!.crash();
+  }
 
   /// Sets up global error handlers for both Flutter framework errors and
   /// asynchronous platform dispatcher errors.
   Future<void> initialize() async {
     final client = _crashlytics;
     if (client == null) {
-      debugPrint('[Crashlytics] No Firebase App initialized, skipping Crashlytics setup.');
+      debugPrint(
+        '[Crashlytics] No Firebase App initialized, skipping Crashlytics setup.',
+      );
       return;
     }
 
     try {
-      // In debug mode, don't flood Crashlytics; keep collection enabled in release
-      await client.setCrashlyticsCollectionEnabled(!kDebugMode);
+      // Keep explicit debug-test opt-in across the crash/relaunch boundary,
+      // when the native SDK sends the previous process's report.
+      // Android defaults to disabled via manifest; the native SDK persists
+      // enableCollection(), so debug initialization must not undo that opt-in.
+      if (!kDebugMode) {
+        await client.setCrashlyticsCollectionEnabled(true);
+      }
 
       // Pass all uncaught "fatal" errors from the framework to Crashlytics
       FlutterError.onError = client.recordFlutterFatalError;
@@ -47,19 +66,14 @@ class CrashlyticsService {
   }) async {
     final client = _crashlytics;
     if (client == null) {
-      debugPrint('[Crashlytics] Firebase not initialized — skipped recordError: $exception, reason: $reason');
-      return;
+      throw StateError('Crashlytics chưa được kết nối.');
     }
 
     try {
-      await client.recordError(
-        exception,
-        stack,
-        reason: reason,
-        fatal: fatal,
-      );
+      await client.recordError(exception, stack, reason: reason, fatal: fatal);
     } catch (e) {
       debugPrint('[Crashlytics] recordError error: $e');
+      rethrow;
     }
   }
 
@@ -67,7 +81,9 @@ class CrashlyticsService {
   Future<void> log(String message) async {
     final client = _crashlytics;
     if (client == null) {
-      debugPrint('[Crashlytics] Firebase not initialized — skipped log: $message');
+      debugPrint(
+        '[Crashlytics] Firebase not initialized — skipped log: $message',
+      );
       return;
     }
 
@@ -82,7 +98,9 @@ class CrashlyticsService {
   Future<void> setUserId(String userId) async {
     final client = _crashlytics;
     if (client == null) {
-      debugPrint('[Crashlytics] Firebase not initialized — skipped setUserId: $userId');
+      debugPrint(
+        '[Crashlytics] Firebase not initialized — skipped setUserId: $userId',
+      );
       return;
     }
 
@@ -98,7 +116,9 @@ class CrashlyticsService {
   Future<void> setCustomKey(String key, Object value) async {
     final client = _crashlytics;
     if (client == null) {
-      debugPrint('[Crashlytics] Firebase not initialized — skipped setCustomKey: $key=$value');
+      debugPrint(
+        '[Crashlytics] Firebase not initialized — skipped setCustomKey: $key=$value',
+      );
       return;
     }
 

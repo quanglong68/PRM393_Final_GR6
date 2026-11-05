@@ -1,0 +1,8 @@
+{
+  "route": "/course-detail",
+  "courseId": "PRM323",
+  "validationOnly": true,
+  "mode": "validated",
+  "message": "projects/prm323-lab2-gr6/messages/fake_message_id",
+  "notificationId": "lab3-3c29c321-7463-44a0-a2bf-0ac0ab0e8df8"
+}

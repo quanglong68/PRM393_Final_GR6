@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../models/app_state.dart';
+import '../models/academic_profile.dart';
 import '../models/course_model.dart';
 import '../services/analytics_service.dart';
 import '../services/auth_service.dart';
@@ -26,6 +27,7 @@ class RoadmapViewModel extends BaseViewModel<List<CourseModel>> {
   final FirestoreService? firestoreService;
   final AnalyticsService? analyticsService;
   StreamSubscription<bool>? _authSub;
+  int _loadVersion = 0;
   String? _loadedUid;
 
   /// Authenticated UID, or null when no identity is available. Used for the
@@ -52,11 +54,7 @@ class RoadmapViewModel extends BaseViewModel<List<CourseModel>> {
 
   /// Parses `users/{uid}` profile into the passed-course set.
   static Set<String> parsePassedCourses(Map<String, dynamic>? profile) {
-    final list = profile?['passedCourses'];
-    if (list is List) {
-      return list.map((e) => e.toString()).toSet();
-    }
-    return {};
+    return AcademicProfile.fromMap(profile).completedCodes;
   }
 
   // Getters
@@ -90,11 +88,13 @@ class RoadmapViewModel extends BaseViewModel<List<CourseModel>> {
 
   @override
   Future<void> loadData() async {
+    if (isDisposed) return;
+    final version = ++_loadVersion;
+    final uid = currentUserId;
     setState(const AsyncViewState.loading());
 
     try {
       final firestore = firestoreService;
-      final uid = currentUserId;
       _loadedUid = uid;
       if (firestore == null || uid == null) {
         // No backend / no identity: show the empty state. Never fall back to
@@ -107,8 +107,11 @@ class RoadmapViewModel extends BaseViewModel<List<CourseModel>> {
 
       // Transcript drives prerequisite checks; courses come from Firestore.
       final profileDoc = await firestore.getUserProfile(uid);
-      _passedCourses = parsePassedCourses(profileDoc);
+      if (isDisposed || version != _loadVersion || uid != currentUserId) return;
+      final passed = parsePassedCourses(profileDoc);
       final docs = await firestore.getCourses(uid);
+      if (isDisposed || version != _loadVersion || uid != currentUserId) return;
+      _passedCourses = passed;
       _allCourses = docs.map(CourseModel.fromMap).toList();
 
       if (_allCourses.isEmpty) {
@@ -117,6 +120,7 @@ class RoadmapViewModel extends BaseViewModel<List<CourseModel>> {
         setState(AsyncViewState.data(filteredCourses));
       }
     } catch (e) {
+      if (isDisposed || version != _loadVersion || uid != currentUserId) return;
       setState(AsyncViewState.error('Không thể tải lộ trình môn học: $e'));
     }
   }
@@ -157,9 +161,9 @@ class RoadmapViewModel extends BaseViewModel<List<CourseModel>> {
   bool checkEligibilityForCourse(CourseModel course) {
     final isEligible = isEligibleForCourse(course);
     analyticsService?.logPrerequisiteCheck(
-        courseId: course.id,
-        isEligible: isEligible,
-      );
+      courseId: course.id,
+      isEligible: isEligible,
+    );
     return isEligible;
   }
 
@@ -180,10 +184,7 @@ class RoadmapViewModel extends BaseViewModel<List<CourseModel>> {
   void logCourseOpened(String courseId) {
     final course = findCourseById(courseId);
     if (course == null) return;
-    analyticsService?.logCourseView(
-        courseId: course.id,
-        code: course.code,
-      );
+    analyticsService?.logCourseView(courseId: course.id, code: course.code);
   }
 
   /// Called when a search is committed (debounced by the view); logs

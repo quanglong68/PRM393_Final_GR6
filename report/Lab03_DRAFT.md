@@ -1,89 +1,45 @@
-# PRM393 Lab 3 — Project Report Draft
+# PRM393 Lab 3 — FPTU Second Brain
 
-> **Draft only.** Replace the Student ID field, attach genuine runtime evidence, and export to `Lab03_<StudentID>.pdf` only after the missing checks below are completed. Do not submit this draft as final.
+Bản nội dung báo cáo ngày 05/11/2026. Trang bìa và tên file nộp chờ MSSV. Android package là `com.example.prm323_lab3`.
 
-**Student ID:** `[NEEDS STUDENT ID]`  
-**Project:** FPTU Second Brain  
-**Repository:** `prm323-lab2-gr6` (rubric requires renaming to `PRM393_Lab03_<StudentID>` at submission)  
-**Android application ID:** `com.example.prm323_lab3`  
-**Technology:** Flutter/Dart, Firebase  
-**Report date:** 2026-11-03
+## 1. Mục tiêu và phạm vi
 
-## 1. Project overview
+Ứng dụng giúp sinh viên tra lộ trình, theo dõi công việc, lưu ghi chú, nhập bảng điểm/lịch cá nhân và xuất báo cáo PDF. Dự án triển khai trên nền Flutter của Lab 2. Lab 3 bổ sung Firebase Auth, Firestore, FCM, Analytics, Crashlytics và Remote Config. Team chọn Firebase Spark. Luồng PDF cục bộ đã kiểm chứng, phương án PDF cloud dùng Media API và Cloudinary khi có cấu hình.
 
-FPTU Second Brain is a Flutter study-planning app. It provides Google sign-in, a course roadmap, task and note management, study advice, notifications, Firebase telemetry/configuration, and PDF report export. User-owned Firestore data is scoped below `users/{uid}`. The code uses an MVVM structure with services injected into ViewModels.
+## 2. Kiến trúc
 
-The app is derived from a Lab 2 design project. The current implementation and test evidence are documented in [the final requirement audit](../docs/lab3-final-requirement-audit.md), [completion progress](../docs/lab3-completion-progress.md), and [architecture overview](../docs/architecture.md).
+Flutter tách Screen, ViewModel và Service. ViewModel biểu diễn trạng thái tải, dữ liệu, rỗng và lỗi. Firebase Auth cung cấp UID. Firestore Rules kiểm soát đọc/ghi hồ sơ, task, note, token, notification và metadata dưới UID tương ứng. Danh mục môn tách khỏi dữ liệu cá nhân. Advisor và Strategy dùng danh mục và hồ sơ nhập thật, giữ trạng thái thiếu dữ liệu khi chưa có lịch hoặc điểm.
 
-## 2. Architecture
+Web admin đọc báo cáo Crashlytics qua Node và OAuth phía server. Trình duyệt chỉ nhận danh sách sự cố đã lọc. Dev có thể đối chiếu với Firebase Console. Media API riêng xác thực Firebase ID token của client rồi dùng Cloudinary key của server. Hai tiến trình phục vụ hai mục đích và dùng hai kiểu xác thực.
 
-The app separates screens, ViewModels, services, models, and theme/widgets. `AsyncViewState<T>` represents loading, empty, error, and data states. Authentication supplies the Firebase UID to user-owned ViewModels; unauthenticated writes fail closed. Production startup displays a configuration error state if Firebase initialization fails rather than silently using test doubles.
+## 3. Luồng chính và nguyên lý
 
-The Firestore catalog is read from `courses`. Personal tasks and notes use `users/{uid}/tasks` and `users/{uid}/notes`. Cloud Storage services support note attachments and report uploads in code; runtime upload evidence is still pending. Firebase Messaging handlers, token persistence, notification storage, Analytics, Crashlytics, and Remote Config are implemented in source, with Console/device verification still needed for several services.
+- Roadmap hiển thị catalog Firestore, đối chiếu môn tiên quyết và mở ba tab chi tiết. Bảng điểm và lịch là dữ liệu riêng do sinh viên nhập.
+- Tasks xử lý sửa, toggle, lỗi ghi và Hoàn tác. Notes dùng Firestore và phục hồi dữ liệu từ cache khi có bản đọc trước đó.
+- FCM SDK nhận registration token từ Firebase. App ghi bản sao theo UID. Server đọc bản ghi gần nhất, gọi HTTP v1 có OAuth, và gửi dữ liệu `route` cùng `courseId`. Client xử lý callback khi app mở, khi chạm thông báo từ nền và khi mở từ trạng thái process đã dừng.
+- Nút test crash gọi native SDK sau khi xác nhận. Lần mở lại cho phép SDK gửi báo cáo. Admin xem kết quả trên web, dev xem console. Nút non-fatal ghi lỗi trong khi app tiếp tục chạy.
+- Remote Config fetch/activate thay tham số ở runtime. Đã xác minh 31 rồi trả 30 trên cùng APK.
+- PDF được tạo từ dữ liệu đang hiển thị, có consent trước upload. Cloudinary nhận asset raw authenticated. Firestore chỉ lưu metadata sau khi dịch vụ trả thành công. Người dùng tải lại qua Media API với UID hợp lệ.
 
-**Evidence to add:** architecture diagram and one sequence diagram for sign-in → authenticated Firestore read.
+## 4. Kết quả và bằng chứng
 
-## 3. Implemented study flows
+| Mục | Kết quả quan sát |
+|---|---|
+| Flutter | 114 unit/widget tests pass, analyzer sạch. |
+| FCM | Đã gửi và nhận trên emulator ở ba trạng thái, cold deep link mở PRM323. Script server mới gọi HTTP v1 validate_only thành công. |
+| Crashlytics | Native test crash và non-fatal đã có trong dashboard. API của web admin trả báo cáo thật và chặn truy cập chưa xác thực. |
+| Remote Config | App hiển thị 31 rồi 30 phút trên cùng APK, đọc lại 30 phút sau khi mở emulator. |
+| PDF | Đã tạo PDF tiếng Việt và mở Android share sheet. Node test kiểm tra giới hạn file, sai UID và upload/download qua HTTP bằng adapter thử. Cloudinary thật chờ credentials. |
+| Analytics | DebugView xác nhận export_report_local và course_count=4. Đối chiếu các event còn lại theo tracking plan. |
+| ARTEMIS | TC_11 pass 1 lượt trên emulator, trace cc6378c0-a0d2-4c0b-8c2a-f728025f6ecc. Kết quả máy thật và batch theo rubric còn thiếu. |
+| AI review | 9 findings trong tài liệu review local, có quyết định và kiểm thử. PR và ba commit độc lập còn chờ. |
 
-### 3.1 Course roadmap
+Xem [mục lục bằng chứng](../evidence/README.md), [log ARTEMIS](../evidence/artemis/results-20261105T103204181722Z.md) và [hướng dẫn demo](../docs/lab3-oral-defense.md).
 
-The Roadmap reads course documents from Firestore, filters/searches courses, and checks prerequisites against the signed-in user's `passedCourses`. On the emulator, courses loaded and prerequisite status changed after the profile data was refreshed.
+## 5. Quyền truy cập và dữ liệu
 
-### 3.2 Tasks and notes
+Firestore chỉ cho owner dùng dữ liệu cá nhân theo UID. Hosted domain của Google Sign-In và kiểm tra email trong app là hai phần của luồng đăng nhập. Kiểm tra domain trên thiết bị và cách ly giữa hai tài khoản demo cần thu riêng. API PDF xác minh chữ ký ID token, từ chối UID khác, chỉ nhận dữ liệu PDF tối đa 10 MB. Cloudinary key, OAuth token và mật khẩu web lưu ngoài source. Dữ liệu personal và key cần ẩn khỏi hình chụp.
 
-Tasks support create/edit/complete/delete paths in code with authenticated ownership and optimistic rollback on write failure. Runtime testing created a Task and confirmed its completion state in Firestore. Notes support create/read/update/delete paths in code. Runtime testing created and read a Note; a Firestore Timestamp parsing defect was found and fixed in `NoteModel.fromMap`. A manual sync subsequently reloaded Roadmap, Tasks, and Notes successfully. The two disposable test documents were deleted from Firebase Console after testing.
+## 6. Kiểm thử trên máy thật và bàn giao
 
-### 3.3 Authentication and Firebase controls
-
-Google Sign-In succeeded on the emulator and reached HomeScreen. Source now filters the Google account picker to `fpt.edu.vn` and rejects a signed-in account whose email does not match that domain. The rejection branch has not yet been exercised on a device.
-
-## 4. Verification results
-
-Last recorded local checks, on 2026-11-02:
-
-| Check | Result | Scope |
-|---|---|---|
-| `flutter analyze` | PASS, 0 issues | Static analysis |
-| `flutter test` | PASS, 54 tests | Unit/widget tests with hermetic fakes; not ARTEMIS E2E |
-| `flutter build apk --debug` | PASS | Used the ignored, out-of-band `google-services.json` |
-| Google Sign-In | PASS on emulator | Reached HomeScreen |
-| Roadmap / Firestore | PASS on emulator | Catalog and `passedCourses` observed |
-| Task create/toggle | PASS on emulator | Firestore record and `isCompleted` observed |
-| Note create/read | PASS on emulator | Firestore record observed; Timestamp reload fixed |
-| Manual sync | PASS on emulator | All three stores reloaded successfully |
-
-**Evidence placeholders:** attach screenshots/logs for each runtime row with device/emulator model and capture date. Do not substitute source code or unit tests for runtime evidence.
-
-## 5. Security and privacy
-
-Firestore rules in the repository scope user-owned collections to the authenticated UID and end in default deny. This local file does not prove which Rules version is currently deployed; recheck Firebase Console and attach evidence. The ignored Android Firebase config must remain out of Git and must not appear in screenshots.
-
-Google Sign-In's `hostedDomain` value is a picker filter; the code also checks the returned email after credential exchange. Runtime rejection of a non-FPT account remains unverified. PDF export includes a consent step before upload; Storage bucket availability and real upload behavior remain unverified.
-
-## 6. Test strategy
-
-Flutter unit/widget tests cover ViewModel behavior, UID propagation, rollback, NoteModel timestamp conversion, Analytics wiring, PDF export service behavior, FCM token/notification logic, and sync reload outcomes. The complete output is 54 tests passing as last recorded.
-
-The Lab 3 checklist separately requires at least 10 ARTEMIS E2E cases, three runs each, plus traces and an exploratory session. The repository currently contains a manual test plan but no ARTEMIS harness or run traces. Those results must be generated on a configured device and recorded truthfully.
-
-## 7. Unverified runtime items
-
-- FCM delivery in foreground, background, and terminated states, including tap routing.
-- Analytics DebugView events and exact counts.
-- Crashlytics non-fatal event visible in the dashboard.
-- Remote Config before/after behavior after a Console value change.
-- Storage bucket availability, note attachment upload, PDF upload, URL, and metadata.
-- Current Firestore Rules deployment state.
-- Offline/reconnect behavior.
-- Runtime rejection of a non-`@fpt.edu.vn` account.
-
-Do not upgrade billing, deploy Rules, change Remote Config, or mutate cloud data without the team's approval. Check the current Storage bucket before calling Spark a blocker.
-
-## 8. Submission deliverables still needed
-
-- Student ID and final public repository rename to `PRM393_Lab03_<StudentID>` at submission.
-- At least 10 ARTEMIS cases × 3 real runs, traces, pass-rate/duration table, and exploratory notes.
-- Genuine AI review output with at least five findings and three separately committed fixes, as specified by the checklist. This draft does not invent findings or commits.
-- Evidence screenshots for Firebase Console/device checks.
-- Final 8–12 page report PDF, 12–15 page slide PDF, and 5–10 minute demo video.
-
+Chọn serial máy thật qua ADB. Dùng app cùng project, tài khoản FPT demo và APK có SHA phù hợp. Thu kết quả crash trước/sau trên web admin, ba trạng thái FCM, upload/tải lại Cloudinary khi đã provision, Analytics DebugView và batch ARTEMIS. Chốt MSSV và đổi tên file khi xuất bản nộp. Slide để sau theo yêu cầu. Video quay khi có thiết bị thật.

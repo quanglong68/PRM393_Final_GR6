@@ -6,6 +6,7 @@ import '../services/analytics_service.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import 'base_viewmodel.dart';
+
 import 'package:flutter/foundation.dart';
 
 class TasksViewModel extends BaseViewModel<List<TaskModel>> {
@@ -21,7 +22,11 @@ class TasksViewModel extends BaseViewModel<List<TaskModel>> {
     // Guarded on uid change so a stream replay of the same identity cannot
     // race a concurrent add/update and clobber the list.
     _authSub = authService?.authStateChanges.listen((_) {
-      if (currentUserId != _loadedUid) loadData();
+      if (currentUserId != _loadedUid) {
+        _filter = "all";
+        clearLastError();
+        loadData();
+      }
     });
   }
 
@@ -29,6 +34,7 @@ class TasksViewModel extends BaseViewModel<List<TaskModel>> {
   final FirestoreService? firestoreService;
   final AnalyticsService? analyticsService;
   StreamSubscription<bool>? _authSub;
+  int _loadVersion = 0;
   String? _loadedUid;
 
   /// Authenticated UID, or null when no identity is available. Used for all
@@ -60,11 +66,13 @@ class TasksViewModel extends BaseViewModel<List<TaskModel>> {
 
   @override
   Future<void> loadData() async {
+    if (isDisposed) return;
+    final version = ++_loadVersion;
+    final uid = currentUserId;
     setState(const AsyncViewState.loading());
 
     try {
       final firestore = firestoreService;
-      final uid = currentUserId;
       _loadedUid = uid;
       if (firestore == null || uid == null) {
         // No backend / no identity: empty state — never seeded mock tasks.
@@ -73,6 +81,7 @@ class TasksViewModel extends BaseViewModel<List<TaskModel>> {
         return;
       }
       final docs = await firestore.getTasks(uid);
+      if (isDisposed || version != _loadVersion || uid != currentUserId) return;
       _allTasks = docs.map(TaskModel.fromMap).toList();
 
       if (_allTasks.isEmpty) {
@@ -81,7 +90,10 @@ class TasksViewModel extends BaseViewModel<List<TaskModel>> {
         setState(AsyncViewState.data(filteredTasks));
       }
     } catch (e) {
-      setState(AsyncViewState.error('Không thể tải danh sách việc cần làm: $e'));
+      if (isDisposed || version != _loadVersion || uid != currentUserId) return;
+      setState(
+        AsyncViewState.error('Không thể tải danh sách việc cần làm: $e'),
+      );
     }
   }
 
@@ -118,17 +130,18 @@ class TasksViewModel extends BaseViewModel<List<TaskModel>> {
     final firestore = firestoreService;
     if (firestore != null) {
       try {
-        await firestore.addTask({
-          ...newTask.toMap(),
-          'userId': uid!,
-        });
+        await firestore.addTask({...newTask.toMap(), 'userId': uid!});
       } catch (e) {
+        if (isDisposed || uid != currentUserId) return false;
         _allTasks.removeWhere((t) => t.id == newTask.id);
         setState(AsyncViewState.data(filteredTasks));
-        setLastError('Không thể lưu việc cần làm. Kiểm tra kết nối và thử lại.');
+        setLastError(
+          'Không thể lưu việc cần làm. Kiểm tra kết nối và thử lại.',
+        );
         return false;
       }
     }
+    if (isDisposed || uid != currentUserId) return false;
     clearLastError();
 
     analyticsService?.logTaskCreate(category: courseCode);
@@ -138,6 +151,17 @@ class TasksViewModel extends BaseViewModel<List<TaskModel>> {
   /// Toggles completion and persists the change. Reverts the toggle and sets
   /// [lastError] if the write fails.
   Future<bool> toggleTask(String taskId) async {
+    final task = _allTasks.where((t) => t.id == taskId).firstOrNull;
+    if (task == null) {
+      if (currentUserId == null) {
+        setLastError("Bạn chưa đăng nhập — không thể cập nhật việc cần làm.");
+      }
+      return false;
+    }
+    return setTaskCompletion(taskId, !task.isCompleted);
+  }
+
+  Future<bool> setTaskCompletion(String taskId, bool completed) async {
     final uid = currentUserId;
     if (firestoreService != null && uid == null) {
       setLastError('Bạn chưa đăng nhập — không thể cập nhật việc cần làm.');
@@ -148,7 +172,7 @@ class TasksViewModel extends BaseViewModel<List<TaskModel>> {
     if (index == -1) return false;
 
     final task = _allTasks[index];
-    final updated = task.copyWith(isCompleted: !task.isCompleted);
+    final updated = task.copyWith(isCompleted: completed);
     _allTasks[index] = updated;
     setState(AsyncViewState.data(filteredTasks));
 
@@ -160,12 +184,17 @@ class TasksViewModel extends BaseViewModel<List<TaskModel>> {
           'userId': uid!,
         });
       } catch (e) {
-        _allTasks[index] = task;
+        if (isDisposed || uid != currentUserId) return false;
+        final restoreIndex = _allTasks.indexWhere((t) => t.id == taskId);
+        if (restoreIndex != -1) _allTasks[restoreIndex] = task;
         setState(AsyncViewState.data(filteredTasks));
-        setLastError('Không thể cập nhật việc cần làm. Kiểm tra kết nối và thử lại.');
+        setLastError(
+          'Không thể cập nhật việc cần làm. Kiểm tra kết nối và thử lại.',
+        );
         return false;
       }
     }
+    if (isDisposed || uid != currentUserId) return false;
     clearLastError();
 
     if (updated.isCompleted) {
@@ -209,15 +238,20 @@ class TasksViewModel extends BaseViewModel<List<TaskModel>> {
           'userId': uid!,
         });
       } catch (e) {
+        if (isDisposed || uid != currentUserId) return false;
         // T03-M11C temporary capture block removed: root cause was the
         // legacy task ID mismatch fixed in T03-M11D/M11E (canonical doc IDs).
         debugPrint('[ViewModel] editTask error: $e');
-        _allTasks[index] = oldTask;
+        final restoreIndex = _allTasks.indexWhere((t) => t.id == taskId);
+        if (restoreIndex != -1) _allTasks[restoreIndex] = oldTask;
         setState(AsyncViewState.data(filteredTasks));
-        setLastError('Không thể sửa việc cần làm. Kiểm tra kết nối và thử lại.');
+        setLastError(
+          'Không thể sửa việc cần làm. Kiểm tra kết nối và thử lại.',
+        );
         return false;
       }
     }
+    if (isDisposed || uid != currentUserId) return false;
     clearLastError();
     return true;
   }
@@ -243,12 +277,18 @@ class TasksViewModel extends BaseViewModel<List<TaskModel>> {
       try {
         await firestore.deleteTask(uid!, taskId);
       } catch (e) {
-        _allTasks.insert(index, removed);
+        if (isDisposed || uid != currentUserId) return false;
+        if (!_allTasks.any((t) => t.id == taskId)) {
+          _allTasks.insert(index.clamp(0, _allTasks.length), removed);
+        }
         setState(AsyncViewState.data(filteredTasks));
-        setLastError('Không thể xóa việc cần làm. Kiểm tra kết nối và thử lại.');
+        setLastError(
+          'Không thể xóa việc cần làm. Kiểm tra kết nối và thử lại.',
+        );
         return false;
       }
     }
+    if (isDisposed || uid != currentUserId) return false;
     clearLastError();
     return true;
   }

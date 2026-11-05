@@ -1,0 +1,15 @@
+{
+  "notification_id": "LAB3-LINK-20261104141627730",
+  "found": true,
+  "title": "LAB3-LINK-20261104141627730",
+  "read_after_tap": true,
+  "route": "/course-detail",
+  "routeArgument": "PRM323",
+  "native_destination_title": "PRM323",
+  "native_tabs": [
+    "L\u1ecbch slot",
+    "\u0110\u00e1nh gi\u00e1",
+    "T\u1ed5ng quan"
+  ],
+  "verified_after_cold_notification_tap": true
+}

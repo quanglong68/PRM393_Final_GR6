@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-05",
+  "device": "emulator-5554",
+  "avd": "Pixel_7_API_35_Google_Play",
+  "method": "manual ADB with ARTEMIS hierarchy",
+  "remote_config_interval_displayed_mins": 30,
+  "notification_center_loaded": true,
+  "existing_notification_link_opened_course": "PRM323",
+  "course_tabs_verified": 3,
+  "new_fcm_message_sent": false,
+  "pytest_e2e_run": false,
+  "firebase_plan_user_decision": "Spark"
+}

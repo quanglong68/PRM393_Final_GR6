@@ -13,15 +13,18 @@ import 'analytics_service.dart';
 /// event helpers; every one funnels into [logEvent] below.
 class FirebaseAnalyticsService extends AnalyticsService {
   FirebaseAnalyticsService({FirebaseAnalytics? analytics})
-      : _analytics = analytics ??
-            (Firebase.apps.isNotEmpty ? FirebaseAnalytics.instance : null);
+    : _analytics =
+          analytics ??
+          (Firebase.apps.isNotEmpty ? FirebaseAnalytics.instance : null);
 
   final FirebaseAnalytics? _analytics;
 
   @override
   List<NavigatorObserver> get navigatorObservers {
     final client = _analytics;
-    return client != null ? [FirebaseAnalyticsObserver(analytics: client)] : const [];
+    return client != null
+        ? [FirebaseAnalyticsObserver(analytics: client)]
+        : const [];
   }
 
   // Blacklist of forbidden PII parameter keys
@@ -80,7 +83,7 @@ class FirebaseAnalyticsService extends AnalyticsService {
     }
 
     try {
-      await client.setUserId(id: id);
+      await client.setUserId(id: id.isEmpty ? null : id);
     } catch (e) {
       debugPrint('[Analytics] setUserId error: $e');
     }

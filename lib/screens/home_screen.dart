@@ -66,13 +66,15 @@ class HomeScreen extends StatelessWidget {
             padding: const EdgeInsets.all(AppSpacing.md),
             children: [
               // Greeting
-              Text('Chào $displayName 👋', style: Theme.of(context).textTheme.headlineLarge),
+              Text(
+                'Chào $displayName 👋',
+                style: Theme.of(context).textTheme.headlineLarge,
+              ),
               const SizedBox(height: AppSpacing.xs),
               Text(
                 'Học tập hiệu quả, kể cả khi ngoại tuyến.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.onSurfaceVariant,
-                    ),
+                style: Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(color: AppColors.onSurfaceVariant),
               ),
               const SizedBox(height: AppSpacing.lg),
 
@@ -81,16 +83,24 @@ class HomeScreen extends StatelessWidget {
                 onTap: () => Navigator.pushNamed(context, '/sync-vault'),
                 child: const ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.cloud_done_outlined, color: AppColors.success),
+                  leading: Icon(
+                    Icons.cloud_done_outlined,
+                    color: AppColors.success,
+                  ),
                   title: Text('Firebase Cloud & Offline Vault'),
-                  subtitle: Text('Sẵn sàng đồng bộ hai chiều (Firestore + Storage).'),
+                  subtitle: Text(
+                    'Đồng bộ Firestore và xuất tài liệu lên Storage.',
+                  ),
                   trailing: Icon(Icons.chevron_right),
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
 
               // Quick Actions / Navigation
-              Text('Truy cập nhanh', style: Theme.of(context).textTheme.titleLarge),
+              Text(
+                'Truy cập nhanh',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
               const SizedBox(height: AppSpacing.sm),
 
               AppCard(
@@ -99,7 +109,9 @@ class HomeScreen extends StatelessWidget {
                   contentPadding: EdgeInsets.zero,
                   leading: Icon(Icons.route_outlined, color: AppColors.primary),
                   title: Text('Lộ trình môn học'),
-                  subtitle: Text('Kiểm tra môn tiên quyết và tiến độ kỳ Fall 2024.'),
+                  subtitle: Text(
+                    'Xem danh mục môn và kiểm tra môn tiên quyết.',
+                  ),
                   trailing: Icon(Icons.chevron_right),
                 ),
               ),
@@ -109,9 +121,14 @@ class HomeScreen extends StatelessWidget {
                 onTap: () => onNavigate(2),
                 child: const ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.task_alt_outlined, color: AppColors.secondary),
+                  leading: Icon(
+                    Icons.task_alt_outlined,
+                    color: AppColors.secondary,
+                  ),
                   title: Text('Kế hoạch & Việc cần làm'),
-                  subtitle: Text('Quản lý deadline bài tập, sprint SWP391 và lab PRM323.'),
+                  subtitle: Text(
+                    'Quản lý deadline bài tập, sprint SWP391 và lab PRM323.',
+                  ),
                   trailing: Icon(Icons.chevron_right),
                 ),
               ),
@@ -133,9 +150,14 @@ class HomeScreen extends StatelessWidget {
                 onTap: () => Navigator.pushNamed(context, '/advisor'),
                 child: const ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.auto_awesome_outlined, color: AppColors.primary),
-                  title: Text('AI Academic Advisor'),
-                  subtitle: Text('Mô phỏng chiến lược GPA và tư vấn kế hoạch học tập.'),
+                  leading: Icon(
+                    Icons.auto_awesome_outlined,
+                    color: AppColors.primary,
+                  ),
+                  title: Text('Cố vấn học tập'),
+                  subtitle: Text(
+                    'Tư vấn theo dữ liệu riêng và mô phỏng kế hoạch học tập.',
+                  ),
                   trailing: Icon(Icons.chevron_right),
                 ),
               ),

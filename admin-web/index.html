@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Crashlytics · Lab 3 Admin</title>
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="/dashboard.js"></script>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">FPTU Second Brain / Admin</p>
+      <h1>Sự cố ứng dụng</h1>
+      <p>Theo dõi crash và non-fatal của ứng dụng Android từ Firebase Crashlytics.</p>
+    </header>
+    <form id="filters">
+      <label for="days">Khoảng thời gian</label>
+      <select id="days"><option value="1">24 giờ</option><option value="7" selected>7 ngày</option><option value="30">30 ngày</option></select>
+      <button id="refresh" type="submit">Tải lại báo cáo</button>
+    </form>
+    <p id="status" role="status">Đang tải báo cáo…</p>
+    <div class="table-wrap" id="results" hidden>
+      <table>
+        <thead><tr><th scope="col">Sự cố</th><th scope="col">Loại</th><th scope="col">Sự kiện</th><th scope="col">Người bị ảnh hưởng</th></tr></thead>
+        <tbody id="issues"></tbody>
+      </table>
+    </div>
+    <footer>Sau khi test crash, mở lại app trên điện thoại để SDK gửi báo cáo, rồi tải lại trang khi Firebase đã xử lý.</footer>
+  </main>
+</body>
+</html>

@@ -17,6 +17,7 @@ class NotificationModel {
     this.read = false,
     this.receivedAt = '',
     this.route,
+    this.routeArgument,
   });
 
   final String id;
@@ -31,6 +32,42 @@ class NotificationModel {
   /// In-app destination of the push (`/advisor`, `/sync-vault`, …). Null when
   /// the sender did not address a screen — tapping then only marks read.
   final String? route;
+  final String? routeArgument;
+
+  /// A push is untrusted input: only known in-app routes may be opened.
+  String? get destinationRoute {
+    if (route == null || route!.isEmpty) return null;
+    final uri = Uri.tryParse(route!);
+    if (uri == null || uri.hasScheme || uri.hasAuthority) {
+      return '/notifications';
+    }
+    const routes = {
+      '/home',
+      '/advisor',
+      '/strategy-sim',
+      '/sync-vault',
+      '/notifications',
+      '/course-detail',
+      '/note-editor',
+      '/academic-profile',
+      '/tasks',
+      '/notes',
+      '/roadmap',
+    };
+    if (!routes.contains(uri.path)) return '/notifications';
+    if (uri.path == '/course-detail' &&
+        (destinationArgument == null || destinationArgument!.isEmpty)) {
+      return '/notifications';
+    }
+    return uri.path;
+  }
+
+  String? get destinationArgument {
+    final uri = Uri.tryParse(route ?? '');
+    return routeArgument ??
+        uri?.queryParameters['courseId'] ??
+        uri?.queryParameters['noteId'];
+  }
 
   bool get isUnread => !read;
 
@@ -43,6 +80,7 @@ class NotificationModel {
         read: map['read'] as bool? ?? false,
         receivedAt: _formatReceivedAt(map['receivedAt']),
         route: map['route'] as String?,
+        routeArgument: map['routeArgument'] as String?,
       );
 
   static String _formatReceivedAt(Object? value) {
@@ -60,24 +98,26 @@ class NotificationModel {
   }
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'title': title,
-        'body': body,
-        'type': type,
-        'read': read,
-        'receivedAt': receivedAt,
-        if (route != null) 'route': route,
-      };
+    'id': id,
+    'title': title,
+    'body': body,
+    'type': type,
+    'read': read,
+    'receivedAt': receivedAt,
+    if (route != null) 'route': route,
+    if (routeArgument != null) 'routeArgument': routeArgument,
+  };
 
   NotificationModel copyWith({bool? read}) => NotificationModel(
-        id: id,
-        title: title,
-        body: body,
-        type: type,
-        read: read ?? this.read,
-        receivedAt: receivedAt,
-        route: route,
-      );
+    id: id,
+    title: title,
+    body: body,
+    type: type,
+    read: read ?? this.read,
+    receivedAt: receivedAt,
+    route: route,
+    routeArgument: routeArgument,
+  );
 
   /// Firebase Cloud Messaging payloads carry `title`/`body` plus custom data.
   /// [notificationId] (when present) is the Firestore document id used to mark
@@ -90,7 +130,8 @@ class NotificationModel {
     final map = data is Map
         ? Map<String, dynamic>.from(data)
         : <String, dynamic>{};
-    final id = map['notificationId'] as String? ??
+    final id =
+        map['notificationId'] as String? ??
         payload['notificationId'] as String? ??
         fallbackId ??
         'local_${DateTime.now().microsecondsSinceEpoch}';
@@ -104,6 +145,14 @@ class NotificationModel {
       read: false,
       receivedAt: ts,
       route: map['route'] as String? ?? payload['route'] as String?,
+      routeArgument:
+          (map['routeArgument'] ??
+                  map['courseId'] ??
+                  map['course_id'] ??
+                  map['noteId'] ??
+                  map['note_id'] ??
+                  payload['routeArgument'])
+              as String?,
     );
   }
 }

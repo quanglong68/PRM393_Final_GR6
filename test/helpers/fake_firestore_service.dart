@@ -22,6 +22,15 @@ class FakeFirestoreService implements FirestoreService {
   Map<String, dynamic>? userProfile;
 
   bool shouldFailTaskAdd = false;
+
+  @override
+  Future<void> saveAcademicProfile(
+    String userId,
+    Map<String, dynamic> data,
+  ) async {
+    userProfile = {...?userProfile, ...data};
+  }
+
   bool shouldFailTaskUpdate = false;
   bool shouldFailTaskDelete = false;
   bool shouldFailNoteSave = false;
@@ -119,7 +128,9 @@ class FakeFirestoreService implements FirestoreService {
 
   @override
   Future<void> saveReportMetadata(
-      String userId, Map<String, dynamic> metadata) async {
+    String userId,
+    Map<String, dynamic> metadata,
+  ) async {
     if (shouldFailReportSave) {
       throw Exception('Simulated remote saveReportMetadata failure');
     }
@@ -132,15 +143,13 @@ class FakeFirestoreService implements FirestoreService {
 
   @override
   Future<void> saveNotification(
-      String userId, Map<String, dynamic> data,
-      {String? notificationId}) async {
+    String userId,
+    Map<String, dynamic> data, {
+    String? notificationId,
+  }) async {
     final id = notificationId ?? 'notif_${notifications.length + 1}';
     final index = notifications.indexWhere((n) => n['id'] == id);
-    final item = {
-      'id': id,
-      'userId': userId,
-      ...data,
-    };
+    final item = {'id': id, 'userId': userId, ...data};
     if (index == -1) {
       notifications.add(item);
     } else {
@@ -150,7 +159,9 @@ class FakeFirestoreService implements FirestoreService {
 
   @override
   Future<void> markNotificationRead(
-      String userId, String notificationId) async {
+    String userId,
+    String notificationId,
+  ) async {
     final idx = notifications.indexWhere((n) => n['id'] == notificationId);
     if (idx != -1) notifications[idx]['read'] = true;
   }

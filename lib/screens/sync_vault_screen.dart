@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
@@ -37,9 +38,13 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
 
   // ── PDF export state (Lab 3 §6.5) ──
   bool _isExporting = false;
+  bool _isDownloadingReport = false;
   double _exportProgress = 0.0;
   ReportExportResult? _exportResult;
   String? _exportError;
+  Uint8List? _localPdfBytes;
+  String? _localPdfName;
+  bool _isLocalExport = false;
 
   Future<void> _testFirestore(FirestoreService firestore, String? uid) async {
     setState(() {
@@ -68,7 +73,8 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
       final tasks = await firestore.getTasks(uid);
 
       setState(() {
-        _firestoreTestResult = 'Thành công! Firestore đã đọc/ghi ${tasks.length} mục.';
+        _firestoreTestResult =
+            'Thành công! Firestore đã đọc/ghi ${tasks.length} mục.';
       });
     } catch (e) {
       setState(() {
@@ -86,7 +92,10 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
     });
 
     try {
-      await crashlytics.log('Người dùng kích hoạt test Crashlytics từ Firebase Demo Area');
+      await crashlytics.enableCollection();
+      await crashlytics.log(
+        'Người dùng kích hoạt test Crashlytics từ Firebase Demo Area',
+      );
       await crashlytics.recordError(
         Exception('Non-fatal test exception từ FPTU Second Brain Demo Area'),
         StackTrace.current,
@@ -94,7 +103,8 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
       );
 
       setState(() {
-        _crashlyticsResult = 'Đã ghi non-fatal error thành công vào Firebase Crashlytics!';
+        _crashlyticsResult =
+            'Đã gửi non-fatal tới SDK. Kiểm tra kết quả trên Dashboard.';
       });
     } catch (e) {
       setState(() {
@@ -102,6 +112,37 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
       });
     } finally {
       setState(() => _isTestingCrashlytics = false);
+    }
+  }
+
+  Future<void> _confirmTestCrash(CrashlyticsService service) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Gây crash thử nghiệm?'),
+        content: const Text(
+          'Ứng dụng sẽ đóng. Mở lại app để gửi báo cáo Crashlytics. Hãy lưu nội dung đang soạn trước.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Gây test crash'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await service.setCustomKey('test_action', 'manual_crash');
+      await service.testCrash();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _crashlyticsResult = 'Không thể gây test crash: $e');
+      }
     }
   }
 
@@ -130,7 +171,8 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
 
       if (!mounted) return;
       setState(() {
-        _syncResult = 'Đã tải lại dữ liệu Cloud Firestore lúc '
+        _syncResult =
+            'Đã tải lại dữ liệu Cloud Firestore lúc '
             '${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}.';
       });
     } catch (e) {
@@ -147,33 +189,48 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
 
   /// Share-consent dialog shown BEFORE any file leaves the device.
   /// The user must explicitly allow the upload; cancelling aborts everything.
-  Future<bool> _askExportConsent(int taskCount, int noteCount, int courseCount) async {
+  Future<bool> _askExportConsent({
+    required int taskCount,
+    required int noteCount,
+    required int courseCount,
+    bool uploadToCloud = true,
+    required String storageProvider,
+  }) async {
     final agreed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         icon: const Icon(Icons.ios_share),
-        title: const Text('Chia sẻ báo cáo học tập?'),
+        title: Text(
+          uploadToCloud ? 'Chia sẻ báo cáo học tập?' : 'Tạo PDF trên thiết bị?',
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Ứng dụng sẽ tạo PDF từ dữ liệu đang hiển thị và tải lên '
-              'Firebase Cloud Storage (đường dẫn reports/{uid}/…).',
-              style: TextStyle(fontSize: 13),
+            Text(
+              uploadToCloud
+                  ? 'Ứng dụng sẽ tạo PDF từ dữ liệu đang hiển thị và tải lên $storageProvider (đường dẫn reports/{uid}/…).'
+                  : 'Ứng dụng sẽ tạo PDF trên thiết bị. Bạn tự chọn ứng dụng nhận file trong menu chia sẻ hệ thống.',
+              style: const TextStyle(fontSize: AppFontSize.dense),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               'Nội dung: $courseCount môn học, $taskCount việc cần làm, '
               '$noteCount ghi chú. Không kèm email/họ tên/SĐT.',
               style: const TextStyle(
-                  fontSize: 12, color: AppColors.onSurfaceVariant),
+                fontSize: AppFontSize.label,
+                color: AppColors.onSurfaceVariant,
+              ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Bạn có thể xóa file và metadata bất cứ lúc nào.',
-              style: TextStyle(
-                  fontSize: 12, color: AppColors.onSurfaceVariant),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              uploadToCloud
+                  ? 'Metadata báo cáo được lưu dưới tài khoản của bạn.'
+                  : 'Chỉ chia sẻ khi bạn chọn nơi nhận. Luồng này không upload Firebase Storage.',
+              style: const TextStyle(
+                fontSize: AppFontSize.label,
+                color: AppColors.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -185,7 +242,7 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
           FilledButton.icon(
             onPressed: () => Navigator.pop(ctx, true),
             icon: const Icon(Icons.check, size: 18),
-            label: const Text('Đồng ý xuất & tải'),
+            label: Text(uploadToCloud ? 'Đồng ý xuất & tải' : 'Đồng ý tạo PDF'),
           ),
         ],
       ),
@@ -195,11 +252,14 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
 
   Future<void> _exportAndUploadReport(
     ReportExportService exporter,
-    String? uid,
-  ) async {
+    String? uid, {
+    bool localOnly = false,
+  }) async {
+    if (_isExporting || _isDownloadingReport) return;
     if (uid == null || uid.isEmpty) {
-      setState(() => _exportError =
-          'Chưa đăng nhập — không thể xuất báo cáo cá nhân.');
+      setState(
+        () => _exportError = 'Chưa đăng nhập — không thể xuất báo cáo cá nhân.',
+      );
       return;
     }
 
@@ -210,6 +270,9 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
       _exportProgress = 0.0;
       _exportResult = null;
       _exportError = null;
+      _localPdfBytes = null;
+      _localPdfName = null;
+      _isLocalExport = localOnly;
     });
 
     List<CourseModel> courses;
@@ -219,15 +282,21 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
       final roadmapVm = context.read<RoadmapViewModel>();
       final tasksVm = context.read<TasksViewModel>();
       final notesVm = context.read<NotesViewModel>();
-      await Future.wait([
-        roadmapVm.loadData(),
-        tasksVm.loadData(),
-        notesVm.loadData(),
-      ]);
+      final reload = await const SyncReloadService().reload(
+        roadmap: roadmapVm,
+        tasks: tasksVm,
+        notes: notesVm,
+      );
+      if (!reload.succeeded) throw StateError(reload.errorMessage!);
+      if (!mounted) return;
+      if (context.read<AuthViewModel>().currentUserId != uid) {
+        throw StateError("Phiên đăng nhập đã thay đổi.");
+      }
       courses = roadmapVm.allCourses;
       tasks = tasksVm.allTasks;
       notes = notesVm.allNotes;
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isExporting = false;
         _exportError = 'Không tải được dữ liệu để xuất: $e';
@@ -236,12 +305,58 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
     }
 
     if (!mounted) return;
-    if (!await _askExportConsent(courses.length, tasks.length, notes.length)) {
-      setState(() => _isExporting = false);
+    if (!await _askExportConsent(
+      courseCount: courses.length,
+      taskCount: tasks.length,
+      noteCount: notes.length,
+      uploadToCloud: !localOnly,
+      storageProvider: exporter.storageProvider,
+    )) {
+      if (mounted) setState(() => _isExporting = false);
       return; // consent is mandatory before any upload
     }
 
+    if (!mounted) return;
+    if (context.read<AuthViewModel>().currentUserId != uid) {
+      setState(() {
+        _isExporting = false;
+        _exportError = "Phiên đăng nhập đã thay đổi. Vui lòng xuất lại.";
+      });
+      return;
+    }
     try {
+      if (localOnly) {
+        final generatedAt = DateTime.now();
+        final bytes = await exporter.generateLocalStudyReport(
+          userId: uid,
+          courses: courses,
+          tasks: tasks,
+          notes: notes,
+          generatedAt: generatedAt,
+        );
+        if (!mounted || context.read<AuthViewModel>().currentUserId != uid) {
+          return;
+        }
+        setState(() {
+          _localPdfBytes = bytes;
+          _localPdfName =
+              'study_report_${generatedAt.millisecondsSinceEpoch}.pdf';
+        });
+        try {
+          await context.read<AnalyticsService>().logEvent(
+            'export_report_local',
+            parameters: {
+              'file_size_kb': (bytes.length / 1024).ceil(),
+              'course_count': courses.length,
+              'task_count': tasks.length,
+              'note_count': notes.length,
+            },
+          );
+        } catch (_) {
+          // A diagnostics failure must not discard the generated PDF.
+        }
+        return;
+      }
       final result = await exporter.exportStudyReport(
         userId: uid,
         courses: courses,
@@ -261,12 +376,49 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
 
   /// Opens the OS print/share sheet with the just-generated PDF in memory.
   Future<void> _openLastReport() async {
-    final bytes = _exportResult?.pdfBytes;
+    final bytes = _exportResult?.pdfBytes ?? _localPdfBytes;
     if (bytes == null) return;
-    await Printing.sharePdf(
-      bytes: bytes,
-      filename: _exportResult!.storagePath.split('/').last,
-    );
+    try {
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: _exportResult?.storagePath.split('/').last ?? _localPdfName!,
+      );
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _exportError =
+              'Không mở được menu chia sẻ PDF. Vui lòng thử lại.',
+        );
+      }
+    }
+  }
+
+  Future<void> _downloadLastReport(ReportExportService exporter) async {
+    final report = _exportResult;
+    final uid = context.read<AuthViewModel>().currentUserId;
+    if (report == null || uid == null || _isDownloadingReport || _isExporting) {
+      return;
+    }
+    setState(() {
+      _isDownloadingReport = true;
+      _exportError = null;
+    });
+    try {
+      final bytes = await exporter.downloadStudyReport(report.storagePath);
+      if (!mounted || context.read<AuthViewModel>().currentUserId != uid) {
+        return;
+      }
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: report.storagePath.split('/').last,
+      );
+    } catch (_) {
+      if (mounted) {
+        setState(() => _exportError = 'Không mở được bản PDF từ cloud.');
+      }
+    } finally {
+      if (mounted) setState(() => _isDownloadingReport = false);
+    }
   }
 
   @override
@@ -294,9 +446,10 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
                   radius: 28,
                   backgroundColor: AppColors.primaryContainer,
                   child: Text(
-                    (authVm.currentUserEmail ?? '?').characters.first.toUpperCase(),
+                    (authVm.currentUserEmail ?? '?').characters.first
+                        .toUpperCase(),
                     style: const TextStyle(
-                      fontSize: 22,
+                      fontSize: AppFontSize.displayMedium,
                       fontWeight: FontWeight.w700,
                       color: AppColors.primary,
                     ),
@@ -309,22 +462,25 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
                     children: [
                       Text(
                         authVm.isAuthenticated
-                            ? (authVm.currentUserEmail?.split('@').first ?? 'Người dùng')
+                            ? (authVm.currentUserEmail?.split('@').first ??
+                                  'Người dùng')
                             : 'Chưa đăng nhập',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: AppSpacing.hairline),
                       Text(
                         authVm.currentUserEmail ??
                             'Vui lòng đăng nhập bằng tài khoản Google',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.onSurfaceVariant,
-                            ),
+                        style: Theme.of(context).textTheme.bodyMedium
+                            ?.copyWith(color: AppColors.onSurfaceVariant),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: AppSpacing.hairline),
                       const Text(
                         'Dữ liệu đồng bộ theo UID Firebase của bạn',
-                        style: TextStyle(fontSize: 12, color: AppColors.primary),
+                        style: TextStyle(
+                          fontSize: AppFontSize.label,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ],
                   ),
@@ -335,7 +491,10 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
           const SizedBox(height: AppSpacing.lg),
 
           // Offline Vault Sync Status Card
-          Text('Trạng thái Vault & Đồng bộ', style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            'Trạng thái Vault & Đồng bộ',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: AppSpacing.sm),
           AppCard(
             child: Column(
@@ -343,14 +502,22 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
               children: [
                 const ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.cloud_done_outlined, color: AppColors.success),
+                  leading: Icon(
+                    Icons.cloud_done_outlined,
+                    color: AppColors.success,
+                  ),
                   title: Text('Đồng bộ Cloud Firestore'),
-                  subtitle: Text('Offline persistence: Hoạt động (Unlimited cache)'),
+                  subtitle: Text(
+                    'Offline persistence: Hoạt động (Unlimited cache)',
+                  ),
                 ),
                 const Divider(height: 1),
                 const ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.folder_shared_outlined, color: AppColors.secondary),
+                  leading: Icon(
+                    Icons.folder_shared_outlined,
+                    color: AppColors.secondary,
+                  ),
                   title: Text('Cloud Storage Vault'),
                   subtitle: Text('Đường dẫn: notes/{uid}/... (Max 10MB)'),
                 ),
@@ -358,7 +525,10 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     _syncResult!,
-                    style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
                 const SizedBox(height: AppSpacing.sm),
@@ -375,13 +545,15 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
           const SizedBox(height: AppSpacing.lg),
 
           // Firebase Demo Area (Lab 3 Requirement)
-          Text('Firebase Demo Area (PRM323 Lab 3)', style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            'Firebase Demo Area (PRM323 Lab 3)',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Khu vực kiểm thử tính năng của đề bài Lab 3: Remote Config, Crashlytics, Firestore read/write.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.onSurfaceVariant,
-                ),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: AppColors.onSurfaceVariant),
           ),
           const SizedBox(height: AppSpacing.sm),
 
@@ -404,7 +576,12 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
                         await remoteConfig.fetchAndActivate();
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Đã cập nhật cấu hình từ xa')),
+                          SnackBar(
+                            content: Text(
+                              remoteConfig.lastFetchError ??
+                                  'Đã tải cấu hình hiện hành từ Firebase.',
+                            ),
+                          ),
                         );
                       },
                     ),
@@ -412,10 +589,19 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
                 ),
                 const Divider(height: 1),
                 const SizedBox(height: AppSpacing.xs),
-                _buildConfigRow('maintenance_mode', remoteConfig.isMaintenanceMode.toString()),
-                _buildConfigRow('feature_ai_advisor_enabled', remoteConfig.isAiAdvisorEnabled.toString()),
+                _buildConfigRow(
+                  'maintenance_mode',
+                  remoteConfig.isMaintenanceMode.toString(),
+                ),
+                _buildConfigRow(
+                  'feature_ai_advisor_enabled',
+                  remoteConfig.isAiAdvisorEnabled.toString(),
+                ),
                 _buildConfigRow('min_app_version', remoteConfig.minAppVersion),
-                _buildConfigRow('vault_sync_interval_mins', '${remoteConfig.vaultSyncIntervalMins} phút'),
+                _buildConfigRow(
+                  'vault_sync_interval_mins',
+                  '${remoteConfig.vaultSyncIntervalMins} phút',
+                ),
               ],
             ),
           ),
@@ -426,24 +612,40 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Firebase Crashlytics Test', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 4),
+                Text(
+                  'Firebase Crashlytics Test',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: AppSpacing.xxs),
                 const Text(
                   'Ghi nhận non-fatal exception và breadcrumb log lên dashboard Crashlytics mà không làm crash ứng dụng.',
-                  style: TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant),
+                  style: TextStyle(
+                    fontSize: AppFontSize.label,
+                    color: AppColors.onSurfaceVariant,
+                  ),
                 ),
                 if (_crashlyticsResult != null) ...[
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     _crashlyticsResult!,
-                    style: const TextStyle(color: AppColors.success, fontSize: 12),
+                    style: const TextStyle(
+                      color: AppColors.success,
+                      fontSize: AppFontSize.label,
+                    ),
                   ),
                 ],
                 const SizedBox(height: AppSpacing.sm),
                 OutlinedButton.icon(
-                  onPressed: _isTestingCrashlytics ? null : () => _testCrashlytics(crashlytics),
+                  onPressed: _isTestingCrashlytics
+                      ? null
+                      : () => _testCrashlytics(crashlytics),
                   icon: const Icon(Icons.bug_report_outlined),
                   label: const Text('Ghi nhận Test Exception vào Crashlytics'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _confirmTestCrash(crashlytics),
+                  icon: const Icon(Icons.warning_amber_rounded),
+                  label: const Text('Gây test crash (đóng ứng dụng)'),
                 ),
               ],
             ),
@@ -455,23 +657,33 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Firestore Read/Write Test', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 4),
+                Text(
+                  'Firestore Read/Write Test',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: AppSpacing.xxs),
                 const Text(
                   'Kiểm tra đọc và ghi dữ liệu mẫu qua FirestoreService (áp dụng Offline Persistence).',
-                  style: TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant),
+                  style: TextStyle(
+                    fontSize: AppFontSize.label,
+                    color: AppColors.onSurfaceVariant,
+                  ),
                 ),
                 if (_firestoreTestResult != null) ...[
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     _firestoreTestResult!,
-                    style: const TextStyle(color: AppColors.success, fontSize: 12),
+                    style: const TextStyle(
+                      color: AppColors.success,
+                      fontSize: AppFontSize.label,
+                    ),
                   ),
                 ],
                 const SizedBox(height: AppSpacing.sm),
                 OutlinedButton.icon(
-                  onPressed:
-                      _isTestingFirestore ? null : () => _testFirestore(firestore, authVm.currentUserId),
+                  onPressed: _isTestingFirestore
+                      ? null
+                      : () => _testFirestore(firestore, authVm.currentUserId),
                   icon: const Icon(Icons.cloud_sync_outlined),
                   label: const Text('Chạy Test Đọc/Ghi Firestore'),
                 ),
@@ -485,14 +697,19 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Export & Upload PDF',
-                    style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 4),
-                const Text(
-                  'Tạo PDF từ dữ liệu đang hiển thị (lộ trình, việc cần làm, ghi chú), '
-                      'hiện hộp thoại xin phép chia sẻ, tải lên Cloud Storage '
-                      'reports/{uid}/… kèm metadata Firestore.',
-                  style: TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant),
+                Text(
+                  'Export & Upload PDF',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  'Tạo PDF từ lộ trình, việc cần làm và ghi chú. '
+                  'Bạn có thể chia sẻ từ thiết bị hoặc chọn tải lên '
+                  '${reportExporter.storageProvider} cùng metadata Firestore.',
+                  style: const TextStyle(
+                    fontSize: AppFontSize.label,
+                    color: AppColors.onSurfaceVariant,
+                  ),
                 ),
                 if (_isExporting) ...[
                   const SizedBox(height: AppSpacing.sm),
@@ -503,20 +720,44 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
                       minHeight: 8,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xxs),
                   Text(
                     _exportProgress > 0
                         ? 'Đang tải lên… ${(_exportProgress * 100).toStringAsFixed(0)}%'
                         : 'Đang tạo PDF…',
-                    style: const TextStyle(fontSize: 12),
+                    style: const TextStyle(fontSize: AppFontSize.label),
                   ),
                 ],
                 if (_exportError != null) ...[
                   const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    _exportError!,
-                    style: const TextStyle(
-                        color: Color(0xFFB3261E), fontSize: 12),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        size: 16,
+                        color: AppColors.error,
+                      ),
+                      const SizedBox(width: AppSpacing.xxs),
+                      Expanded(
+                        child: Text(
+                          _exportError!,
+                          style: const TextStyle(
+                            color: AppColors.error,
+                            fontSize: AppFontSize.label,
+                          ),
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: _isExporting
+                            ? null
+                            : () => _exportAndUploadReport(
+                                reportExporter,
+                                authVm.currentUserId,
+                              ),
+                        icon: const Icon(Icons.refresh, size: 16),
+                        label: const Text('Thử lại'),
+                      ),
+                    ],
                   ),
                 ],
                 if (_exportResult != null) ...[
@@ -524,41 +765,86 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
                   Text(
                     'Hoàn tất! Kích thước ${(_exportResult!.bytes / 1024).toStringAsFixed(1)} KB',
                     style: const TextStyle(
-                        color: AppColors.success,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12),
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w600,
+                      fontSize: AppFontSize.label,
+                    ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xxs),
                   SelectableText(
                     _exportResult!.downloadUrl,
-                    style: const TextStyle(fontSize: 11),
+                    style: const TextStyle(fontSize: AppFontSize.caption),
                     maxLines: 3,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xxs),
                   Text(
                     'Đường dẫn: ${_exportResult!.storagePath}',
                     style: const TextStyle(
-                        fontSize: 11, color: AppColors.onSurfaceVariant),
+                      fontSize: AppFontSize.caption,
+                      color: AppColors.onSurfaceVariant,
+                    ),
                   ),
                 ],
                 const SizedBox(height: AppSpacing.sm),
+                AppOutlinedButton(
+                  label: _isExporting && _isLocalExport
+                      ? 'Đang tạo PDF…'
+                      : 'Tạo PDF trên thiết bị',
+                  icon: Icons.picture_as_pdf_outlined,
+                  isExpanded: true,
+                  onPressed: _isExporting
+                      ? null
+                      : () => _exportAndUploadReport(
+                          reportExporter,
+                          authVm.currentUserId,
+                          localOnly: true,
+                        ),
+                ),
+                if (_localPdfBytes != null) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Đã tạo PDF trên thiết bị (${(_localPdfBytes!.length / 1024).toStringAsFixed(1)} KB). Chưa upload cloud.',
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.xs),
                 AppButton(
                   label: _exportResult == null
-                      ? 'Xuất & Tải PDF lên Cloud Storage'
+                      ? reportExporter.storageProvider ==
+                                'Firebase Cloud Storage'
+                            ? 'Xuất & Tải PDF lên Cloud Storage'
+                            : 'Xuất & Tải PDF lên ${reportExporter.storageProvider}'
                       : 'Xuất báo cáo mới',
                   icon: Icons.picture_as_pdf_outlined,
-                  isLoading: _isExporting,
+                  isLoading: _isExporting && !_isLocalExport,
                   isExpanded: true,
-                  onPressed: () =>
-                      _exportAndUploadReport(reportExporter, authVm.currentUserId),
+                  onPressed: _isExporting
+                      ? null
+                      : () => _exportAndUploadReport(
+                          reportExporter,
+                          authVm.currentUserId,
+                        ),
                 ),
-                if (_exportResult != null) ...[
+                if (_exportResult != null)
+                  TextButton.icon(
+                    onPressed: _isDownloadingReport || _isExporting
+                        ? null
+                        : () => _downloadLastReport(reportExporter),
+                    icon: const Icon(Icons.download_outlined),
+                    label: Text(
+                      _isDownloadingReport
+                          ? 'Đang tải PDF…'
+                          : 'Tải lại PDF từ cloud',
+                    ),
+                  ),
+                if (_exportResult != null || _localPdfBytes != null) ...[
                   const SizedBox(height: AppSpacing.xs),
                   Row(
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: _openLastReport,
+                          onPressed: _isExporting || _isDownloadingReport
+                              ? null
+                              : _openLastReport,
                           icon: const Icon(Icons.open_in_new, size: 18),
                           label: const Text('Mở / Chia sẻ file'),
                         ),
@@ -575,30 +861,36 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
   }
 
   Widget _buildConfigRow(String key, String value) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              key,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.primaryContainer,
-                borderRadius: BorderRadius.circular(AppRadius.xs),
-              ),
-              child: Text(
-                value,
-                style: const TextStyle(
-                  color: AppColors.onPrimaryContainer,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 11,
-                ),
-              ),
-            ),
-          ],
+    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          key,
+          style: const TextStyle(
+            fontFamily: 'monospace',
+            fontSize: AppFontSize.label,
+          ),
         ),
-      );
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.micro,
+            vertical: AppSpacing.hairline,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.primaryContainer,
+            borderRadius: BorderRadius.circular(AppRadius.xs),
+          ),
+          child: Text(
+            value,
+            style: const TextStyle(
+              color: AppColors.onPrimaryContainer,
+              fontWeight: FontWeight.w700,
+              fontSize: AppFontSize.caption,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }

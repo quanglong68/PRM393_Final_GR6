@@ -17,15 +17,14 @@ class AuthException implements Exception {
 
 /// Firebase Authentication implementation supporting Google Sign-In.
 class FirebaseAuthService implements AuthService {
-  FirebaseAuthService({
-    FirebaseAuth? auth,
-    GoogleSignIn? googleSignIn,
-  })  : _auth = auth ?? FirebaseAuth.instance,
-        _googleSignIn = googleSignIn ??
-            GoogleSignIn(
-              scopes: ['email', 'profile'],
-              hostedDomain: 'fpt.edu.vn',
-            );
+  FirebaseAuthService({FirebaseAuth? auth, GoogleSignIn? googleSignIn})
+    : _auth = auth ?? FirebaseAuth.instance,
+      _googleSignIn =
+          googleSignIn ??
+          GoogleSignIn(
+            scopes: ['email', 'profile'],
+            hostedDomain: 'fpt.edu.vn',
+          );
 
   final FirebaseAuth _auth;
   final GoogleSignIn _googleSignIn;
@@ -49,9 +48,7 @@ class FirebaseAuthService implements AuthService {
     try {
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
-        // User cancelled the sign-in flow — return cleanly without throwing error
-        debugPrint('[Auth] Google Sign-In was cancelled by user.');
-        return;
+        throw const AuthException('Bạn đã hủy đăng nhập.', code: 'cancelled');
       }
 
       final googleAuth = await googleUser.authentication;
@@ -62,7 +59,7 @@ class FirebaseAuthService implements AuthService {
 
       await _auth.signInWithCredential(credential);
 
-      // ponytail: server-side domain enforcement — client hostedDomain only filters picker.
+      // Client-side domain check; backend restrictions must also use rules.
       // Upgrade path: move to Firebase Auth blocking function or Firestore rules email check.
       final email = _auth.currentUser?.email ?? '';
       if (!email.endsWith('@fpt.edu.vn')) {
@@ -74,7 +71,11 @@ class FirebaseAuthService implements AuthService {
         );
       }
 
-      debugPrint('[Auth] Google Sign-In succeeded for uid: ${_auth.currentUser?.uid}');
+      debugPrint(
+        '[Auth] Google Sign-In succeeded for uid: ${_auth.currentUser?.uid}',
+      );
+    } on AuthException {
+      rethrow;
     } on FirebaseAuthException catch (e) {
       debugPrint('[Auth] FirebaseAuthException: ${e.code} — ${e.message}');
       switch (e.code) {
@@ -110,10 +111,7 @@ class FirebaseAuthService implements AuthService {
   @override
   Future<void> signOut() async {
     try {
-      await Future.wait([
-        _googleSignIn.signOut(),
-        _auth.signOut(),
-      ]);
+      await Future.wait([_googleSignIn.signOut(), _auth.signOut()]);
       debugPrint('[Auth] Successfully signed out.');
     } catch (e) {
       debugPrint('[Auth] Error signing out: $e');

@@ -1,0 +1,10 @@
+{
+  "phase_requested": "TERM",
+  "device": "emulator-5554",
+  "title": "LAB3-TERM-20261104T141206",
+  "timestamp_utc": "2026-11-04T14:12:06.698206+00:00",
+  "send_api_error": false,
+  "send_api_response": "name: projects/prm323-lab2-gr6/messages/0:1793801529827637%6bcd012b6bcd012b\n",
+  "counts_as_terminated_evidence": false,
+  "reason": "Earlier precondition still saw the process alive; excluded."
+}

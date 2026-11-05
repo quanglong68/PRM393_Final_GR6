@@ -1,0 +1,33 @@
+{
+  "parameters": {
+    "maintenance_mode": {
+      "defaultValue": {
+        "value": "false"
+      },
+      "valueType": "BOOLEAN",
+      "description": "Show maintenance gate when enabled."
+    },
+    "feature_ai_advisor_enabled": {
+      "defaultValue": {
+        "value": "true"
+      },
+      "valueType": "BOOLEAN",
+      "description": "Enable the academic advisor feature."
+    },
+    "min_app_version": {
+      "defaultValue": {
+        "value": "1.0.0"
+      },
+      "valueType": "STRING",
+      "description": "Minimum supported app version."
+    },
+    "vault_sync_interval_mins": {
+      "defaultValue": {
+        "value": "31"
+      },
+      "valueType": "NUMBER",
+      "description": "Vault sync interval displayed by the app, in minutes."
+    }
+  },
+  "conditions": []
+}

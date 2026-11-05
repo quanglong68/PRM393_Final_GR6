@@ -36,33 +36,37 @@ class AppTextField extends StatelessWidget {
   final bool autofocus;
 
   @override
-  Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (label != null) ...[
-            Text(label!, style: Theme.of(context).textTheme.labelLarge),
-            const SizedBox(height: AppSpacing.xxs),
-          ],
-          TextField(
-            controller: controller,
-            obscureText: obscureText,
-            maxLines: maxLines,
-            keyboardType: keyboardType,
-            onChanged: onChanged,
-            onSubmitted: onSubmitted,
-            autofocus: autofocus,
-            decoration: InputDecoration(
-              hintText: hint,
-              prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
-              suffixIcon: suffixIcon != null
-                  ? IconButton(onPressed: onSuffixTap, icon: Icon(suffixIcon))
-                  : null,
-              errorText: errorText,
-            ),
-          ),
+  Widget build(BuildContext context) => Semantics(
+    textField: true,
+    label: label ?? hint,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (label != null) ...[
+          Text(label!, style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: AppSpacing.xxs),
         ],
-      );
+        TextField(
+          controller: controller,
+          obscureText: obscureText,
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+          onChanged: onChanged,
+          onSubmitted: onSubmitted,
+          autofocus: autofocus,
+          decoration: InputDecoration(
+            hintText: hint,
+            prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
+            suffixIcon: suffixIcon != null
+                ? IconButton(onPressed: onSuffixTap, icon: Icon(suffixIcon))
+                : null,
+            errorText: errorText,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 /// Search bar reusable widget.
@@ -79,21 +83,25 @@ class AppSearchBar extends StatelessWidget {
   final ValueChanged<String>? onChanged;
 
   @override
-  Widget build(BuildContext context) => TextField(
-        controller: controller,
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          hintText: hint,
-          prefixIcon: const Icon(Icons.search),
-          suffixIcon: controller.text.isNotEmpty
-              ? IconButton(
-                  onPressed: () {
-                    controller.clear();
-                    onChanged?.call('');
-                  },
-                  icon: const Icon(Icons.close),
-                )
-              : null,
-        ),
-      );
+  Widget build(BuildContext context) => Semantics(
+    textField: true,
+    label: hint,
+    child: TextField(
+      controller: controller,
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixIcon: const Icon(Icons.search),
+        suffixIcon: controller.text.isNotEmpty
+            ? IconButton(
+                onPressed: () {
+                  controller.clear();
+                  onChanged?.call('');
+                },
+                icon: const Icon(Icons.close),
+              )
+            : null,
+      ),
+    ),
+  );
 }

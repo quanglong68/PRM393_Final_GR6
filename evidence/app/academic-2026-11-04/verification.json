@@ -1,0 +1,33 @@
+{
+  "date": "2026-11-04",
+  "flutter_tests": {
+    "passed": 112,
+    "failed": 0
+  },
+  "flutter_analyze": "No issues found",
+  "debug_apk_sha256": "39cbb0495d993609e50b5220d46843bc864c2a04a3f1a7511e0698a3b001eccb",
+  "device": "emulator-5554",
+  "avd": "Pixel_7_API_35_Google_Play",
+  "installed": true,
+  "host_parser_tests": 7,
+  "e2e_collected_runs": 76,
+  "e2e_actual": {
+    "passed": 0,
+    "rubric_complete": false,
+    "blockers": [
+      "Gemini 2.5 Flash 20 requests/day quota",
+      "Historical ANR/focus problem; long-run stability unverified",
+      "Dedicated test account required for auth/write cases"
+    ],
+    "historical_sdk_completed_is_not_pytest_pass": true
+  },
+  "cloud_runtime_complete": false,
+  "native_pdf_consent": {
+    "courses": 4,
+    "tasks": 0,
+    "notes": 0,
+    "cancelled_before_upload": true
+  },
+  "superseded_app_verification": "../local-pdf-2026-11-04/verification.json",
+  "admin_cloud_oauth": "completed"
+}

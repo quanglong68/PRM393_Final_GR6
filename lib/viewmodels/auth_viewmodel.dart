@@ -91,7 +91,9 @@ class AuthViewModel extends ChangeNotifier {
     try {
       final granted = await messaging.requestPermission();
       if (!granted) {
-        debugPrint('[Auth] Notification permission denied — skipping token registration.');
+        debugPrint(
+          '[Auth] Notification permission denied — skipping token registration.',
+        );
         return;
       }
       final token = await messaging.getToken();
@@ -107,12 +109,16 @@ class AuthViewModel extends ChangeNotifier {
 
   Future<void> _registerToken(String? uid, String token) async {
     final firestore = firestoreService;
-    if (firestore == null || uid == null || uid.isEmpty || token.isEmpty) return;
+    if (firestore == null || uid == null || uid.isEmpty || token.isEmpty) {
+      return;
+    }
     try {
       await firestore.registerToken(uid, token);
       debugPrint('[Auth] Registered FCM token for $uid.');
     } catch (e) {
-      debugPrint('[Auth] FCM token refresh registration failed (non-fatal): $e');
+      debugPrint(
+        '[Auth] FCM token refresh registration failed (non-fatal): $e',
+      );
     }
   }
 
@@ -146,6 +152,9 @@ class AuthViewModel extends ChangeNotifier {
 
     try {
       await authService.signOut();
+      await analyticsService?.logLogout();
+      await analyticsService?.setUserId('');
+      await crashlyticsService?.setUserId('');
     } on AuthException catch (e) {
       _errorMessage = e.message;
     } catch (e) {

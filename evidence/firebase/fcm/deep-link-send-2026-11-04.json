@@ -1,0 +1,13 @@
+{
+  "notification_id": "LAB3-LINK-20261104141627730",
+  "message_name": "projects/prm323-lab2-gr6/messages/0:1793801787974303%6bcd012b6bcd012b",
+  "payload_data": {
+    "notificationId": "LAB3-LINK-20261104141627730",
+    "route": "/course-detail",
+    "courseId": "PRM323",
+    "type": "system"
+  },
+  "phase_requested": "terminated deep link",
+  "timestamp_utc": "2026-11-04T14:16:27.931Z",
+  "device": "emulator-5554"
+}

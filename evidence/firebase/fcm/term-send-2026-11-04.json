@@ -1,0 +1,8 @@
+{
+  "phase_requested": "TERM",
+  "device": "emulator-5554",
+  "title": "LAB3-TERM-20261104T141313",
+  "timestamp_utc": "2026-11-04T14:13:13.094953+00:00",
+  "send_api_error": false,
+  "send_api_response": "name: projects/prm323-lab2-gr6/messages/0:1793801596186731%6bcd012b6bcd012b\n"
+}

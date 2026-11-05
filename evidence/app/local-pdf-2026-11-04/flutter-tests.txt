@@ -1,0 +1,189 @@
+00:00 +0: loading G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/models/note_model_test.dart
+00:00 +0: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/models/note_model_test.dart: NoteModel.fromMap formats Firestore Timestamp values for display
+00:00 +1: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/models/note_model_test.dart: NoteModel.fromMap keeps legacy string timestamps and supplies a fallback
+00:00 +2: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/models/notification_model_test.dart: NotificationModel.fromMap receivedAt parses a Firestore Timestamp instead of throwing
+00:00 +3: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/models/notification_model_test.dart: NotificationModel.fromMap receivedAt parses a DateTime value
+00:00 +4: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/models/notification_model_test.dart: NotificationModel.fromMap receivedAt parses an ISO-8601 string from an FCM payload
+00:00 +5: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/models/notification_model_test.dart: NotificationModel.fromMap receivedAt keeps a legacy display string and tolerates a missing field
+00:00 +6: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/models/notification_model_test.dart: NotificationModel route fromMap carries route
+00:00 +7: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/models/notification_model_test.dart: NotificationModel route toMap only emits route when set
+00:00 +8: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/models/notification_model_test.dart: NotificationModel route copyWith(read:) preserves route
+00:00 +9: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/models/notification_model_test.dart: NotificationModel route fromPush carries route from the data payload
+00:01 +10: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:01 +11: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:01 +12: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:01 +13: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:01 +14: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:01 +15: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:01 +15: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/firestore_tasks_regression_test.dart: Firestore adapter returns every task and preserves canonical legacy IDs
+[Firestore] Offline persistence enabled with unlimited cache.
+00:01 +16: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:01 +16: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/firestore_tasks_regression_test.dart: Firestore adapter returns an empty list for no tasks
+[Firestore] Offline persistence enabled with unlimited cache.
+00:01 +17: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +18: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +19: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +20: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +21: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +22: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +22: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/report_export_service_test.dart: ReportExportService success flow uploads to reports/{uid}/… with PDF content type
+[ReportExport] Uploaded reports/uid_123/study_report_1793802201720.pdf (20091 bytes)
+00:02 +23: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +24: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +24: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/report_export_service_test.dart: ReportExportService progress callback receives upload fractions in order
+[ReportExport] Uploaded reports/uid_123/study_report_1793802201791.pdf (20091 bytes)
+00:02 +25: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +26: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +27: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +28: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +29: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +30: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +31: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +31: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/report_export_service_test.dart: ReportExportService long uid is used verbatim in the storage path
+[ReportExport] Uploaded reports/a-very-long-firebase-uid-0123456789/study_report_1793802201835.pdf (20400 bytes)
+00:02 +32: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +33: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +34: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +34: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/report_export_service_test.dart: ReportExportService metadata is persisted to Firestore with counts and URL
+[ReportExport] Uploaded reports/uid_123/study_report_1793802201904.pdf (20091 bytes)
+00:02 +35: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +36: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +36: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/report_export_service_test.dart: ReportExportService export_report event fires exactly once with success params
+[ReportExport] Uploaded reports/uid_123/study_report_1793802201939.pdf (20091 bytes)
+00:02 +37: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +38: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +39: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +40: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +40: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/report_export_service_test.dart: ReportExportService storage failure rethrows and logs export_report=failed
+[ReportExport] FAILED: Exception: Simulated storage upload failure
+00:02 +41: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +42: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +43: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +44: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +44: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/report_export_service_test.dart: ReportExportService metadata failure also rethrows and marks the event failed
+[ReportExport] FAILED: Exception: Simulated remote saveReportMetadata failure
+00:02 +45: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +46: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +47: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +48: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +49: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +50: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +51: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +52: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:02 +53: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +54: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +55: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +56: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +57: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +58: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +59: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +59: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/viewmodels/advisor_viewmodel_test.dart: AdvisorViewModel & GPA Strategy Simulator Tests Without consent no question is sent and no bubble is added
+[Advisor] askQuestion blocked — share consent not granted.
+00:03 +60: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +61: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +62: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +63: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +64: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +65: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +66: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +67: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +68: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +69: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +70: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +70: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/viewmodels/notifications_test.dart: AuthViewModel FCM token registration (T12) registers a real token on login and stores under users/{uid}/tokens
+[Auth] Registered FCM token for test_p02_duc.
+00:03 +71: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +72: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +73: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +73: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/viewmodels/notifications_test.dart: AuthViewModel FCM token registration (T12) denied permission registers nothing (no fake token rows)
+[Auth] Notification permission denied — skipping token registration.
+00:03 +74: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: task Undo remains usable at seven seconds and restores persisted state
+00:03 +75: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/version_gate_test.dart: AuthGate version block older build than minimum is blocked
+00:03 +76: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/version_gate_test.dart: AuthGate version block older build than minimum is blocked
+00:03 +76: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/viewmodels/notifications_test.dart: AuthViewModel FCM token registration (T12) null token registers nothing
+[Auth] No FCM token available — skipping registration.
+00:03 +77: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/version_gate_test.dart: AuthGate version block older build than minimum is blocked
+00:03 +78: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/version_gate_test.dart: AuthGate version block older build than minimum is blocked
+00:03 +79: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/version_gate_test.dart: AuthGate version block older build than minimum is blocked
+00:03 +80: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/version_gate_test.dart: AuthGate version block older build than minimum is blocked
+00:03 +81: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/version_gate_test.dart: AuthGate version block older build than minimum is blocked
+[Analytics] Firebase not initialized — setUserId skipped.
+[Crashlytics] Firebase not initialized — skipped setUserId: user_123
+[Analytics] Firebase not initialized — event DROPPED: login_success
+[Crashlytics] Firebase not initialized — skipped setCustomKey: auth_method=google
+00:03 +82: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: remote configuration notification reevaluates the running auth gate
+[Analytics] Firebase not initialized — setUserId skipped.
+[Crashlytics] Firebase not initialized — skipped setUserId: owner-a
+[Analytics] Firebase not initialized — event DROPPED: login_success
+[Crashlytics] Firebase not initialized — skipped setCustomKey: auth_method=google
+00:04 +83: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/viewmodels/session_regression_test.dart: logout clears advisor consent, questions and pending replies
+00:04 +84: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/version_gate_test.dart: AuthGate version block exactly at minimum reaches the shell
+00:04 +84: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/viewmodels/session_regression_test.dart: logout records one event and clears analytics and crash identity
+[Crashlytics] Firebase not initialized — skipped setCustomKey: auth_method=google
+00:04 +85: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/version_gate_test.dart: AuthGate version block exactly at minimum reaches the shell
+[Analytics] Firebase not initialized — setUserId skipped.
+[Crashlytics] Firebase not initialized — skipped setUserId: user_123
+[Analytics] Firebase not initialized — event DROPPED: login_success
+[Crashlytics] Firebase not initialized — skipped setCustomKey: auth_method=google
+00:04 +86: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: export rejects failed source reload before consent or Storage upload
+00:04 +87: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: export rejects failed source reload before consent or Storage upload
+00:04 +87: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/version_gate_test.dart: AuthGate version block newer build than minimum reaches the shell
+[Analytics] Firebase not initialized — setUserId skipped.
+[Crashlytics] Firebase not initialized — skipped setUserId: user_123
+[Analytics] Firebase not initialized — event DROPPED: login_success
+[Crashlytics] Firebase not initialized — skipped setCustomKey: auth_method=google
+00:04 +88: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: export rejects failed source reload before consent or Storage upload
+00:04 +89: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: export rejects failed source reload before consent or Storage upload
+[Analytics] Firebase not initialized — setUserId skipped.
+[Crashlytics] Firebase not initialized — skipped setUserId: owner-a
+[Analytics] Firebase not initialized — event DROPPED: login_success
+[Crashlytics] Firebase not initialized — skipped setCustomKey: auth_method=google
+00:04 +90: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+00:04 +91: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+00:04 +92: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+00:05 +92: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/version_gate_test.dart: AuthGate version block maintenance_mode still gates after the version check
+[Analytics] Firebase not initialized — setUserId skipped.
+[Crashlytics] Firebase not initialized — skipped setUserId: user_123
+[Analytics] Firebase not initialized — event DROPPED: login_success
+[Crashlytics] Firebase not initialized — skipped setCustomKey: auth_method=google
+00:05 +93: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+00:05 +93: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/services/version_gate_test.dart: AuthGate version block version block wins over maintenance mode
+[Analytics] Firebase not initialized — setUserId skipped.
+[Crashlytics] Firebase not initialized — skipped setUserId: user_123
+[Analytics] Firebase not initialized — event DROPPED: login_success
+[Crashlytics] Firebase not initialized — skipped setCustomKey: auth_method=google
+00:05 +94: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+00:05 +95: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+00:05 +96: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+00:05 +97: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+00:05 +98: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+00:05 +99: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+00:05 +100: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+00:05 +101: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+00:05 +101: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: PDF consent reports each source count in the correct category
+[Analytics] Firebase not initialized — setUserId skipped.
+[Crashlytics] Firebase not initialized — skipped setUserId: owner-a
+[Analytics] Firebase not initialized — event DROPPED: login_success
+[Crashlytics] Firebase not initialized — skipped setCustomKey: auth_method=google
+00:05 +102: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+00:05 +103: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+00:05 +104: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+00:05 +105: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+00:05 +106: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+00:05 +107: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+00:05 +108: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+00:05 +109: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+00:06 +109: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/regression_widget_test.dart: local PDF consent can cancel without any cloud write
+[Analytics] Firebase not initialized — setUserId skipped.
+[Crashlytics] Firebase not initialized — skipped setUserId: owner-a
+[Analytics] Firebase not initialized — event DROPPED: login_success
+[Crashlytics] Firebase not initialized — skipped setCustomKey: auth_method=google
+00:06 +110: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Authenticated user sees AppShell with bottom navigation
+[Analytics] Firebase not initialized — setUserId skipped.
+[Crashlytics] Firebase not initialized — skipped setUserId: user_123
+[Analytics] Firebase not initialized — event DROPPED: login_success
+[Crashlytics] Firebase not initialized — skipped setCustomKey: auth_method=google
+00:06 +111: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Unauthenticated user sees SignInScreen with Google sign-in button
+00:06 +112: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Successful note save shows success snackbar
+00:06 +113: G:/FPT/Semester8/PRM/Lab3/prm323-lab2-gr6/test/widget_test.dart: Failed note save does not show success and displays error snackbar
+00:06 +114: All tests passed!

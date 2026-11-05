@@ -1,3 +1,13 @@
+> **Yêu cầu chấm cập nhật 05/11/2026.** Chuẩn bị demo trên điện thoại thật. Dev xem Firebase Console, admin xem web riêng. [Chạy web admin, FCM server và Media API](admin-web/README.md) · [Giải thích nguyên lý và quy trình chấm](docs/lab3-oral-defense.md). Cloudinary là adapter PDF tùy chọn cho Spark.
+
+> 05/11/2026 — Giữ Spark, dùng PDF cục bộ. Upload Storage còn thiếu trong rubric. [Kết quả kiểm tra nhẹ](docs/implementation-verification-2026-11-05.md).
+
+> Cập nhật tiếp 04/11: 114 Flutter tests, analyzer sạch, APK/PDF cục bộ và menu chia sẻ đã xác minh. FCM ba trạng thái + cold deep link, RC 31→30 cùng APK và dashboard Crashlytics đã có evidence. Upload Storage còn thiếu bucket/billing; ARTEMIS đủ số lượt chưa đạt (quota). Chi tiết: docs/implementation-verification-2026-11-04.md.
+
+> Cập nhật tiếp hạng mục 1–2–3 ngày 04/11/2026: xem [báo cáo xác minh mới](docs/implementation-verification-2026-11-04.md). Đã thêm nhập dữ liệu học tập riêng, Advisor/Strategy theo dữ liệu, tab môn và route FCM. Cloud evidence/E2E vẫn có blocker thực; checklist cũ không chứng minh hoàn tất.
+
+> Cập nhật kiểm tra 04/11/2026: 100/100 Flutter tests pass, analyzer 0 issue. Chi tiết sửa lỗi và giới hạn xác minh: [docs/fix-verification-2026-11-04.md](docs/fix-verification-2026-11-04.md). Các kết quả emulator/Firebase cũ bên dưới là snapshot, không thay thế evidence mới.
+
 # FPTU Second Brain — PRM393 Lab 3 (Cloud-Enabled Mobile App)
 
 Ứng dụng Android Flutter (PRM323 Lab 2 → Lab 3): tra cứu chương trình/đề cương,
@@ -11,7 +21,7 @@ Kiến trúc fail-loud: Firebase lỗi là báo lỗi thật, không fallback mo
 ```bash
 flutter pub get
 flutter analyze          # 0 issues
-flutter test             # 84 tests (unit/widget, hermetic mocks + Timestamp parsing + SyncReloadService + version gate)
+flutter test             # 89 tests (unit/widget, hermetic mocks + Timestamp parsing + SyncReloadService + version gate + Advisor levels/consent)
 flutter build apk --debug   # PASS on 2026-11-02 with out-of-band google-services.json
 ```
 
@@ -24,9 +34,9 @@ flutter build apk --debug   # PASS on 2026-11-02 with out-of-band google-service
 | Security rules + seed + RC defaults | [firebase/](firebase/) |
 | AI code log (policy) | [ai/ai-code-log.md](ai/ai-code-log.md) |
 | Evidence matrix | [evidence/README.md](evidence/README.md) — matrix và yêu cầu bằng chứng; chưa có bộ ảnh/trace hoàn chỉnh |
-| Report/slides drafts | [report/Lab03_DRAFT.md](report/Lab03_DRAFT.md), [slides/Lab03_DRAFT.md](slides/Lab03_DRAFT.md); final PDFs/video chưa có |
+| Report/slides PDFs | [report/Lab03_STUDENT_ID.pdf](report/Lab03_STUDENT_ID.pdf) (10 trang), [slides/Lab03_STUDENT_ID_slides.pdf](slides/Lab03_STUDENT_ID_slides.pdf) (15 slide); kịch bản video tại [docs/lab3-video-script.md](docs/lab3-video-script.md) |
 
-ARTEMIS (E2E on-device): checklist yêu cầu tối thiểu 10 test, mỗi test chạy 3 lần. Harness có tại `e2e_test/` (26 case thu thập được, `pytest --collect-only` sạch), nhưng **chưa chạy được ca nào**: ARTEMIS host lên bình thường, device `emulator-5554` sẵn sàng, song Gemini free-tier đã hết quota ngày (HTTP 429, reset ≈14h). Chi tiết ở [evidence/artemis/RUN_LOG_2026-11-04.md](evidence/artemis/RUN_LOG_2026-11-04.md). 68 là tổng Flutter unit/widget tests, **không phải** ARTEMIS test cases.
+ARTEMIS (E2E on-device): checklist yêu cầu tối thiểu 10 test, mỗi test chạy 3 lần. Harness có tại `e2e_test/` (26 case thu thập được, `pytest --collect-only` sạch), nhưng **chưa chạy được ca nào**: ARTEMIS host lên bình thường, device `emulator-5554` sẵn sàng, song Gemini free-tier đã hết quota ngày (HTTP 429, reset ≈14h). Chi tiết ở [evidence/artemis/RUN_LOG_2026-11-04.md](evidence/artemis/RUN_LOG_2026-11-04.md). 89 là tổng Flutter unit/widget tests, **không phải** ARTEMIS test cases.
 
 ### Evidence matrix (local emulator, 2026-11-02)
 
@@ -43,8 +53,8 @@ ARTEMIS (E2E on-device): checklist yêu cầu tối thiểu 10 test, mỗi test 
 | Notification banner/route | Foreground push persists `route`, shows in-app banner, Notification Center tap navigates | ✅ Verified (hermetic) |
 | Maintenance mode | Remote Config `maintenance_mode=true` renders `MaintenanceScreen` instead of the shell | ✅ Verified (hermetic) |
 | Version gate | Remote Config `min_app_version` above the build blocks with `VersionBlockedScreen` before sign-in; equal/newer passes; malformed value fails open | ✅ Verified (hermetic) |
-| Tests | 84 tests pass (unit/widget hermetic + Timestamp parsing + SyncReloadService + version gate) | ✅ Verified |
-| Build | `flutter analyze`: 0 issues; `flutter test`: 68/68 pass; `flutter build apk --debug`: PASS | ✅ Verified |
+| Tests | 89 tests pass (unit/widget hermetic + Timestamp parsing + SyncReloadService + version gate + Advisor levels/consent) | ✅ Verified |
+| Build | `flutter analyze`: 0 issues; `flutter test`: 89/89 pass; `flutter build apk --debug`: PASS | ✅ Verified |
 
 ### Known limitations (emulator only)
 
