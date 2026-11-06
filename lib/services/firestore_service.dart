@@ -26,7 +26,11 @@ abstract class FirestoreService {
 
   // ── Notes ──
   Future<List<Map<String, dynamic>>> getNotes(String userId);
-  Future<void> saveNote(Map<String, dynamic> note);
+  Future<void> saveNote(
+    Map<String, dynamic> note, {
+    (String?, String?)? attachmentBefore,
+    bool preserveAttachment = false,
+  });
 
   /// Deletes [noteId] from [userId]'s subcollection. Fails if the item is
   /// missing or the remote write is rejected.
@@ -36,6 +40,7 @@ abstract class FirestoreService {
   /// Stores a generated study-report's metadata under
   /// `users/{userId}/sync/{reportId}` so exports are auditable.
   Future<void> saveReportMetadata(String userId, Map<String, dynamic> metadata);
+  Future<List<Map<String, dynamic>>> getRecentReportMetadata(String userId);
 
   // ── Notification Center ──
   Future<List<Map<String, dynamic>>> getNotifications(String userId);

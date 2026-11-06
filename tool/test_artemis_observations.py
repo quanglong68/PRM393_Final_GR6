@@ -30,6 +30,30 @@ class ObservationContractTest(unittest.TestCase):
         equals(observed, 'enabled', False)
         self.assertEqual(evidence['step_id'], 'final-id')
 
+    def test_terminal_action_can_return_observation_as_arguments(self):
+        steps = self.valid_steps()
+        steps[0]['action_taken']['args'] = {
+            'status': 'completed',
+            'explanation': 'The course is visible.',
+            'visible_text': 'Lộ trình học tập',
+            'course_codes': ['PRM323'],
+        }
+        observed, _ = terminal_observation(steps, 'test-session')
+        self.assertEqual(observed, {
+            'visible_text': 'Lộ trình học tập', 'course_codes': ['PRM323'],
+        })
+
+    def test_terminal_action_can_return_nested_fields(self):
+        steps = self.valid_steps()
+        fields = {'visible_text': 'Lộ trình học tập', 'course_codes': ['PRM323']}
+        steps[0]['action_taken']['args'] = {
+            'status': 'completed',
+            'explanation': 'The course is visible.',
+            'custom_fields': fields,
+        }
+        observed, _ = terminal_observation(steps, 'test-session')
+        self.assertEqual(observed, fields)
+
     def test_other_session_cannot_supply_observation(self):
         with self.assertRaises(AssertionError):
             terminal_observation(self.valid_steps(), 'other-session')

@@ -1,4 +1,6 @@
 """Verified Lab 3 cases; observations asserted from TaskResult.output JSON."""
+import re
+
 import pytest
 from conftest import APP_PACKAGE, require_artemis, skip_without_adb
 from observations import equals, contains_text
@@ -18,12 +20,18 @@ async def test_TC_F1_01_open_course_slots(artemis):
 @require_artemis
 async def test_TC_F1_02_search_course(artemis):
     observed = await artemis.run(
-        'From Home open Lộ trình, clear old search and search PRM. Report only the course codes actually shown after filtering.',
+        'From Home open Lộ trình. Tap the search field before typing PRM. '
+        'Wait until the field visibly contains PRM and the list shows only matching courses. '
+        'If the field still shows its placeholder, tap and type again. '
+        'Leave the query in the field and report the course codes actually shown after filtering.',
         {'course_codes': 'array of course codes'},
     )
-    assert observed['course_codes']
-    assert 'PRM323' in observed['course_codes']
-    assert all(code.startswith('PRM') for code in observed['course_codes'])
+    native = observed['native_visible_text']
+    assert re.search(r'^PRM[ \t]*$', native, re.MULTILINE), 'Search field does not contain PRM'
+    codes = re.findall(r'^[ \t]*\d+, ([A-Z]+\d+[A-Z0-9]*)\b', native, re.MULTILINE)
+    assert 'PRM323' in codes
+    assert all(code.startswith('PRM') for code in codes)
+    assert set(observed['course_codes']) == set(codes)
 
 @require_artemis
 async def test_TC_F1_04_ask_ai_branch(artemis):

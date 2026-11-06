@@ -3,6 +3,10 @@ import 'package:prm323_lab3/services/firestore_service.dart';
 /// In-memory Mock implementation of [FirestoreService] for testing.
 class MockFirestoreService implements FirestoreService {
   @override
+  Future<List<Map<String, dynamic>>> getRecentReportMetadata(
+    String userId,
+  ) async => [];
+  @override
   Future<void> saveAcademicProfile(
     String userId,
     Map<String, dynamic> data,
@@ -100,7 +104,11 @@ class MockFirestoreService implements FirestoreService {
       List.from(_notes);
 
   @override
-  Future<void> saveNote(Map<String, dynamic> note) async {
+  Future<void> saveNote(
+    Map<String, dynamic> note, {
+    (String?, String?)? attachmentBefore,
+    bool preserveAttachment = false,
+  }) async {
     final idx = _notes.indexWhere((n) => n['id'] == note['id']);
     if (idx != -1) {
       _notes[idx] = note;

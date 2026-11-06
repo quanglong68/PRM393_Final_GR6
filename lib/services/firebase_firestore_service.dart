@@ -36,7 +36,9 @@ class FirebaseFirestoreService implements FirestoreService {
           .orderBy('semester')
           .get(const GetOptions(source: Source.serverAndCache));
 
-      debugPrint('[Firestore] Course catalog returned ${snapshot.docs.length} documents.');
+      debugPrint(
+        '[Firestore] Course catalog returned ${snapshot.docs.length} documents.',
+      );
       return snapshot.docs.map((doc) => {'id': doc.id, ...doc.data()}).toList();
     } catch (e) {
       debugPrint('[Firestore] getCourses error: $e');
@@ -206,7 +208,11 @@ class FirebaseFirestoreService implements FirestoreService {
   }
 
   @override
-  Future<void> saveNote(Map<String, dynamic> note) async {
+  Future<void> saveNote(
+    Map<String, dynamic> note, {
+    (String?, String?)? attachmentBefore,
+    bool preserveAttachment = false,
+  }) async {
     try {
       final userId = note['userId'] as String?;
       if (userId == null) throw ArgumentError('Note must include userId');
@@ -224,11 +230,29 @@ class FirebaseFirestoreService implements FirestoreService {
                 .collection('notes')
                 .doc();
 
-      await noteRef.set({
+      final data = {
         ...note,
         'id': noteRef.id,
         'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      };
+      if (preserveAttachment) {
+        data.remove('attachmentPath');
+        data.remove('attachmentUrl');
+        data.remove('attachmentName');
+      }
+      if (attachmentBefore == null) {
+        await noteRef.set(data, SetOptions(merge: true));
+      } else {
+        await _firestore.runTransaction((transaction) async {
+          final current = (await transaction.get(noteRef)).data();
+          if (current == null ||
+              (current['attachmentPath'], current['attachmentUrl']) !=
+                  attachmentBefore) {
+            throw StateError('Tệp đã thay đổi trên thiết bị khác.');
+          }
+          transaction.set(noteRef, data, SetOptions(merge: true));
+        });
+      }
     } catch (e) {
       debugPrint('[Firestore] saveNote error: $e');
       rethrow;
@@ -251,6 +275,20 @@ class FirebaseFirestoreService implements FirestoreService {
   }
 
   // ──────────────────────── Report metadata ────────────────────────
+
+  @override
+  Future<List<Map<String, dynamic>>> getRecentReportMetadata(
+    String userId,
+  ) async {
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('sync')
+        .orderBy('createdAt', descending: true)
+        .limit(30)
+        .get(const GetOptions(source: Source.serverAndCache));
+    return snapshot.docs.map((doc) => doc.data()).toList();
+  }
 
   @override
   Future<void> saveReportMetadata(

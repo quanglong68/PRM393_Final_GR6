@@ -142,6 +142,14 @@ class FptuSecondBrainApp extends StatelessWidget {
       Provider<StorageService>(
         create: (_) => storageService ?? FirebaseStorageService(),
       ),
+      Provider<ReportMediaStorageService?>(
+        create: (_) {
+          const mediaUrl = String.fromEnvironment('REPORT_MEDIA_URL');
+          return _usesRealComposition && mediaUrl.isNotEmpty
+              ? ReportMediaStorageService(Uri.parse(mediaUrl))
+              : null;
+        },
+      ),
       Provider<AnalyticsService>(
         create: (_) => analyticsService ?? FirebaseAnalyticsService(),
       ),
@@ -164,13 +172,13 @@ class FptuSecondBrainApp extends StatelessWidget {
       ),
       Provider<ReportExportService>(
         create: (ctx) {
-          const mediaUrl = String.fromEnvironment('REPORT_MEDIA_URL');
-          final useMedia = _usesRealComposition && mediaUrl.isNotEmpty;
+          final media = ctx.read<ReportMediaStorageService?>();
           return ReportExportService(
-            storageService: useMedia
-                ? ReportMediaStorageService(Uri.parse(mediaUrl))
-                : ctx.read<StorageService>(),
-            storageProvider: useMedia ? 'Cloudinary' : 'Firebase Cloud Storage',
+            storageService: media ?? ctx.read<StorageService>(),
+            firebaseStorageService: ctx.read<StorageService>(),
+            storageProvider: media == null
+                ? 'Firebase Cloud Storage'
+                : 'Cloudinary',
             firestoreService: ctx.read<FirestoreService>(),
             analyticsService: ctx.read<AnalyticsService>(),
             crashlyticsService: ctx.read<CrashlyticsService>(),
@@ -215,6 +223,7 @@ class FptuSecondBrainApp extends StatelessWidget {
           authService: ctx.read<AuthService>(),
           firestoreService: ctx.read<FirestoreService>(),
           storageService: ctx.read<StorageService>(),
+          mediaStorageService: ctx.read<ReportMediaStorageService?>(),
           analyticsService: ctx.read<AnalyticsService>(),
         ),
       ),
@@ -226,6 +235,7 @@ class FptuSecondBrainApp extends StatelessWidget {
       ),
       ChangeNotifierProvider<AdvisorViewModel>(
         create: (ctx) => AdvisorViewModel(
+          askGemini: ctx.read<ReportMediaStorageService?>()?.askAdvisor,
           academicViewModel: ctx.read<AcademicViewModel>(),
           remoteConfigService: ctx.read<RemoteConfigService>(),
           analyticsService: ctx.read<AnalyticsService>(),

@@ -121,7 +121,8 @@ class ObservedClient:
             f'App {APP_PACKAGE}; dedicated test device {DEVICE_SERIAL}. '
             'The harness has cold-started the app and waited for Home/sign-in. Start from this observed screen; '
             'if signed out and this case does not request authentication, report the signed-out screen; do not invent data. '
-            + instruction + '\nReturn ONLY a JSON object with these field names and their observed values: '
+            + instruction + '\nCall report_task_status with a JSON object as the explanation. '
+              'Use these field names and their actual observed values: '
             + json.dumps(schema, ensure_ascii=False)
             + '. Do not report success if a step fails. Never infer uploads, grades, push delivery or server persistence from a label. '
               'Do not delete or modify records except the exact E2E fixture named in this instruction.'
@@ -152,7 +153,7 @@ class ObservedClient:
         if result.output is None:
             observation, terminal = await asyncio.to_thread(read_terminal_report, self.trace_id)
             (folder / 'terminal-report.json').write_text(json.dumps(terminal, ensure_ascii=False, indent=2), encoding='utf-8')
-            record['output_source'] = 'ARTEMIS session steps: final report_task_status.explanation'
+            record['output_source'] = 'ARTEMIS session steps: final report_task_status'
         else:
             observation = parse_observation(result.output)
             record['output_source'] = 'TaskResult.output'

@@ -1,0 +1,28 @@
+{
+  "date": "2026-11-05",
+  "device": "Pixel_7_API_35_Google_Play",
+  "hardware_device_verified": false,
+  "apk_sha256": "b7e13d2f220bcc7a47c5f45352b0dbfe85e83bf2a1b2a10a1c52b079af6943fd",
+  "build_flag": "REPORT_MEDIA_URL=http://127.0.0.1:8788",
+  "android_report": {
+    "cloudinary_upload": true,
+    "firestore_metadata_read_back": true,
+    "size_bytes": 20321,
+    "download_opened_android_share_sheet": true
+  },
+  "android_note": {
+    "saved_and_reopened": true,
+    "firestore_attachment_metadata_read_back": true,
+    "attachment": "lab3-media-demo.docx",
+    "download_sha256_matches_original": true,
+    "sha256": "a1fdcf7e11a796ed61fe13001d9b9432ff30102321faf627f6fcdb1f50ad0346",
+    "screenshot": "note-reopened.png"
+  },
+  "media_api_live_cloudinary_round_trip": {
+    "fixtures_with_identical_bytes": ["md", "pdf", "docx"],
+    "upload_status": 201,
+    "download_status": 200,
+    "test_fixture_cleanup_status": 204
+  },
+  "node_http_tests_passed": 3
+}

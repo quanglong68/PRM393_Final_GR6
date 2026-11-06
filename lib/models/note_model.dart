@@ -9,6 +9,8 @@ class NoteModel {
     required this.courseCode,
     required this.updatedAt,
     this.attachmentUrl,
+    this.attachmentPath,
+    this.attachmentName,
     this.tags = const [],
   });
 
@@ -18,6 +20,8 @@ class NoteModel {
   final String courseCode;
   final String updatedAt;
   final String? attachmentUrl;
+  final String? attachmentPath;
+  final String? attachmentName;
   final List<String> tags;
 
   NoteModel copyWith({
@@ -27,6 +31,8 @@ class NoteModel {
     String? courseCode,
     String? updatedAt,
     String? attachmentUrl,
+    String? attachmentPath,
+    String? attachmentName,
     List<String>? tags,
   }) => NoteModel(
     id: id ?? this.id,
@@ -35,6 +41,8 @@ class NoteModel {
     courseCode: courseCode ?? this.courseCode,
     updatedAt: updatedAt ?? this.updatedAt,
     attachmentUrl: attachmentUrl ?? this.attachmentUrl,
+    attachmentPath: attachmentPath ?? this.attachmentPath,
+    attachmentName: attachmentName ?? this.attachmentName,
     tags: tags ?? this.tags,
   );
 
@@ -46,6 +54,8 @@ class NoteModel {
         map['courseCode'] as String? ?? map['courseId'] as String? ?? 'Chung',
     updatedAt: _formatUpdatedAt(map['updatedAt']),
     attachmentUrl: map['attachmentUrl'] as String?,
+    attachmentPath: map['attachmentPath'] as String?,
+    attachmentName: map['attachmentName'] as String?,
     tags:
         (map['tags'] as List<dynamic>?)?.map((t) => t.toString()).toList() ??
         const [],
@@ -68,6 +78,8 @@ class NoteModel {
     'courseCode': courseCode,
     'updatedAt': updatedAt,
     'attachmentUrl': attachmentUrl,
+    'attachmentPath': attachmentPath,
+    'attachmentName': attachmentName,
     'tags': tags,
   };
 }

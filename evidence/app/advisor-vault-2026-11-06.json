@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-06",
+  "device": "Pixel_7_API_35_Google_Play",
+  "hardware_device_verified": false,
+  "apk_sha256": "0d91d858b750735c94e29d66e5b585e13af960cee478a172158ce75eacdea040",
+  "advisor": {
+    "gemini_direct_http_status": 200,
+    "app_consent_observed": true,
+    "app_question": "PRM323 credits?",
+    "app_answer_credits": 3,
+    "app_local_cross_check_visible": true
+  },
+  "report_history": {
+    "opened_existing_cloudinary_report_from_history": true,
+    "opened_android_share_sheet": true
+  },
+  "attachment_cleanup": {
+    "fixture_type": "text/markdown",
+    "cloudinary_asset_present_before_removal": true,
+    "firestore_kept_note_and_cleared_attachment": true,
+    "cloudinary_asset_http_status_after_removal": 404,
+    "fixture_note_removed_after_verification": true
+  }
+}

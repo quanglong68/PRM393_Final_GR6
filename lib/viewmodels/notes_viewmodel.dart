@@ -1,8 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
-
 import '../models/app_state.dart';
+import '../models/note_attachment.dart';
 import '../models/note_model.dart';
 import '../services/analytics_service.dart';
 import '../services/auth_service.dart';
@@ -15,6 +14,7 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
     this.authService,
     this.firestoreService,
     this.storageService,
+    this.mediaStorageService,
     this.analyticsService,
   }) {
     loadData();
@@ -33,6 +33,7 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
   final AuthService? authService;
   final FirestoreService? firestoreService;
   final StorageService? storageService;
+  final StorageService? mediaStorageService;
   final AnalyticsService? analyticsService;
   StreamSubscription<bool>? _authSub;
   int _loadVersion = 0;
@@ -108,64 +109,82 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
     }
   }
 
-  /// Uploads a note attachment to Cloud Storage and returns its real
-  /// download URL (Lab 3 §2.3). Storage rules cap uploads at 10 MB; a larger
-  /// file, a missing identity, or any transport failure returns null and sets
-  /// [lastError] — the caller must not persist a fabricated URL.
+  /// Returns the owner-scoped object path after Storage accepts the file.
   Future<String?> uploadAttachment({
     required String fileName,
     required List<int> bytes,
+    void Function(double progress)? onProgress,
   }) async {
-    final storage = storageService;
+    final storage = mediaStorageService ?? storageService;
     final uid = currentUserId;
-    if (storage == null) {
-      setLastError('Cloud Storage chưa sẵn sàng — không thể đính kèm tệp.');
+    if (storage == null || uid == null) {
+      setLastError('Hãy đăng nhập và kết nối Cloud Storage để tải tệp lên.');
       return null;
     }
-    if (uid == null) {
-      setLastError('Bạn chưa đăng nhập — không thể tải tệp lên.');
-      return null;
-    }
-    if (bytes.isEmpty) {
-      setLastError('Tệp rỗng — không thể tải lên.');
-      return null;
-    }
-    if (bytes.length > 10 * 1024 * 1024) {
-      setLastError('Tệp vượt 10 MB — quy định Storage từ chối.');
-      return null;
-    }
-    final contentType = _contentTypeFor(fileName);
-    // Storage rules only accept image/*, application/pdf, text/plain —
-    // reject others here with a clear message instead of PERMISSION_DENIED.
-    if (contentType == 'application/octet-stream') {
-      setLastError('Định dạng tệp chưa được hỗ trợ (chỉ nhận PDF, ảnh, .txt).');
+    final error = NoteAttachment.validationError(fileName, bytes.length);
+    if (error != null) {
+      setLastError(error);
       return null;
     }
 
-    final sanitizedName = fileName.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
-    final path =
-        'notes/$uid/${DateTime.now().millisecondsSinceEpoch}_$sanitizedName';
+    final safeName = fileName.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+    final stamp = DateTime.now().microsecondsSinceEpoch;
+    final extension = fileName.split('.').last.toLowerCase();
+    final path = mediaStorageService == null
+        ? 'notes/$uid/${stamp}_$safeName'
+        : 'notes/$uid/cloudinary/note_$stamp.$extension';
     try {
-      final url = await storage.uploadFile(
+      await storage.uploadFile(
         path,
         bytes,
-        contentType: contentType,
+        contentType: NoteAttachment.contentTypeFor(fileName),
+        createDownloadUrl: false,
+        onProgress: onProgress,
       );
-      debugPrint('[Notes] Attachment uploaded to $path');
-      return url;
-    } catch (e) {
-      setLastError('Tải tệp lên thất bại. Kiểm tra kết nối và thử lại.');
+      if (isDisposed || uid != currentUserId) return null;
+      clearLastError();
+      return path;
+    } catch (_) {
+      if (!isDisposed && uid == currentUserId) {
+        setLastError(
+          'Tải tệp lên thất bại. Kiểm tra Cloud Storage và thử lại.',
+        );
+      }
       return null;
     }
   }
 
-  static String _contentTypeFor(String name) {
-    final lower = name.toLowerCase();
-    if (lower.endsWith('.pdf')) return 'application/pdf';
-    if (lower.endsWith('.png')) return 'image/png';
-    if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
-    if (lower.endsWith('.txt')) return 'text/plain';
-    return 'application/octet-stream';
+  Future<List<int>> downloadAttachment(String path) async {
+    final uid = currentUserId;
+    if (uid == null || !path.startsWith('notes/$uid/')) {
+      throw StateError('Bạn không có quyền tải tệp này.');
+    }
+    final storage = path.startsWith('notes/$uid/cloudinary/')
+        ? mediaStorageService
+        : storageService;
+    if (storage == null) {
+      throw StateError('Dịch vụ tải tệp chưa được cấu hình.');
+    }
+    final bytes = await storage.downloadFile(path);
+    if (isDisposed || uid != currentUserId || bytes.isEmpty) {
+      throw StateError('Không thể đọc tệp đính kèm.');
+    }
+    return bytes;
+  }
+
+  Future<bool> removeObsoleteAttachment(String path) async {
+    final uid = currentUserId;
+    if (uid == null || !path.startsWith('notes/$uid/')) return false;
+    final storage = path.startsWith('notes/$uid/cloudinary/')
+        ? mediaStorageService
+        : storageService;
+    if (storage == null) return false;
+    try {
+      await storage.deleteFile(path);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Saves a note and persists it. Returns true on success; on failure the
@@ -177,6 +196,10 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
     required String content,
     required String courseCode,
     String? attachmentUrl,
+    String? attachmentPath,
+    String? attachmentName,
+    (String?, String?)? attachmentBefore,
+    bool preserveAttachment = false,
     List<String> tags = const [],
   }) async {
     if (_isSaving) return false;
@@ -196,6 +219,8 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
       courseCode: courseCode,
       updatedAt: 'Vừa xong',
       attachmentUrl: attachmentUrl,
+      attachmentPath: attachmentPath,
+      attachmentName: attachmentName,
       tags: tags,
     );
 
@@ -212,12 +237,21 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
     }
     setState(AsyncViewState.data(filteredNotes));
 
+    var attachmentRemoved = true;
     final firestore = firestoreService;
     if (firestore != null) {
       _isSaving = true;
       notifyListeners();
       try {
-        await firestore.saveNote({...note.toMap(), 'userId': uid!});
+        await firestore.saveNote(
+          {...note.toMap(), 'userId': uid!},
+          attachmentBefore: attachmentBefore,
+          preserveAttachment: preserveAttachment,
+        );
+        final oldPath = attachmentBefore?.$1;
+        if (oldPath != null && oldPath != attachmentPath) {
+          attachmentRemoved = await removeObsoleteAttachment(oldPath);
+        }
       } catch (e) {
         if (isDisposed || uid != currentUserId) return false;
         if (isNew) {
@@ -229,7 +263,11 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
           _allNotes.removeWhere((n) => n.id == noteId);
         }
         setState(AsyncViewState.data(filteredNotes));
-        setLastError('Không thể lưu ghi chú. Kiểm tra kết nối và thử lại.');
+        setLastError(
+          attachmentBefore == null
+              ? 'Không thể lưu ghi chú. Kiểm tra kết nối và thử lại.'
+              : 'Không thể cập nhật tệp. Kiểm tra kết nối và mở lại ghi chú.',
+        );
         return false;
       } finally {
         if (uid == currentUserId) {
@@ -239,7 +277,13 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
       }
     }
     if (isDisposed || uid != currentUserId) return false;
-    clearLastError();
+    if (attachmentRemoved) {
+      clearLastError();
+    } else {
+      setLastError(
+        'Đã lưu ghi chú, nhưng chưa xóa được tệp cũ khỏi kho lưu trữ.',
+      );
+    }
 
     analyticsService?.logNoteCreate(contentLength: content.length);
     return true;

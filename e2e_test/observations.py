@@ -31,8 +31,8 @@ def equals(observation, key, value):
 def terminal_observation(steps, session_id):
     """Read the actual final report from this session when SDK output is absent.
 
-    ARTEMIS 351ca842 exposes Flash's terminal explanation in its step API,
-    while TaskResult.output remains None. No stdout guessing or success stub.
+    The step API can hold the structured observation in the terminal action's
+    arguments or in its JSON explanation while TaskResult.output is absent.
     """
     assert isinstance(steps, list) and steps, 'No recorded ARTEMIS steps'
     assert all(step.get('session_id') == session_id for step in steps), 'Cross-session trace rejected'
@@ -41,7 +41,11 @@ def terminal_observation(steps, session_id):
     assert action.get('action') == 'report_task_status', 'No terminal report action'
     args = action.get('args') or {}
     assert args.get('status') == 'completed', 'Terminal report did not complete'
-    return parse_observation(args.get('explanation')), {
+    output = args.get('custom_fields', args.get('explanation'))
+    if 'visible_text' in args:
+        output = {key: value for key, value in args.items()
+                  if key not in {'status', 'explanation'}}
+    return parse_observation(output), {
         'session_id': session_id, 'step_id': final['step_id'],
         'step_number': final['step_number'], 'action_taken': action,
     }

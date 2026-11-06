@@ -75,3 +75,9 @@
 | On Surface | `AppColors.onSurface` | `#17233B` | Chữ chính (body, title) |
 | On Surface Variant | `AppColors.onSurfaceVariant` | `#526176` | Chữ phụ, mô tả |
 | Outline | `AppColors.outline` | `#C8D2E0` | Viền card, divider, input border |
+
+### Đính kèm tài liệu trong trình soạn ghi chú
+
+Nút đính kèm nhận PDF, Markdown (.md/.markdown), DOCX, TXT, PNG và JPEG nhỏ hơn 10 MB. Trình soạn hiển thị tiến độ upload. Lưu ghi chú để giữ tên và đường dẫn tệp, rồi mở lại ghi chú để tải bản sao về máy. Đường dẫn nằm dưới `notes/{uid}/`; app đọc file bằng phiên Firebase hiện tại. Khi bật Media API qua `REPORT_MEDIA_URL`, tệp mới lưu tại `notes/{uid}/cloudinary/` và tải qua Media API xác thực theo UID. Bản ghi cũ chỉ có URL vẫn hiện tên tệp đính kèm chung. Gỡ đính kèm trong editor chỉ bỏ liên kết khi lưu ghi chú.
+
+Luồng xuất báo cáo từ dữ liệu học tập giữ định dạng PDF trong Sync Vault. Đã kiểm tra bằng Firebase Storage Emulator. Upload trên project thật cần bucket Storage và rules đã triển khai.

@@ -22,11 +22,11 @@ npm run send:fcm -- DEMO_UID PRM323 --send
 
 Lệnh đầu kiểm tra request với FCM qua `validate_only`. Lệnh thứ hai gửi thật. Script chọn registration cập nhật gần nhất trong `users/{uid}/tokens`, từ chối token cũ quá 24 giờ và không in token. Payload gồm nội dung ngắn cùng `route=/course-detail` và `courseId`. Chỉ chọn tài khoản demo có một thiết bị đang dùng, vì lệnh chọn bản ghi mới nhất. Server chỉ gửi mã môn và thông báo chung, tránh đưa dữ liệu cá nhân vào thông báo hệ thống.
 
-## Cloudinary cho PDF trên Spark
+## Lưu báo cáo và tệp đính kèm trên Cloudinary Free
 
-Cloudinary dùng tài sản `raw` với chế độ `authenticated`. Điền ba biến `CLOUDINARY_*` vào `.env` trên server. Chạy `npm run start:media`. Media API là tiến trình riêng, không cần mật khẩu admin. Nó kiểm tra Firebase ID token, so UID với đường dẫn và chỉ nhận PDF tối đa 10 MB.
+Sao chép `.env.example` sang `.env` nếu chưa có. Điền ba biến `CLOUDINARY_*` ở server. Trong Cloudinary Console, mở **Settings → Security** và bật **Allow delivery of PDF and ZIP files**. Chạy `npm run start:media` từ thư mục này. Media API xác minh Firebase ID token và đối chiếu UID trước khi truy cập tài sản `raw` có chế độ `authenticated`. Firebase Spark tiếp tục phục vụ đăng nhập và Firestore.
 
-Khi chấm qua USB, chạy từ thư mục gốc sau khi kết nối điện thoại thật:
+Kết nối Android qua USB. Chạy từ thư mục gốc và thay `ANDROID_SERIAL` bằng serial từ ADB. Nếu bạn đổi `MEDIA_PORT` thì cập nhật cổng ở cả hai lệnh.
 
 ```powershell
 adb devices -l
@@ -34,8 +34,18 @@ adb -s ANDROID_SERIAL reverse tcp:8788 tcp:8788
 flutter run -d ANDROID_SERIAL --dart-define=REPORT_MEDIA_URL=http://127.0.0.1:8788
 ```
 
-Mở Sync Vault, chọn **Xuất & Tải PDF lên Cloudinary**, xác nhận và đợi upload. Firestore lưu metadata sau khi server xác nhận tài sản. **Tải lại PDF từ cloud** tải qua Media API dưới phiên đăng nhập hiện tại, rồi mở chooser chia sẻ. Link metadata là URL API cần xác thực. Server giữ URL ký Cloudinary và proxy nội dung cho đúng chủ tài khoản. App vẫn hỗ trợ tạo PDF tại máy. Nhánh Cloudinary chỉ phục vụ PDF báo cáo, ghi chú vẫn dùng adapter Storage hiện tại.
+- Trong **Ghi chú**, chọn tệp Markdown, PDF, DOCX, TXT, PNG hoặc JPEG dưới 10 MB. Đợi tiến độ kết thúc và lưu ghi chú. Mở lại ghi chú rồi bấm nút tải để lưu file. Firestore giữ tên và đường dẫn dưới `notes/{uid}/cloudinary/`. Tệp đã lưu bằng Firebase Storage vẫn tải qua adapter Firebase.
+- Trong **Sync Vault**, chọn **Xuất & Tải PDF lên Cloudinary** rồi xác nhận. Kiểm tra metadata Firestore và dùng **Tải lại PDF từ cloud** để tải bản đã upload. Địa chỉ Media API cần phiên đăng nhập của app. Server giữ URL ký Cloudinary.
+- Mở **Lịch sử báo cáo** trong Sync Vault để tải lại tối đa 30 báo cáo gần đây. App chọn kho tải theo metadata Firestore của từng báo cáo.
+- Khi lưu ghi chú sau khi gỡ hoặc thay tệp, app đối chiếu đính kèm hiện tại trên Firestore rồi cập nhật liên kết. App xóa tệp cũ sau khi lưu thành công. Nếu kho lưu trữ từ chối xóa, app báo lại sau khi lưu.
+- Xem **Media Library** để đối chiếu file raw của hai luồng. Kiểm tra trong giới hạn gói Free và bằng tệp thử trước khi dùng dữ liệu thật.
 
 Trên bản phát hành, dùng URL HTTPS cho Media API và đặt dịch vụ sau reverse proxy HTTPS. Bản debug cho phép HTTP chỉ tới loopback để chạy USB. Không chép `.env`, token hoặc Cloudinary key vào APK hay Git. Kiểm tra product environment Cloudinary đã cho phép delivery PDF trước khi chấm. [Tài liệu Cloudinary về asset riêng và tải có chữ ký](https://cloudinary.com/documentation/control_access_to_media).
 
-`npm test` kiểm tra xác thực web và hợp đồng PDF qua HTTP local, gồm các nhánh sai chủ tài khoản và giới hạn kích thước.
+`npm test` kiểm tra xác thực web, upload PDF và tải lại tệp đính kèm qua HTTP local, gồm các nhánh sai chủ tài khoản và giới hạn kích thước. Xem [kết quả kiểm tra Cloudinary thật](../evidence/app/cloudinary-2026-11-05/verification.json).
+
+## Cố vấn học tập với Gemini
+
+Điền `GEMINI_API_KEY` từ Google AI Studio vào `admin-web/.env` và khởi động lại `npm run start:media`. Có thể đặt `GEMINI_MODEL` nếu tài khoản dùng model khác. App dùng cùng `REPORT_MEDIA_URL` với Media API.
+
+Sau khi người dùng đồng ý, app gửi câu hỏi, cấp tư vấn và dữ kiện danh mục môn qua endpoint có kiểm tra Firebase ID token. Điểm, lịch và nội dung ghi chú được xử lý trên thiết bị. Hộp thoại nhắc người dùng tránh nhập thông tin riêng vào câu hỏi. Backend giữ key Gemini và trả trạng thái để app hiện lỗi cấu hình hoặc giới hạn lượt hỏi. [Gemini API](https://ai.google.dev/api/generate-content).

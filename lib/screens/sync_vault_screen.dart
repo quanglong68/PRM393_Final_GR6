@@ -395,8 +395,95 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
 
   Future<void> _downloadLastReport(ReportExportService exporter) async {
     final report = _exportResult;
+    if (report == null) return;
+    await _downloadReport(
+      report.storagePath.split('/').last,
+      () => exporter.downloadStudyReport(report.storagePath),
+    );
+  }
+
+  Future<void> _showReportHistory(ReportExportService exporter) async {
     final uid = context.read<AuthViewModel>().currentUserId;
-    if (report == null || uid == null || _isDownloadingReport || _isExporting) {
+    if (uid == null) return;
+    final history = exporter.recentReports(uid);
+    final selected = await showDialog<StudyReportEntry>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Lịch sử báo cáo'),
+        content: SizedBox(
+          width: 420,
+          child: FutureBuilder<List<StudyReportEntry>>(
+            future: history,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return const Text(
+                  'Không tải được lịch sử. Hãy mở lại để thử lại.',
+                );
+              }
+              if (!snapshot.hasData) {
+                return const Center(
+                  heightFactor: 2,
+                  child: CircularProgressIndicator(),
+                );
+              }
+              final reports = snapshot.data!;
+              if (reports.isEmpty) {
+                return const Text('Chưa có báo cáo đã tải lên.');
+              }
+              return ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 360),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: reports.length,
+                  itemBuilder: (context, index) {
+                    final report = reports[index];
+                    final date = report.generatedAt?.toLocal();
+                    final dateLabel = date == null
+                        ? ''
+                        : MaterialLocalizations.of(context)
+                              .formatShortDate(date);
+                    return ListTile(
+                      title: Text(report.fileName),
+                      subtitle: Text(
+                        [
+                          if (dateLabel.isNotEmpty) dateLabel,
+                          report.provider,
+                        ].join(' · '),
+                      ),
+                      trailing: const Icon(Icons.download_outlined),
+                      onTap: () => Navigator.pop(dialogContext, report),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Đóng'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted ||
+        selected == null ||
+        context.read<AuthViewModel>().currentUserId != uid) {
+      return;
+    }
+    await _downloadReport(
+      selected.fileName,
+      () => exporter.downloadSavedReport(selected),
+    );
+  }
+
+  Future<void> _downloadReport(
+    String fileName,
+    Future<Uint8List> Function() fetch,
+  ) async {
+    final uid = context.read<AuthViewModel>().currentUserId;
+    if (uid == null || _isDownloadingReport || _isExporting) {
       return;
     }
     setState(() {
@@ -404,14 +491,11 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
       _exportError = null;
     });
     try {
-      final bytes = await exporter.downloadStudyReport(report.storagePath);
+      final bytes = await fetch();
       if (!mounted || context.read<AuthViewModel>().currentUserId != uid) {
         return;
       }
-      await Printing.sharePdf(
-        bytes: bytes,
-        filename: report.storagePath.split('/').last,
-      );
+      await Printing.sharePdf(bytes: bytes, filename: fileName);
     } catch (_) {
       if (mounted) {
         setState(() => _exportError = 'Không mở được bản PDF từ cloud.');
@@ -836,6 +920,16 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
                           : 'Tải lại PDF từ cloud',
                     ),
                   ),
+                TextButton.icon(
+                  onPressed:
+                      authVm.currentUserId == null ||
+                          _isDownloadingReport ||
+                          _isExporting
+                      ? null
+                      : () => _showReportHistory(reportExporter),
+                  icon: const Icon(Icons.history),
+                  label: const Text('Lịch sử báo cáo'),
+                ),
                 if (_exportResult != null || _localPdfBytes != null) ...[
                   const SizedBox(height: AppSpacing.xs),
                   Row(

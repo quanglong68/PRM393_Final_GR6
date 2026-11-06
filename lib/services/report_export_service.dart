@@ -23,6 +23,20 @@ class ReportExportResult {
   int get bytes => pdfBytes.length;
 }
 
+class StudyReportEntry {
+  const StudyReportEntry({
+    required this.path,
+    required this.fileName,
+    required this.provider,
+    required this.generatedAt,
+  });
+
+  final String path;
+  final String fileName;
+  final String provider;
+  final DateTime? generatedAt;
+}
+
 /// Orchestrates the Lab 3 §6.5 export flow end-to-end:
 /// generate PDF → upload to Storage (with progress) → store metadata in
 /// Firestore → emit the `export_report` analytics event.
@@ -35,10 +49,12 @@ class ReportExportService {
     required StorageService storageService,
     required FirestoreService firestoreService,
     required AnalyticsService analyticsService,
+    StorageService? firebaseStorageService,
     CrashlyticsService? crashlyticsService,
     this.storageProvider = 'Firebase Cloud Storage',
   }) : _pdf = pdfService ?? ReportPdfService(),
        _storage = storageService,
+       _firebaseStorage = firebaseStorageService,
        _firestore = firestoreService,
        _analytics = analyticsService,
        _crashlytics = crashlyticsService;
@@ -46,12 +62,52 @@ class ReportExportService {
   final String storageProvider;
   final ReportPdfService _pdf;
   final StorageService _storage;
+  final StorageService? _firebaseStorage;
   final FirestoreService _firestore;
   final AnalyticsService _analytics;
   final CrashlyticsService? _crashlytics;
 
   Future<Uint8List> downloadStudyReport(String path) async =>
       Uint8List.fromList(await _storage.downloadFile(path));
+
+  Future<List<StudyReportEntry>> recentReports(String uid) async {
+    final records = await _firestore.getRecentReportMetadata(uid);
+    final pattern = RegExp(r'^study_report_\d{13}\.pdf$');
+    final reports = <StudyReportEntry>[];
+    for (final record in records) {
+      final path = record['storagePath'];
+      final name = record['fileName'];
+      if (path is! String ||
+          name is! String ||
+          !pattern.hasMatch(name) ||
+          path != 'reports/$uid/$name') {
+        continue;
+      }
+      final date = record['generatedAt'];
+      final provider = record['storageProvider'];
+      reports.add(
+        StudyReportEntry(
+          path: path,
+          fileName: name,
+          provider: provider is String ? provider : 'Firebase Cloud Storage',
+          generatedAt: date is String ? DateTime.tryParse(date) : null,
+        ),
+      );
+    }
+    return reports;
+  }
+
+  Future<Uint8List> downloadSavedReport(StudyReportEntry report) async {
+    final storage = report.provider == storageProvider
+        ? _storage
+        : report.provider == 'Firebase Cloud Storage'
+        ? _firebaseStorage
+        : null;
+    if (storage == null) {
+      throw StateError('Dịch vụ lưu báo cáo này chưa được cấu hình.');
+    }
+    return Uint8List.fromList(await storage.downloadFile(report.path));
+  }
 
   /// Builds a real PDF without contacting Storage or creating cloud metadata.
   Future<Uint8List> generateLocalStudyReport({

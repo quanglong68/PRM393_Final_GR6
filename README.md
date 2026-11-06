@@ -1,8 +1,4 @@
-> **Yêu cầu chấm cập nhật 05/11/2026.** Chuẩn bị demo trên điện thoại thật. Dev xem Firebase Console, admin xem web riêng. [Chạy web admin, FCM server và Media API](admin-web/README.md) · [Giải thích nguyên lý và quy trình chấm](docs/lab3-oral-defense.md). Cloudinary là adapter PDF tùy chọn cho Spark.
-
-> 05/11/2026 — Giữ Spark, dùng PDF cục bộ. Upload Storage còn thiếu trong rubric. [Kết quả kiểm tra nhẹ](docs/implementation-verification-2026-11-05.md).
-
-> Cập nhật tiếp 04/11: 114 Flutter tests, analyzer sạch, APK/PDF cục bộ và menu chia sẻ đã xác minh. FCM ba trạng thái + cold deep link, RC 31→30 cùng APK và dashboard Crashlytics đã có evidence. Upload Storage còn thiếu bucket/billing; ARTEMIS đủ số lượt chưa đạt (quota). Chi tiết: docs/implementation-verification-2026-11-04.md.
+> **Demo ngày 05/11/2026.** Firebase Spark phục vụ đăng nhập và Firestore. Cloudinary Free đã được xác minh cho PDF báo cáo và tệp đính kèm trên giả lập. Khi chấm, kết nối điện thoại thật. Dev xem Firebase Console, admin xem web riêng. [Cách chạy web admin, FCM server và Media API](admin-web/README.md) · [Giải thích nguyên lý](docs/lab3-oral-defense.md) · [Minh chứng Cloudinary](evidence/app/cloudinary-2026-11-05/verification.json).
 
 > Cập nhật tiếp hạng mục 1–2–3 ngày 04/11/2026: xem [báo cáo xác minh mới](docs/implementation-verification-2026-11-04.md). Đã thêm nhập dữ liệu học tập riêng, Advisor/Strategy theo dữ liệu, tab môn và route FCM. Cloud evidence/E2E vẫn có blocker thực; checklist cũ không chứng minh hoàn tất.
 
@@ -13,7 +9,7 @@
 Ứng dụng Android Flutter (PRM323 Lab 2 → Lab 3): tra cứu chương trình/đề cương,
 quản lý deadline, ghi chú + attachment, tư vấn học vụ, **đồng bộ Firestore
 offline-first**, Google Sign-In, FCM + Notification Center, Analytics/Crashlytics/
-Remote Config, và **xuất PDF báo cáo học tập** (kèm consent) lên Cloud Storage.
+Remote Config, và **xuất PDF báo cáo học tập** với xác nhận trước khi upload.
 Kiến trúc fail-loud: Firebase lỗi là báo lỗi thật, không fallback mock im lặng.
 
 ## Build · Run · Test
@@ -21,8 +17,8 @@ Kiến trúc fail-loud: Firebase lỗi là báo lỗi thật, không fallback mo
 ```bash
 flutter pub get
 flutter analyze          # 0 issues
-flutter test             # 89 tests (unit/widget, hermetic mocks + Timestamp parsing + SyncReloadService + version gate + Advisor levels/consent)
-flutter build apk --debug   # PASS on 2026-11-02 with out-of-band google-services.json
+flutter test             # 119 unit/widget tests passed with the Cloudinary changes
+flutter build apk --debug
 ```
 
 | Hạng mục Lab 3 | Vị trí |
@@ -36,7 +32,7 @@ flutter build apk --debug   # PASS on 2026-11-02 with out-of-band google-service
 | Evidence matrix | [evidence/README.md](evidence/README.md) — matrix và yêu cầu bằng chứng; chưa có bộ ảnh/trace hoàn chỉnh |
 | Report/slides PDFs | [report/Lab03_STUDENT_ID.pdf](report/Lab03_STUDENT_ID.pdf) (10 trang), [slides/Lab03_STUDENT_ID_slides.pdf](slides/Lab03_STUDENT_ID_slides.pdf) (15 slide); kịch bản video tại [docs/lab3-video-script.md](docs/lab3-video-script.md) |
 
-ARTEMIS (E2E on-device): checklist yêu cầu tối thiểu 10 test, mỗi test chạy 3 lần. Harness có tại `e2e_test/` (26 case thu thập được, `pytest --collect-only` sạch), nhưng **chưa chạy được ca nào**: ARTEMIS host lên bình thường, device `emulator-5554` sẵn sàng, song Gemini free-tier đã hết quota ngày (HTTP 429, reset ≈14h). Chi tiết ở [evidence/artemis/RUN_LOG_2026-11-04.md](evidence/artemis/RUN_LOG_2026-11-04.md). 89 là tổng Flutter unit/widget tests, **không phải** ARTEMIS test cases.
+ARTEMIS có 26 kịch bản trong harness. TC_11 Remote Config đã pass một lượt trên Pixel 7 giả lập. Checklist yêu cầu tối thiểu 10 ca, mỗi ca chạy 3 lần, và một phiên exploratory. [Hướng dẫn chạy và kết quả ARTEMIS](e2e_test/README.md).
 
 ### Evidence matrix (local emulator, 2026-11-02)
 
@@ -56,17 +52,11 @@ ARTEMIS (E2E on-device): checklist yêu cầu tối thiểu 10 test, mỗi test 
 | Tests | 89 tests pass (unit/widget hermetic + Timestamp parsing + SyncReloadService + version gate + Advisor levels/consent) | ✅ Verified |
 | Build | `flutter analyze`: 0 issues; `flutter test`: 89/89 pass; `flutter build apk --debug`: PASS | ✅ Verified |
 
-### Known limitations (emulator only)
+### Xác minh runtime và giới hạn
 
-- FCM delivery (foreground/background/terminated) và tap routing: chưa test trên thiết bị có Play Services
-- Analytics DebugView event delivery: chưa check trên Console
-- Crashlytics dashboard collection (non-fatal test): chưa test trên device
-- Remote Config before/after behavior: chưa test trên Console
-- Storage bucket provisioning và PDF export runtime: chưa xác minh trên Firebase Console/device; không nâng billing khi chưa được nhóm đồng ý
-- Offline/reconnect behavior: chưa test
-- Firestore Rules deployment status: cần recheck trên Console
-- S-10: code gate `hostedDomain` + hậu kiểm email `@fpt.edu.vn` đã có; chưa thử đăng nhập bằng tài khoản ngoài domain để xác minh nhánh từ chối trên emulator.
-- ARTEMIS E2E tests: cần device có Google Play Services; Python `uv`, `adb` chưa setup
+- Trên giả lập đã xác minh FCM ở ba trạng thái, Crashlytics fatal/non-fatal qua web admin và Remote Config 31 → 30 trên cùng APK. [Mục lục minh chứng](evidence/README.md).
+- PDF báo cáo và tệp đính kèm đã upload/tải lại qua Cloudinary. Firestore đã đọc lại metadata của cả hai. Bản demo USB cần Media API chạy trên máy tính và `adb reverse`.
+- Cần bổ sung DebugView theo tracking plan, batch ARTEMIS và lượt kiểm tra trên điện thoại thật. Nhánh từ chối tài khoản ngoài `@fpt.edu.vn` cần tài khoản kiểm thử riêng.
 
 ### Hướng dẫn chạy (emulator)
 
@@ -91,7 +81,7 @@ flutter run -d <emulator-id>
 ### Giới hạn
 
 - Kết quả runtime đã ghi nhận trên emulator với Firebase project `prm323-lab2-gr6`; `google-services.json` là file out-of-band/gitignored. APK debug build đã pass trong checkout này, nhưng clone mới cần tự cung cấp config hợp lệ.
-- Các runtime feature cần thiết bị có Google Play Services: FCM 3 trạng thái, Analytics DebugView, Crashlytics dashboard, Remote Config before/after, Storage bucket + PDF export, offline/reconnect.
+- Khi chấm trên Android thật, kiểm tra Play Services, thông báo, kết nối với Media API và Google Sign-In bằng tài khoản demo.
 - Repo hiện `prm323-lab2-gr6` chưa khớp mẫu tên repo ở checklist §2.1 (`PRM393_Lab03_<StudentID>`). Đổi tên repo trên GitHub khi nộp bài; checklist không yêu cầu đổi `applicationId`.
 - `@fpt.edu.vn` enforcement: code đã lọc account và hậu kiểm email; runtime rejection với tài khoản khác domain chưa kiểm chứng.
 

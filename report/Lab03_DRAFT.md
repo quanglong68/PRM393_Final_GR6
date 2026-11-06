@@ -25,12 +25,12 @@ Web admin đọc báo cáo Crashlytics qua Node và OAuth phía server. Trình d
 
 | Mục | Kết quả quan sát |
 |---|---|
-| Flutter | 114 unit/widget tests pass, analyzer sạch. |
+| Flutter | 119 unit/widget tests pass, analyzer sạch. |
 | FCM | Đã gửi và nhận trên emulator ở ba trạng thái, cold deep link mở PRM323. Script server mới gọi HTTP v1 validate_only thành công. |
 | Crashlytics | Native test crash và non-fatal đã có trong dashboard. API của web admin trả báo cáo thật và chặn truy cập chưa xác thực. |
 | Remote Config | App hiển thị 31 rồi 30 phút trên cùng APK, đọc lại 30 phút sau khi mở emulator. |
-| PDF | Đã tạo PDF tiếng Việt và mở Android share sheet. Node test kiểm tra giới hạn file, sai UID và upload/download qua HTTP bằng adapter thử. Cloudinary thật chờ credentials. |
-| Analytics | DebugView xác nhận export_report_local và course_count=4. Đối chiếu các event còn lại theo tracking plan. |
+| PDF và tệp đính kèm | Pixel 7 giả lập đã tạo PDF, upload Cloudinary, tải lại và mở Android share sheet. DOCX tải lại từ ghi chú đã lưu khớp SHA-256. Đã đọc lại metadata của cả hai trên Firestore. Media API chạy thành công với Markdown, PDF và DOCX. |
+| Analytics | DebugView xác nhận `export_report_local` và `course_count=4`. Log SDK ghi nhận thêm `export_report` với `status=success` và `note_create`. Còn đối chiếu các event này trên DebugView. |
 | ARTEMIS | TC_11 pass 1 lượt trên emulator, trace cc6378c0-a0d2-4c0b-8c2a-f728025f6ecc. Kết quả máy thật và batch theo rubric còn thiếu. |
 | AI review | 9 findings trong tài liệu review local, có quyết định và kiểm thử. PR và ba commit độc lập còn chờ. |
 
@@ -38,8 +38,8 @@ Xem [mục lục bằng chứng](../evidence/README.md), [log ARTEMIS](../eviden
 
 ## 5. Quyền truy cập và dữ liệu
 
-Firestore chỉ cho owner dùng dữ liệu cá nhân theo UID. Hosted domain của Google Sign-In và kiểm tra email trong app là hai phần của luồng đăng nhập. Kiểm tra domain trên thiết bị và cách ly giữa hai tài khoản demo cần thu riêng. API PDF xác minh chữ ký ID token, từ chối UID khác, chỉ nhận dữ liệu PDF tối đa 10 MB. Cloudinary key, OAuth token và mật khẩu web lưu ngoài source. Dữ liệu personal và key cần ẩn khỏi hình chụp.
+Firestore chỉ cho owner dùng dữ liệu cá nhân theo UID. Hosted domain của Google Sign-In và kiểm tra email trong app là hai phần của luồng đăng nhập. Kiểm tra domain trên thiết bị và cách ly giữa hai tài khoản demo cần thu riêng. Media API xác minh chữ ký ID token và từ chối UID khác. Đường dẫn báo cáo chỉ nhận PDF tối đa 10 MiB. Đường dẫn ghi chú nhận tệp thuộc danh sách định dạng được hỗ trợ và nhỏ hơn 10 MiB. Cloudinary key, OAuth token và mật khẩu web lưu ngoài source. Dữ liệu cá nhân và key cần ẩn khỏi hình chụp.
 
 ## 6. Kiểm thử trên máy thật và bàn giao
 
-Chọn serial máy thật qua ADB. Dùng app cùng project, tài khoản FPT demo và APK có SHA phù hợp. Thu kết quả crash trước/sau trên web admin, ba trạng thái FCM, upload/tải lại Cloudinary khi đã provision, Analytics DebugView và batch ARTEMIS. Chốt MSSV và đổi tên file khi xuất bản nộp. Slide để sau theo yêu cầu. Video quay khi có thiết bị thật.
+Chọn serial máy thật qua ADB. Dùng app cùng project, tài khoản FPT demo và APK có SHA phù hợp. Thu kết quả crash trước/sau trên web admin, ba trạng thái FCM, upload/tải lại Cloudinary, Analytics DebugView và batch ARTEMIS. Chốt MSSV và đổi tên file khi xuất bản nộp. Slide để sau theo yêu cầu. Video quay khi có thiết bị thật.

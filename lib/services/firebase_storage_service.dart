@@ -10,8 +10,9 @@ import 'storage_service.dart';
 /// `reports/{userId}/...` or `notes/{userId}/...`.
 class FirebaseStorageService implements StorageService {
   FirebaseStorageService({FirebaseStorage? storage})
-      : _storage = storage ??
-            (Firebase.apps.isNotEmpty ? FirebaseStorage.instance : null);
+    : _storage =
+          storage ??
+          (Firebase.apps.isNotEmpty ? FirebaseStorage.instance : null);
 
   final FirebaseStorage? _storage;
 
@@ -21,8 +22,9 @@ class FirebaseStorageService implements StorageService {
     final client = _storage;
     if (client == null) {
       throw StateError(
-          'Cloud Storage chưa được khởi tạo (thiếu google-services.json / '
-          'Firebase.initializeApp thất bại). Từ chối trả về URL giả lập.');
+        'Cloud Storage chưa được khởi tạo (thiếu google-services.json / '
+        'Firebase.initializeApp thất bại). Từ chối trả về URL giả lập.',
+      );
     }
     return client;
   }
@@ -32,6 +34,7 @@ class FirebaseStorageService implements StorageService {
     String path,
     List<int> bytes, {
     String? contentType,
+    bool createDownloadUrl = true,
     void Function(double progress)? onProgress,
   }) async {
     final client = _client;
@@ -40,6 +43,7 @@ class FirebaseStorageService implements StorageService {
       final ref = client.ref().child(path);
       final metadata = SettableMetadata(
         contentType: contentType ?? 'application/octet-stream',
+        contentDisposition: createDownloadUrl ? null : 'attachment',
         customMetadata: {'uploadedAt': DateTime.now().toIso8601String()},
       );
 
@@ -54,6 +58,7 @@ class FirebaseStorageService implements StorageService {
       }
 
       final completed = await uploadTask;
+      if (!createDownloadUrl) return path;
       final downloadUrl = await completed.ref.getDownloadURL();
       debugPrint('[Storage] Uploaded successfully to $path');
       return downloadUrl;

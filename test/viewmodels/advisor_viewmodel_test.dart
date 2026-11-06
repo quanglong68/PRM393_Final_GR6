@@ -6,6 +6,49 @@ import '../helpers/fake_firestore_service.dart';
 import '../helpers/mock_auth_service.dart';
 
 void main() {
+  test(
+    'Gemini receives catalog facts after consent while grades stay local',
+    () async {
+      final auth = MockAuthService(initialUserId: 'test-owner');
+      final store = FakeFirestoreService()
+        ..courses.add({
+          'id': 'PRM323',
+          'code': 'PRM323',
+          'name': 'Mobile',
+          'credits': 3,
+          'semester': 5,
+          'currentGrade': 9.875,
+        });
+      final academic = AcademicViewModel(
+        authService: auth,
+        firestoreService: store,
+      );
+      var calls = 0;
+      final vm = AdvisorViewModel(
+        authService: auth,
+        academicViewModel: academic,
+        askGemini: (uid, question, level, catalog) async {
+          calls++;
+          expect(uid, 'test-owner');
+          expect(question, 'PRM323');
+          expect(level, 'course');
+          expect(catalog, contains('PRM323 — Mobile, 3 tín chỉ'));
+          expect(catalog, isNot(contains('9.875')));
+          return 'Kết quả Gemini thử nghiệm';
+        },
+      );
+      addTearDown(auth.dispose);
+      addTearDown(academic.dispose);
+      addTearDown(vm.dispose);
+      await vm.askQuestion('PRM323');
+      expect(calls, 0);
+      vm.grantConsent();
+      await vm.askQuestion('PRM323');
+      expect(calls, 1);
+      expect(vm.messages.last.text, contains('Kết quả Gemini thử nghiệm'));
+    },
+  );
+
   group('AdvisorViewModel & GPA Strategy Simulator Tests', () {
     late AdvisorViewModel viewModel;
 

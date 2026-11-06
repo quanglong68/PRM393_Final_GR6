@@ -13,6 +13,8 @@ Tại thư mục repository, sau khi ARTEMIS host có quota và emulator sẵn s
 & e2e_test/.venv/Scripts/python.exe -m pytest e2e_test -m exploratory --runs 1 -v
 ```
 
+Nếu SDK báo không kết nối được cổng `8000`, mở một terminal riêng tại thư mục cài ARTEMIS và chạy `& .venv/Scripts/artemis.exe ui --no-open`. Chờ server nghe trên `127.0.0.1:8000` rồi chạy lại một ca trước khi chạy batch.
+
 Máy hiện đã có venv riêng và pytest/pytest-asyncio/pytest-timeout/artemis-client. Để tái tạo môi trường dùng `uv sync` trong `e2e_test` với dependency đã pin.
 
 Key mô hình nằm trong `.env` của **host ARTEMIS**, không cần chép key sang repository. Sau đổi key, nạp lại host/MCP. `.env` của harness chỉ cần địa chỉ host, serial và tài khoản thử riêng.
@@ -22,7 +24,7 @@ Các ca đổi tài khoản/tạo dữ liệu yêu cầu `TEST_ACCOUNT_EMAIL` th
 ## Bằng chứng và tính đúng
 
 - Mỗi lượt lưu `admitted.json`, `result.json`, screenshot riêng dưới `evidence/artemis/runs/`; không ghi đè lượt trước.
-- Assertion đọc JSON `TaskResult.output` và giá trị thực; trạng thái SUCCESS đơn lẻ không đủ.
+- Assertion đọc `TaskResult.output` hoặc dữ liệu có cấu trúc trong hành động cuối của đúng trace. Ca tìm môn đối chiếu thêm ô tìm kiếm và mã môn từ hierarchy Android. Trạng thái SUCCESS đơn lẻ không đủ.
 - SDK timeout 390 giây, poll 5 giây, pytest timeout 480 giây. Exploratory có timeout riêng và phải quan sát ít nhất 15 phút.
 - Ca offline luôn khôi phục trạng thái mạng ban đầu bằng fixture `finally` của pytest, kể cả task lỗi.
 - `results-*.json/md` có số lượt chạy, đạt/trượt/bỏ qua, thời gian trung bình. Bỏ qua hoặc hỏng hạ tầng không phải PASS.
@@ -43,3 +45,5 @@ Ngày 04/11: các trace trước bị quota; ca SDK sau restart còn gặp 429/5
 ## Ngày 05/11/2026
 
 TC_11 có 1 PASS trên Pixel 7 emulator. Dữ liệu được xác minh bằng terminal report cùng hierarchy độc lập. Xem [kết quả](../evidence/artemis/results-20261105T103204181722Z.md). Khi chấm, kết nối Android thật, kiểm tra `adb devices -l`, đặt `DEVICE_SERIAL` theo serial máy thật và chạy lại. Batch đủ 3 lượt mỗi ca và exploratory vẫn cần thu.
+
+Lượt chạy ca tìm môn sau đó đã phát hiện hai dạng trường quan sát trong hành động cuối và một lỗi nhập query của agent. Đã cập nhật parser và thêm đối chiếu query với hierarchy. Gemini trả HTTP 429 khi chạy lại. [Trace và kết quả từng lần thử](../evidence/artemis/2026-11-05-search-run.md).

@@ -8,6 +8,13 @@ import 'package:prm323_lab3/services/firestore_service.dart';
 /// [notifications]) and inspect those lists afterwards. Failure flags arm
 /// simulated remote errors.
 class FakeFirestoreService implements FirestoreService {
+  @override
+  Future<List<Map<String, dynamic>>> getRecentReportMetadata(
+    String userId,
+  ) async => reports.reversed
+      .where((report) => report['userId'] == userId)
+      .take(30)
+      .toList();
   final List<Map<String, dynamic>> courses = [];
   final List<Map<String, dynamic>> tasks = [];
   final List<Map<String, dynamic>> notes = [];
@@ -105,15 +112,36 @@ class FakeFirestoreService implements FirestoreService {
   }
 
   @override
-  Future<void> saveNote(Map<String, dynamic> note) async {
+  Future<void> saveNote(
+    Map<String, dynamic> note, {
+    (String?, String?)? attachmentBefore,
+    bool preserveAttachment = false,
+  }) async {
     if (shouldFailNoteSave) {
       throw Exception('Simulated remote saveNote failure');
     }
     final idx = notes.indexWhere((n) => n['id'] == note['id']);
+    final previous = idx == -1 ? null : notes[idx];
+    if (attachmentBefore != null &&
+        (previous == null ||
+            (previous['attachmentPath'], previous['attachmentUrl']) !=
+                attachmentBefore)) {
+      throw StateError('Stale attachment');
+    }
+    final data = Map<String, dynamic>.of(note);
+    if (preserveAttachment && previous != null) {
+      for (final field in [
+        'attachmentPath',
+        'attachmentUrl',
+        'attachmentName',
+      ]) {
+        data[field] = previous[field];
+      }
+    }
     if (idx != -1) {
-      notes[idx] = Map<String, dynamic>.from(note);
+      notes[idx] = data;
     } else {
-      notes.add(Map<String, dynamic>.from(note));
+      notes.add(data);
     }
   }
 

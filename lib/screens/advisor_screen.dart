@@ -38,18 +38,19 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
 
   /// Share consent (rubric §6.4): shown before the first question. Returns
   /// false when the user declines — the question is then not sent at all.
-  Future<bool> _askConsent() async {
+  Future<bool> _askConsent({required bool usesGemini}) async {
     final accepted = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Chia sẻ dữ liệu hỏi đáp'),
-        content: const Text(
-          'Câu hỏi của bạn và cấp tư vấn đang chọn (môn học / kỳ học / '
-          'chương trình / điểm số) sẽ được dùng để tạo câu trả lời và ghi một '
-          'sự kiện ẩn danh vào Firebase Analytics.\n\n'
-          'Không gửi: tên, email, mã số sinh viên, bảng điểm thật hay nội dung '
-          'ghi chú cá nhân. Câu trả lời hiện được tổng hợp từ bộ quy tắc học vụ '
-          'trong app, không phải từ mô hình AI trực tuyến.',
+        content: Text(
+          usesGemini
+              ? 'Gemini nhận câu hỏi bạn nhập, cấp tư vấn và thông tin từ danh mục môn học. '
+                    'App xử lý bảng điểm, lịch học và ghi chú trên thiết bị. '
+                    'Vui lòng tránh nhập tên, email, mã sinh viên hoặc thông tin riêng vào câu hỏi. '
+                    'Firebase Analytics ghi cấp tư vấn, không ghi nội dung câu hỏi.'
+              : 'App dùng câu hỏi để tư vấn theo dữ liệu trên thiết bị. '
+                    'Firebase Analytics ghi cấp tư vấn, không ghi nội dung câu hỏi.',
         ),
         actions: [
           TextButton(
@@ -70,13 +71,16 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
     if (text.trim().isEmpty) return;
 
     if (!vm.hasConsent) {
-      final ok = await _askConsent();
-      if (!ok) return;
+      final ok = await _askConsent(usesGemini: vm.usesGemini);
+      if (!mounted || !ok) return;
       vm.grantConsent();
     }
 
-    vm.askQuestion(text.trim(), level: vm.selectedLevel);
+    final reply = vm.askQuestion(text.trim(), level: vm.selectedLevel);
     _inputController.clear();
+    _scrollToEnd();
+    await reply;
+    if (!mounted) return;
     _scrollToEnd();
   }
 

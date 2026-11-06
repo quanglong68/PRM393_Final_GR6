@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-05",
+  "device": "Pixel_7_API_35_Google_Play",
+  "source": "Android logcat, Firebase Analytics SDK",
+  "debug_mode_package": "com.example.prm323_lab3",
+  "events": {
+    "export_report": {
+      "status": "success",
+      "file_size_kb": 20,
+      "duration_ms": 2394
+    },
+    "note_create": {
+      "content_length": 0
+    }
+  },
+  "console_debugview_verified_for_these_events": false
+}

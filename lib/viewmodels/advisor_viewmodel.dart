@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../services/analytics_service.dart';
 import '../services/auth_service.dart';
 import '../services/remote_config_service.dart';
+import '../services/report_media_storage_service.dart';
 import '../models/app_state.dart';
 import 'academic_viewmodel.dart';
 
@@ -44,23 +45,15 @@ class AdvisorMessage {
   final AdvisorLevel level;
 }
 
-/// Academic Advisor ViewModel.
-///
-/// **Honesty note (important for the report):** this build answers with a
-/// local rule-based engine — no LLM/API is called. The UI and docs must say
-/// so; do not present keyword matching as an AI backend. The single place a
-/// real call would go is marked with a `ponytail:` comment in [askQuestion].
-///
-/// No-mockdata policy: this view never fabricates the student's identity or
-/// grades. The greeting uses the signed-in account (or a generic one), and the
-/// GPA figures are clearly labelled *simulation inputs* — the sandbox, not a
-/// claim about the user's real academic record.
+/// Combines Gemini guidance from the shared catalog with private calculations
+/// on the device.
 class AdvisorViewModel extends ChangeNotifier {
   AdvisorViewModel({
     this.remoteConfigService,
     this.academicViewModel,
     this.analyticsService,
     this.authService,
+    this.askGemini,
   }) {
     _initDefaults();
     _sessionUid = authService?.currentUserId;
@@ -106,6 +99,13 @@ class AdvisorViewModel extends ChangeNotifier {
   final AnalyticsService? analyticsService;
   final AuthService? authService;
   final AcademicViewModel? academicViewModel;
+  final Future<String> Function(
+    String uid,
+    String question,
+    String level,
+    String catalog,
+  )?
+  askGemini;
 
   final List<AdvisorMessage> _messages = [];
   bool _isLoading = false;
@@ -128,6 +128,7 @@ class AdvisorViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isAiEnabled => remoteConfigService?.isAiAdvisorEnabled ?? true;
   bool get hasConsent => _consentGranted;
+  bool get usesGemini => askGemini != null;
 
   /// Currently selected consultation level (drives the UI selector).
   AdvisorLevel get selectedLevel => _selectedLevel;
@@ -201,9 +202,8 @@ class AdvisorViewModel extends ChangeNotifier {
         text:
             'Xin chào $name! Mình là Cố vấn học tập của bạn tại FPTU. '
             'Chọn cấp tư vấn bên dưới (môn học / kỳ học / chương trình / điểm số) '
-            'rồi đặt câu hỏi — hoặc dùng gợi ý nhanh. '
-            'Câu trả lời dựa trên danh mục Firebase và bảng điểm/lịch học bạn nhập, '
-            'không phải từ một mô hình AI trực tuyến.',
+            'rồi đặt câu hỏi hoặc dùng gợi ý nhanh. '
+            '${usesGemini ? 'Gemini tham khảo danh mục môn. Điểm và lịch của bạn được phân tích riêng trên thiết bị.' : 'Bản này tư vấn theo dữ liệu học tập trên thiết bị.'}',
         timestamp: 'Vừa xong',
         level: AdvisorLevel.program,
       ),
@@ -232,7 +232,13 @@ class AdvisorViewModel extends ChangeNotifier {
       return;
     }
     if (question.trim().isEmpty) return;
+    if (question.length > 500) {
+      _errorMessage = 'Câu hỏi tối đa 500 ký tự.';
+      notifyListeners();
+      return;
+    }
 
+    final uid = authService?.currentUserId;
     _lastQuestion = question;
     _lastLevel = useLevel;
     _selectedLevel = useLevel;
@@ -252,9 +258,6 @@ class AdvisorViewModel extends ChangeNotifier {
     analyticsService?.logAdvisorQuery(topic: useLevel.id);
 
     try {
-      // ponytail: local rule engine — no network, no LLM. This delay exists
-      // only so the loading state is observable; swap this block for a real
-      // backend call (Firebase AI Logic / Vertex AI) if that becomes required.
       final academic = academicViewModel;
       if (academic != null) {
         await academic.loadData().timeout(const Duration(seconds: 15));
@@ -265,7 +268,41 @@ class AdvisorViewModel extends ChangeNotifier {
         await Future<void>.delayed(const Duration(milliseconds: 600));
       }
       if (_disposed || request != _requestVersion) return;
-      final reply = _replyFor(useLevel, question.toLowerCase());
+      final local = _replyFor(useLevel, question.toLowerCase());
+      final ask = askGemini;
+      String reply = local;
+      if (ask != null) {
+        if (uid == null || uid != authService?.currentUserId || !isAiEnabled) {
+          throw StateError('Phiên hỏi đáp đã thay đổi.');
+        }
+        final courses = academic?.courses ?? [];
+        final matched = courses.where(
+          (course) =>
+              question.toLowerCase().contains(course.code.toLowerCase()),
+        );
+        final relevant = matched.isNotEmpty ? matched : courses;
+        final catalog = relevant
+            .take(25)
+            .map(
+              (course) =>
+                  '${course.code} — ${course.name}, ${course.credits} tín chỉ, '
+                  'kỳ ${course.semester}, tiên quyết: ${course.prerequisites.join(', ')}',
+            )
+            .join('\n');
+        final answer = await ask(
+          uid,
+          question,
+          useLevel.id,
+          catalog.substring(0, catalog.length.clamp(0, 6000)),
+        );
+        if (_disposed ||
+            request != _requestVersion ||
+            uid != authService?.currentUserId ||
+            !isAiEnabled) {
+          return;
+        }
+        reply = '$answer\n\nĐối chiếu trên thiết bị\n$local';
+      }
 
       _messages.add(
         AdvisorMessage(
@@ -280,8 +317,10 @@ class AdvisorViewModel extends ChangeNotifier {
       if (_disposed || request != _requestVersion) return;
       // Error branch: keep the user's question, post an error bubble + flag
       // for the Retry button. Never pretend a reply succeeded.
-      debugPrint('[Advisor] askQuestion failed: $e');
-      _errorMessage = 'Không nhận được câu trả lời. Vui lòng thử lại.';
+      debugPrint('[Advisor] askQuestion failed: ${e.runtimeType}');
+      _errorMessage = e is AdvisorRequestException
+          ? e.message
+          : 'Không nhận được câu trả lời. Kiểm tra kết nối và thử lại.';
       _messages.add(
         AdvisorMessage(
           id: _errorId(question),
@@ -307,7 +346,7 @@ class AdvisorViewModel extends ChangeNotifier {
     }
     final profile = academic.profile;
     final source =
-        '\nNguồn: danh mục môn Firebase; hồ sơ học tập riêng của bạn. Phân tích cục bộ, không gọi AI bên ngoài.';
+        '\nNguồn: danh mục môn Firebase và hồ sơ học tập riêng trên thiết bị.';
     switch (level) {
       case AdvisorLevel.course:
         final matches = academic.courses

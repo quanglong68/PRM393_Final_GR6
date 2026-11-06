@@ -1,7 +1,11 @@
+import 'dart:async';
+import 'dart:typed_data';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/note_attachment.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../viewmodels/notes_viewmodel.dart';
@@ -26,14 +30,25 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   String? _existingNoteId;
   String? _attachmentName;
   String? _attachmentUrl;
+  String? _attachmentPath;
+  (String?, String?)? _originalAttachment;
+  String? _stagedAttachment;
+  NotesViewModel? _notesVm;
+  bool _saving = false;
   bool _uploading = false;
+  bool _downloading = false;
+  double? _uploadProgress;
+  bool get _transferring => _uploading || _downloading;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_isInitialized) {
       final notesVm = context.read<NotesViewModel>();
-      final arg = widget.noteId ?? ModalRoute.of(context)?.settings.arguments as String?;
+      _notesVm = notesVm;
+      final arg =
+          widget.noteId ??
+          ModalRoute.of(context)?.settings.arguments as String?;
 
       if (arg != null) {
         final existing = notesVm.findNoteById(arg);
@@ -42,11 +57,15 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           _titleController.text = existing.title;
           _courseController.text = existing.courseCode;
           _contentController.text = existing.content;
-          if (existing.attachmentUrl != null) {
-            _attachmentUrl = existing.attachmentUrl;
-            _attachmentName = 'Tệp đính kèm đã tải lên';
+          _attachmentUrl = existing.attachmentUrl;
+          _attachmentPath = existing.attachmentPath;
+          _originalAttachment = (_attachmentPath, _attachmentUrl);
+          if (_attachmentPath != null || _attachmentUrl != null) {
+            _attachmentName = existing.attachmentName ?? 'Tệp đính kèm';
           }
-        } else if (arg.startsWith('PRM') || arg.startsWith('SWP') || arg.startsWith('SWR')) {
+        } else if (arg.startsWith('PRM') ||
+            arg.startsWith('SWP') ||
+            arg.startsWith('SWR')) {
           // Argument is a course code
           _courseController.text = arg;
         }
@@ -57,13 +76,23 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
 
   @override
   void dispose() {
+    if (!_saving) _discardStagedAttachment();
     _titleController.dispose();
     _courseController.dispose();
     _contentController.dispose();
     super.dispose();
   }
 
+  void _discardStagedAttachment() {
+    final path = _stagedAttachment;
+    _stagedAttachment = null;
+    if (path != null) {
+      unawaited(_notesVm?.removeObsoleteAttachment(path));
+    }
+  }
+
   Future<void> _saveNote() async {
+    if (_transferring || _saving) return;
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
     final course = _courseController.text.trim();
@@ -76,14 +105,23 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     }
 
     final notesVm = context.read<NotesViewModel>();
+    final attachmentChanged =
+        (_attachmentPath, _attachmentUrl) != _originalAttachment;
+    _saving = true;
     final ok = await notesVm.saveNote(
       id: _existingNoteId,
       title: title,
       content: content,
       courseCode: course.isEmpty ? 'Chung' : course,
       attachmentUrl: _attachmentUrl,
+      attachmentPath: _attachmentPath,
+      attachmentName: _attachmentName,
+      attachmentBefore: attachmentChanged ? _originalAttachment : null,
+      preserveAttachment: !attachmentChanged && _existingNoteId != null,
       tags: [course.toLowerCase()],
     );
+    _saving = false;
+    if (ok) _stagedAttachment = null;
 
     if (!mounted) return;
     if (!ok) {
@@ -99,9 +137,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Đã lưu ghi chú vào Vault thành công!'),
-        backgroundColor: AppColors.success,
+      SnackBar(
+        content: Text(
+          notesVm.lastError ?? 'Đã lưu ghi chú vào Vault thành công!',
+        ),
+        backgroundColor: notesVm.lastError == null ? AppColors.success : null,
       ),
     );
     if (Navigator.canPop(context)) {
@@ -109,49 +149,112 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     }
   }
 
-  /// Real attachment flow (no mockdata): pick a file, upload its bytes to
-  /// Cloud Storage via NotesViewModel, keep the returned download URL. The
-  /// note only references the file after the upload actually succeeded.
   Future<void> _attachFile() async {
-    if (_uploading) return;
     final notesVm = context.read<NotesViewModel>();
-    // file_picker 13: static API, returns empty list on cancel.
-    final files = await FilePicker.pickFiles();
-    if (files.isEmpty) return;
-    final file = files.first;
-    final bytes = await file.readAsBytes();
-    if (bytes.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tệp rỗng — không thể tải lên.')),
-        );
-      }
-      return;
-    }
-
-    setState(() => _uploading = true);
-    final url = await notesVm.uploadAttachment(
-      fileName: file.name,
-      bytes: bytes,
-    );
-    if (!mounted) return;
-    setState(() => _uploading = false);
-
-    if (url == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(notesVm.lastError ?? 'Tải tệp lên thất bại.'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-      return;
-    }
+    if (_transferring || notesVm.isSaving) return;
+    final uid = notesVm.currentUserId;
     setState(() {
-      _attachmentUrl = url;
-      _attachmentName = '${file.name} (${(bytes.length / 1024).ceil()} KB)';
+      _uploading = true;
+      _uploadProgress = null;
     });
+    try {
+      // Some Android providers don't advertise a MIME type for Markdown.
+      // Accept their selection and validate its extension before reading it.
+      final file = await FilePicker.pickFile(
+        dialogTitle: 'Chọn tài liệu đính kèm',
+      );
+      if (file == null || !mounted || uid != notesVm.currentUserId) return;
+      final name = NoteAttachment.safeFileName(file.name);
+      final error = NoteAttachment.validationError(name, file.lengthSync());
+      if (!mounted || uid != notesVm.currentUserId) return;
+      if (error != null) {
+        _showAttachmentMessage(error, failed: true);
+        return;
+      }
+      final buffer = BytesBuilder(copy: false);
+      await for (final chunk in file.readAsByteStream()) {
+        if (!mounted || uid != notesVm.currentUserId) return;
+        if (buffer.length + chunk.length >= NoteAttachment.maxBytesExclusive) {
+          _showAttachmentMessage('Tệp phải nhỏ hơn 10 MB.', failed: true);
+          return;
+        }
+        buffer.add(chunk);
+      }
+      if (!mounted || uid != notesVm.currentUserId) return;
+      final bytes = buffer.takeBytes();
+      final path = await notesVm.uploadAttachment(
+        fileName: name,
+        bytes: bytes,
+        onProgress: (progress) {
+          if (mounted && _uploading) {
+            setState(() => _uploadProgress = progress);
+          }
+        },
+      );
+      if (!mounted || uid != notesVm.currentUserId) {
+        if (path != null) unawaited(notesVm.removeObsoleteAttachment(path));
+        return;
+      }
+      if (path == null) {
+        _showAttachmentMessage(
+          notesVm.lastError ?? 'Tải tệp lên thất bại.',
+          failed: true,
+        );
+        return;
+      }
+      _discardStagedAttachment();
+      setState(() {
+        _stagedAttachment = path;
+        _attachmentUrl = null;
+        _attachmentPath = path;
+        _attachmentName = name;
+      });
+      _showAttachmentMessage(
+        'Đã tải tệp lên. Lưu ghi chú để giữ tệp đính kèm.',
+      );
+    } catch (_) {
+      if (mounted) _showAttachmentMessage('Không đọc được tệp.', failed: true);
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  Future<void> _downloadAttachment() async {
+    final path = _attachmentPath;
+    if (path == null || _transferring) return;
+    final notesVm = context.read<NotesViewModel>();
+    final uid = notesVm.currentUserId;
+    setState(() => _downloading = true);
+    try {
+      final bytes = await notesVm.downloadAttachment(path);
+      if (!mounted || uid != notesVm.currentUserId) return;
+      final name = NoteAttachment.safeFileName(
+        _attachmentName ?? path.split('/').last,
+      );
+      final location = await FilePicker.saveFile(
+        fileName: name.isEmpty ? 'attachment' : name,
+        bytes: Uint8List.fromList(bytes),
+        mimeType:
+            NoteAttachment.contentTypeFor(name) ?? 'application/octet-stream',
+      );
+      if (mounted && location != null) {
+        _showAttachmentMessage('Đã lưu tệp trên thiết bị.');
+      }
+    } catch (_) {
+      if (mounted) {
+        _showAttachmentMessage('Không tải được tệp đính kèm.', failed: true);
+      }
+    } finally {
+      if (mounted) setState(() => _downloading = false);
+    }
+  }
+
+  void _showAttachmentMessage(String message, {bool failed = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Đã tải tệp lên Cloud Storage')),
+      SnackBar(
+        content: Text(message),
+        backgroundColor: failed ? AppColors.error : null,
+      ),
     );
   }
 
@@ -163,21 +266,25 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     return Scaffold(
       appBar: CustomAppBar(
         title: isEditing ? 'Chỉnh sửa ghi chú' : 'Soạn ghi chú mới',
-        onBack: () => Navigator.pop(context),
+        onBack: () {
+          if (!_saving) Navigator.pop(context);
+        },
         actions: [
           IconButton(
             icon: _uploading
                 ? const SizedBox(
-                    width: 18, height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2))
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 : const Icon(Icons.attach_file),
-            tooltip: 'Đính kèm tệp tin (tải lên Cloud Storage)',
-            onPressed: _uploading ? null : _attachFile,
+            tooltip: 'Đính kèm tệp tin (${NoteAttachment.supportedFormats})',
+            onPressed: _transferring || isSaving ? null : _attachFile,
           ),
           IconButton(
             icon: const Icon(Icons.check),
             tooltip: 'Lưu ghi chú',
-            onPressed: isSaving ? null : _saveNote,
+            onPressed: isSaving || _transferring ? null : _saveNote,
           ),
         ],
       ),
@@ -206,6 +313,17 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             ),
             const SizedBox(height: AppSpacing.sm),
 
+            if (_uploading) ...[
+              LinearProgressIndicator(value: _uploadProgress),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                _uploadProgress == null
+                    ? 'Đang chuẩn bị tệp…'
+                    : 'Đang tải lên ${(_uploadProgress! * 100).round()}%',
+              ),
+              const SizedBox(height: AppSpacing.sm),
+            ],
+
             // Attachment indicator if attached
             if (_attachmentName != null) ...[
               Container(
@@ -219,7 +337,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.insert_drive_file_outlined, size: 18, color: AppColors.primary),
+                    const Icon(
+                      Icons.insert_drive_file_outlined,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
                     const SizedBox(width: AppSpacing.xs),
                     Expanded(
                       child: Text(
@@ -231,12 +353,35 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                         ),
                       ),
                     ),
-                    InkWell(
-                      onTap: () => setState(() {
-                        _attachmentName = null;
-                        _attachmentUrl = null;
-                      }),
-                      child: const Icon(Icons.close, size: 16, color: AppColors.onPrimaryContainer),
+                    if (_attachmentPath != null)
+                      IconButton(
+                        tooltip: 'Tải tệp đính kèm',
+                        onPressed: _transferring || isSaving
+                            ? null
+                            : _downloadAttachment,
+                        icon: _downloading
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.download_outlined),
+                      ),
+                    IconButton(
+                      tooltip: 'Gỡ tệp khỏi ghi chú',
+                      onPressed: _transferring || isSaving
+                          ? null
+                          : () {
+                              _discardStagedAttachment();
+                              setState(() {
+                                _attachmentName = null;
+                                _attachmentPath = null;
+                                _attachmentUrl = null;
+                              });
+                            },
+                      icon: const Icon(Icons.close, size: 18),
                     ),
                   ],
                 ),
@@ -275,7 +420,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               icon: Icons.save_outlined,
               isExpanded: true,
               isLoading: isSaving,
-              onPressed: _saveNote,
+              onPressed: _transferring ? null : _saveNote,
             ),
           ],
         ),

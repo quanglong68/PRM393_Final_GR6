@@ -70,6 +70,34 @@ void main() {
     });
 
     test(
+      'saved reports reload by owner and use the original provider',
+      () async {
+        final cloud = FakeStorageService()..downloadBytesToReturn = [1, 2];
+        storage.downloadBytesToReturn = [3, 4];
+        final cloudExporter = ReportExportService(
+          storageService: cloud,
+          firebaseStorageService: storage,
+          storageProvider: 'Cloudinary',
+          firestoreService: firestore,
+          analyticsService: analytics,
+        );
+        const name = 'study_report_1793886605613.pdf';
+        await firestore.saveReportMetadata('student-a', {
+          'fileName': name,
+          'storagePath': 'reports/student-a/$name',
+        });
+        await firestore.saveReportMetadata('student-a', {
+          'fileName': name,
+          'storagePath': 'reports/student-b/$name',
+          'storageProvider': 'Cloudinary',
+        });
+        final entry = (await cloudExporter.recentReports('student-a')).single;
+        expect(entry.provider, 'Firebase Cloud Storage');
+        expect(await cloudExporter.downloadSavedReport(entry), [3, 4]);
+      },
+    );
+
+    test(
       'local PDF generation works without Storage or cloud metadata',
       () async {
         storage.shouldFailUpload = true;
