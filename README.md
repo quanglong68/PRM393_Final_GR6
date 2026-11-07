@@ -17,7 +17,7 @@ Kiến trúc fail-loud: Firebase lỗi là báo lỗi thật, không fallback mo
 ```bash
 flutter pub get
 flutter analyze          # 0 issues
-flutter test             # 119 unit/widget tests passed with the Cloudinary changes
+flutter test             # 124 unit/widget tests passed
 flutter build apk --debug
 ```
 
@@ -32,7 +32,9 @@ flutter build apk --debug
 | Evidence matrix | [evidence/README.md](evidence/README.md) — matrix và yêu cầu bằng chứng; chưa có bộ ảnh/trace hoàn chỉnh |
 | Report/slides PDFs | [report/Lab03_STUDENT_ID.pdf](report/Lab03_STUDENT_ID.pdf) (10 trang), [slides/Lab03_STUDENT_ID_slides.pdf](slides/Lab03_STUDENT_ID_slides.pdf) (15 slide); kịch bản video tại [docs/lab3-video-script.md](docs/lab3-video-script.md) |
 
-ARTEMIS có 26 kịch bản trong harness. TC_11 Remote Config đã pass một lượt trên Pixel 7 giả lập. Checklist yêu cầu tối thiểu 10 ca, mỗi ca chạy 3 lần, và một phiên exploratory. [Hướng dẫn chạy và kết quả ARTEMIS](e2e_test/README.md).
+Tạo lại báo cáo với thông tin trang bìa bằng `dart run tool/generate_report_pdf.dart MSSV "Họ và tên"`. Thay `MSSV` bằng mã sinh viên. PDF được ghi trong `report/`.
+
+ARTEMIS có 26 kịch bản trong harness. TC_11 Remote Config đã pass 3/3 lượt trên Pixel 7 giả lập. Checklist yêu cầu tối thiểu 10 ca, mỗi ca chạy 3 lần, và một phiên exploratory. [Hướng dẫn chạy](e2e_test/README.md) · [Kết quả ngày 07/11](evidence/artemis/2026-11-07-regression.md).
 
 ### Evidence matrix (local emulator, 2026-11-02)
 
@@ -56,7 +58,7 @@ ARTEMIS có 26 kịch bản trong harness. TC_11 Remote Config đã pass một l
 
 - Trên giả lập đã xác minh FCM ở ba trạng thái, Crashlytics fatal/non-fatal qua web admin và Remote Config 31 → 30 trên cùng APK. [Mục lục minh chứng](evidence/README.md).
 - PDF báo cáo và tệp đính kèm đã upload/tải lại qua Cloudinary. Firestore đã đọc lại metadata của cả hai. Bản demo USB cần Media API chạy trên máy tính và `adb reverse`.
-- Cần bổ sung DebugView theo tracking plan, batch ARTEMIS và lượt kiểm tra trên điện thoại thật. Nhánh từ chối tài khoản ngoài `@fpt.edu.vn` cần tài khoản kiểm thử riêng.
+- DebugView đã nhận tám loại event trong lượt 07/11. Cần thu các event còn thiếu, batch ARTEMIS và lượt kiểm tra trên điện thoại thật. Nhánh từ chối tài khoản ngoài `@fpt.edu.vn` cần tài khoản kiểm thử riêng.
 
 ### Hướng dẫn chạy (emulator)
 

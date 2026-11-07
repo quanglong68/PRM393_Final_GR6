@@ -58,3 +58,5 @@ Code tests prove call wiring only. They do not prove Firebase Console delivery.
 ## Runtime evidence — 2026-11-04
 
 DebugView received `export_report_local` from Pixel_7_API_35_Google_Play (sdk_gphone64_x86_64). Parameters panel confirms `course_count=4`; native log confirms file_size_kb=21, task_count=0, note_count=0 and HTTP 204 upload. Screenshots and filtered native log: `evidence/firebase/analytics/`. This verifies this custom event, not every planned event. Full >=7-event runtime coverage is still pending; no fabricated delivery evidence.
+
+Ngày 07/11/2026, DebugView hiển thị tám loại event theo kế hoạch, gồm `export_report` và `note_create`. Log SDK cho thấy PDF cloud có `status=success`, `file_size_kb=21` và `duration_ms=2648`. Lượt này dùng phiên đã lưu. Cần kiểm tra đăng nhập mới, đăng xuất và các loại event còn lại. [Kết quả và tham số](../evidence/firebase/analytics/debugview-2026-11-07.json).

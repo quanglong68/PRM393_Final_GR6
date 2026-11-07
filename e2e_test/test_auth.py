@@ -17,7 +17,7 @@ async def test_TC_01_google_signin_native(artemis, auth_account):
 @require_artemis
 async def test_TC_02_auth_routing(artemis):
     observed = await artemis.run(
-        'Cold-start the app without clearing data. Report whether the actual screen is signed_in or signed_out and the actual primary action. Do not change authentication.',
+        'The harness has already cold-started the app. Observe the current screen without relaunching or changing authentication. Report signed_in for Home or signed_out for the sign-in screen and quote the visible text.',
         {'auth_state': 'signed_in or signed_out'},
     )
     assert observed['auth_state'] in {'signed_in','signed_out'}

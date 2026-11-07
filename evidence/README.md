@@ -7,12 +7,15 @@
 - [Tạo và chia sẻ PDF cục bộ](app/local-pdf-2026-11-04/verification.json)
 - [Upload và tải lại qua Cloudinary, đối chiếu metadata Firestore](app/cloudinary-2026-11-05/verification.json)
 - [Gemini thật, mở PDF từ lịch sử và gỡ tệp đính kèm trên Pixel 7 giả lập](app/advisor-vault-2026-11-06.json)
+- [Đọc ghi chú offline và tải lại Firestore sau khi có mạng](app/offline-reconnect-2026-11-07.json)
 - [Remote Config 31 → 30 trên cùng APK](firebase/remote-config/same-apk-2026-11-04.json)
 - [FCM mở đúng môn học khi khởi động từ notification](firebase/fcm/deep-link-persistence-2026-11-04.json)
 - [Crashlytics test crash](firebase/crashlytics/dashboard-native-crash-2026-11-04.png) và [non-fatal](firebase/crashlytics/dashboard-nonfatal-2026-11-04.png)
 - [Analytics DebugView cho event tạo PDF](firebase/analytics/debugview-export-parameters-2026-11-04.png). Đối chiếu các event còn lại theo tracking plan.
-- [Log SDK Analytics cho export cloud và tạo ghi chú](firebase/analytics/native-cloudinary-events-2026-11-05.json). Hai event này còn cần đối chiếu trên DebugView.
+- [Log SDK Analytics cho export cloud và tạo ghi chú](firebase/analytics/native-cloudinary-events-2026-11-05.json) từ lượt 05/11.
+- [Tám loại event trên DebugView và tham số đối chiếu từ SDK](firebase/analytics/debugview-2026-11-07.json), gồm xuất PDF cloud và tạo ghi chú.
 - [Lượt chạy ARTEMIS tìm môn, kết quả từng trace và lỗi quota](artemis/2026-11-05-search-run.md)
+- [ARTEMIS TC_11 pass 3/3 lượt ngày 07/11](artemis/2026-11-07-regression.md)
 
 
 Cấu trúc theo checklist §10.1. Naming guide v5: `SCR-` (màn hình), `FLW-` (flow),

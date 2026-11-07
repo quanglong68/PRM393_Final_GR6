@@ -174,7 +174,7 @@ class ReportExportService {
         'source': 'firebase_demo_area',
       });
 
-      await _analytics.logExportReport(
+      await _logExport(
         status: 'success',
         fileSizeKb: (bytes.length / 1024).ceil(),
         durationMs: DateTime.now().difference(startedAt).inMilliseconds,
@@ -196,13 +196,29 @@ class ReportExportService {
       } catch (_) {
         // Preserve the export failure even when diagnostics are unavailable.
       }
-      await _analytics.logExportReport(
+      await _logExport(
         status: 'failed',
         fileSizeKb: 0,
         durationMs: DateTime.now().difference(startedAt).inMilliseconds,
       );
       debugPrint('[ReportExport] FAILED: $e');
       rethrow;
+    }
+  }
+
+  Future<void> _logExport({
+    required String status,
+    required int fileSizeKb,
+    required int durationMs,
+  }) async {
+    try {
+      await _analytics.logExportReport(
+        status: status,
+        fileSizeKb: fileSizeKb,
+        durationMs: durationMs,
+      );
+    } catch (error) {
+      debugPrint('[ReportExport] Analytics failed: ${error.runtimeType}');
     }
   }
 }

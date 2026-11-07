@@ -27,3 +27,21 @@ File:dòng trỏ tới vị trí **sau sửa**, không giả làm permalink củ
 5. Nếu reviewer bổ sung findings, ghi Accepted/Modified/Rejected với lý do trước khi xử lý.
 
 Disclosure của đợt Codex này nằm trong `ai/ai-code-log.md`. Validation tổng hợp và các giới hạn nằm trong `docs/fix-verification-2026-11-04.md`.
+
+## Review local ngày 07/11/2026
+
+Codex review baseline `b69dc71` sau khi tích hợp Gemini và Cloudinary. Ba thay đổi đầu có tập file riêng để đưa vào ba commit. Bảng ghi kết quả review local. PR và hash commit sẽ được điền sau khi có trên Git.
+
+| ID | Loại | Phát hiện | Quyết định | Kiểm thử |
+|---|---|---|---|---|
+| CR-10 | UX | Thử lại thêm trùng câu hỏi. Gửi trong lúc đang chờ có thể xóa nội dung vừa gõ. Vị trí baseline `lib/viewmodels/advisor_viewmodel.dart:214`. | Accepted. Dùng lại câu hỏi cũ và chặn gửi khi đang chờ. | Flutter kiểm tra một câu hỏi qua hai lần gọi và câu trả lời thay lỗi cũ. |
+| CR-11 | Độ tin cậy | Analytics ném lỗi sau khi PDF và metadata đã lưu làm app báo xuất thất bại. Vị trí baseline `lib/services/report_export_service.dart:177`. | Accepted. Tách lỗi telemetry khỏi kết quả nghiệp vụ và giữ lỗi gốc khi export thất bại. | Flutter mô phỏng Analytics không sẵn sàng sau khi lưu. |
+| CR-12 | Kiểm tra đầu vào | Đuôi `.constructor` khớp thuộc tính kế thừa của bảng MIME. Vị trí baseline `admin-web/media-server.mjs:117`. | Accepted. Chỉ chấp nhận các mục được khai báo trong danh sách định dạng. | Test HTTP xác nhận GET với đuôi `.constructor` trả 415. |
+| CR-13 | Tính nhất quán | Asset PDF có thể còn trên cloud nếu đã upload nhưng lần ghi metadata thất bại. Vị trí baseline `lib/services/report_export_service.dart:164`. | Deferred. Cần xác định trạng thái ghi Firestore trước khi thu hồi asset và thiết kế retry theo một ID cố định. | Đã có test lỗi ghi metadata. Chưa có quy trình tự phục hồi. |
+| CR-14 | Vận hành | Endpoint cố vấn chưa giới hạn số câu hỏi theo UID. Vị trí baseline `admin-web/media-server.mjs:92`. | Deferred. Bản demo chạy loopback. Cần giới hạn quota khi đưa API ra môi trường chia sẻ. | Kiểm tra HTTP hiện có cho quyền truy cập và kích thước input. |
+
+| Commit dự kiến | Tệp |
+|---|---|
+| `fix(CR-10): preserve advisor input and retry the existing question` | `lib/screens/advisor_screen.dart`, `lib/viewmodels/advisor_viewmodel.dart`, `test/viewmodels/advisor_viewmodel_test.dart` |
+| `fix(CR-11): isolate report exports from analytics errors` | `lib/services/report_export_service.dart`, `test/services/report_export_service_test.dart` |
+| `fix(CR-12): reject inherited attachment format names` | `admin-web/media-server.mjs`, `admin-web/server.test.mjs` |

@@ -114,7 +114,9 @@ export function createMediaServer({
       }
     }
 
-    const contentType = report ? 'application/pdf' : noteTypes[note[3]];
+    const contentType = report
+      ? 'application/pdf'
+      : Object.hasOwn(noteTypes, note[3]) ? noteTypes[note[3]] : null;
     if (!contentType) return reply(415, { error: 'Định dạng tệp không được hỗ trợ.' });
     const fileName = route[2];
     const id = report ? `reports/${uid}/${fileName}` : `notes/${uid}/cloudinary/${fileName}`;

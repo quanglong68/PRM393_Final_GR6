@@ -1,10 +1,10 @@
 # PRM393 Lab 3 — FPTU Second Brain
 
-Bản nội dung báo cáo ngày 05/11/2026. Trang bìa và tên file nộp chờ MSSV. Android package là `com.example.prm323_lab3`.
+Bản nội dung báo cáo ngày 07/11/2026. Trang bìa và tên file nộp chờ tên và MSSV. Android package là `com.example.prm323_lab3`.
 
 ## 1. Mục tiêu và phạm vi
 
-Ứng dụng giúp sinh viên tra lộ trình, theo dõi công việc, lưu ghi chú, nhập bảng điểm/lịch cá nhân và xuất báo cáo PDF. Dự án triển khai trên nền Flutter của Lab 2. Lab 3 bổ sung Firebase Auth, Firestore, FCM, Analytics, Crashlytics và Remote Config. Team chọn Firebase Spark. Luồng PDF cục bộ đã kiểm chứng, phương án PDF cloud dùng Media API và Cloudinary khi có cấu hình.
+Ứng dụng giúp sinh viên tra lộ trình, theo dõi công việc, lưu ghi chú, nhập bảng điểm và lịch cá nhân, hỏi Cố vấn và xuất PDF. Dự án triển khai trên nền Flutter của Lab 2. Firebase Spark phục vụ Auth, Firestore, FCM, Analytics, Crashlytics và Remote Config. Media API kết nối Cloudinary cho file và Gemini cho hỏi đáp.
 
 ## 2. Kiến trúc
 
@@ -19,22 +19,23 @@ Web admin đọc báo cáo Crashlytics qua Node và OAuth phía server. Trình d
 - FCM SDK nhận registration token từ Firebase. App ghi bản sao theo UID. Server đọc bản ghi gần nhất, gọi HTTP v1 có OAuth, và gửi dữ liệu `route` cùng `courseId`. Client xử lý callback khi app mở, khi chạm thông báo từ nền và khi mở từ trạng thái process đã dừng.
 - Nút test crash gọi native SDK sau khi xác nhận. Lần mở lại cho phép SDK gửi báo cáo. Admin xem kết quả trên web, dev xem console. Nút non-fatal ghi lỗi trong khi app tiếp tục chạy.
 - Remote Config fetch/activate thay tham số ở runtime. Đã xác minh 31 rồi trả 30 trên cùng APK.
+- Cố vấn xin xác nhận trước khi gửi câu hỏi, cấp tư vấn và dữ kiện danh mục tới Gemini. Điểm, lịch và ghi chú cá nhân được xử lý trên thiết bị.
 - PDF được tạo từ dữ liệu đang hiển thị, có consent trước upload. Cloudinary nhận asset raw authenticated. Firestore chỉ lưu metadata sau khi dịch vụ trả thành công. Người dùng tải lại qua Media API với UID hợp lệ.
 
 ## 4. Kết quả và bằng chứng
 
 | Mục | Kết quả quan sát |
 |---|---|
-| Flutter | 119 unit/widget tests pass, analyzer sạch. |
+| Flutter | 124 unit/widget tests pass. |
 | FCM | Đã gửi và nhận trên emulator ở ba trạng thái, cold deep link mở PRM323. Script server mới gọi HTTP v1 validate_only thành công. |
 | Crashlytics | Native test crash và non-fatal đã có trong dashboard. API của web admin trả báo cáo thật và chặn truy cập chưa xác thực. |
 | Remote Config | App hiển thị 31 rồi 30 phút trên cùng APK, đọc lại 30 phút sau khi mở emulator. |
-| PDF và tệp đính kèm | Pixel 7 giả lập đã tạo PDF, upload Cloudinary, tải lại và mở Android share sheet. DOCX tải lại từ ghi chú đã lưu khớp SHA-256. Đã đọc lại metadata của cả hai trên Firestore. Media API chạy thành công với Markdown, PDF và DOCX. |
-| Analytics | DebugView xác nhận `export_report_local` và `course_count=4`. Log SDK ghi nhận thêm `export_report` với `status=success` và `note_create`. Còn đối chiếu các event này trên DebugView. |
-| ARTEMIS | TC_11 pass 1 lượt trên emulator, trace cc6378c0-a0d2-4c0b-8c2a-f728025f6ecc. Kết quả máy thật và batch theo rubric còn thiếu. |
-| AI review | 9 findings trong tài liệu review local, có quyết định và kiểm thử. PR và ba commit độc lập còn chờ. |
+| PDF, tệp đính kèm và Gemini | Pixel 7 giả lập đã mở báo cáo từ lịch sử. Cloudinary trả 404 cho đúng tệp thử sau khi gỡ và Firestore giữ ghi chú. Gemini thật trả lời đúng PRM323 có 3 tín chỉ. |
+| Analytics | DebugView xác nhận tám loại event trong lượt ngày 07/11. Log SDK đối chiếu `export_report` có `status=success`. Lượt trước đã thấy `export_report_local` và `course_count=4`. |
+| ARTEMIS | TC_11 pass 3/3 lượt ngày 07/11, trung bình 31,66 giây theo pytest. Xem mục lục minh chứng để theo dõi batch. |
+| AI review | Review local trên baseline `b69dc71` bổ sung năm findings. Ba sửa lỗi đã tách theo nhóm file và qua kiểm thử. PR và hash commit còn chờ. |
 
-Xem [mục lục bằng chứng](../evidence/README.md), [log ARTEMIS](../evidence/artemis/results-20261105T103204181722Z.md) và [hướng dẫn demo](../docs/lab3-oral-defense.md).
+Xem [mục lục bằng chứng](../evidence/README.md), [DebugView](../evidence/firebase/analytics/debugview-2026-11-07.json) và [hướng dẫn demo](../docs/lab3-oral-defense.md).
 
 ## 5. Quyền truy cập và dữ liệu
 

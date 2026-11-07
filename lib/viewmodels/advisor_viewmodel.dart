@@ -213,15 +213,21 @@ class AdvisorViewModel extends ChangeNotifier {
   /// Re-asks the previous question after a failure (retry branch).
   Future<void> retryLastQuestion() async {
     final q = _lastQuestion;
-    if (q == null) return;
-    _messages.removeWhere((m) => m.id == _errorId(q));
-    await askQuestion(q, level: _lastLevel);
+    if (q == null || _errorMessage == null) return;
+    await _askQuestion(q, level: _lastLevel, retry: true);
   }
 
   String _errorId(String question) =>
       'msg_err_${question.hashCode.toUnsigned(32)}';
 
-  Future<void> askQuestion(String question, {AdvisorLevel? level}) async {
+  Future<void> askQuestion(String question, {AdvisorLevel? level}) =>
+      _askQuestion(question, level: level);
+
+  Future<void> _askQuestion(
+    String question, {
+    AdvisorLevel? level,
+    bool retry = false,
+  }) async {
     if (_disposed || _isLoading || !isAiEnabled) return;
     final request = ++_requestVersion;
     final useLevel = level ?? _selectedLevel;
@@ -244,14 +250,19 @@ class AdvisorViewModel extends ChangeNotifier {
     _selectedLevel = useLevel;
     _errorMessage = null;
 
-    final userMsg = AdvisorMessage(
-      id: 'msg_${DateTime.now().millisecondsSinceEpoch}',
-      sender: 'user',
-      text: question,
-      timestamp: 'Vừa xong',
-      level: useLevel,
-    );
-    _messages.add(userMsg);
+    if (retry) {
+      _messages.removeWhere((message) => message.id == _errorId(question));
+    } else {
+      _messages.add(
+        AdvisorMessage(
+          id: 'msg_${DateTime.now().millisecondsSinceEpoch}',
+          sender: 'user',
+          text: question,
+          timestamp: 'Vừa xong',
+          level: useLevel,
+        ),
+      );
+    }
     _isLoading = true;
     notifyListeners();
 

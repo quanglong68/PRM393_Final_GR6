@@ -149,6 +149,7 @@ test('private note attachments round trip through the same media API', async (co
   }
   const basePath = base + '/api/notes/student-a/cloudinary/note_1793802523924124';
   const markdown = { ...auth, 'content-type': 'text/markdown' };
+  assert.equal((await fetch(basePath + '.constructor', { headers: auth })).status, 415);
   assert.equal((await fetch(basePath + '.exe', {
     method: 'PUT', headers: markdown, body: 'exe',
   })).status, 415);

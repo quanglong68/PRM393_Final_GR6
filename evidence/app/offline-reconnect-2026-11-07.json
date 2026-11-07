@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-07",
+  "device": "Pixel_7_API_35_Google_Play",
+  "apk_source_commit": "b69dc71",
+  "offline": {
+    "airplane_mode_observed": true,
+    "wifi_and_mobile_data_disabled": true,
+    "cold_start_reached_home": true,
+    "previously_synced_note_visible": true
+  },
+  "reconnect": {
+    "wifi_restored": true,
+    "manual_sync_completed": true,
+    "success_message": "Đã tải lại dữ liệu Cloud Firestore"
+  },
+  "scope": "Read cached note after cold start and sync after reconnect. Offline writes and physical device were not covered."
+}

@@ -9,6 +9,13 @@ import '../helpers/fake_firestore_service.dart';
 import '../helpers/fake_storage_service.dart';
 import '../helpers/mock_analytics_service.dart';
 
+class _UnavailableAnalytics extends MockAnalyticsService {
+  @override
+  Future<void> logEvent(String name, {Map<String, Object>? parameters}) async {
+    throw StateError('Analytics unavailable');
+  }
+}
+
 void main() {
   // RootBundle-backed font loading needs the binding initialized.
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -67,6 +74,22 @@ void main() {
         firestoreService: firestore,
         analyticsService: analytics,
       );
+    });
+
+    test('analytics failure does not undo a saved report', () async {
+      final exporter = ReportExportService(
+        storageService: storage,
+        firestoreService: firestore,
+        analyticsService: _UnavailableAnalytics(),
+      );
+      final result = await exporter.exportStudyReport(
+        userId: 'student-a',
+        courses: courses,
+        tasks: tasks,
+        notes: notes,
+      );
+      expect(result.storagePath, firestore.reports.single['storagePath']);
+      expect(result.pdfBytes, isNotEmpty);
     });
 
     test(

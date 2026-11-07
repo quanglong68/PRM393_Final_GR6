@@ -68,11 +68,11 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
   }
 
   Future<void> _sendMessage(AdvisorViewModel vm, String text) async {
-    if (text.trim().isEmpty) return;
+    if (text.trim().isEmpty || vm.isLoading || !vm.isAiEnabled) return;
 
     if (!vm.hasConsent) {
       final ok = await _askConsent(usesGemini: vm.usesGemini);
-      if (!mounted || !ok) return;
+      if (!mounted || !ok || vm.isLoading || !vm.isAiEnabled) return;
       vm.grantConsent();
     }
 
@@ -382,9 +382,11 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
                       Expanded(
                         child: TextField(
                           controller: _inputController,
+                          maxLength: 500,
                           decoration: const InputDecoration(
                             hintText: 'Hỏi về dữ liệu học tập của bạn...',
                             isDense: true,
+                            counterText: '',
                           ),
                           onSubmitted: (val) => _sendMessage(advisorVm, val),
                         ),
@@ -393,8 +395,12 @@ class _AdvisorScreenState extends State<AdvisorScreen> {
                       IconButton.filled(
                         icon: const Icon(Icons.send_rounded),
                         tooltip: 'Gửi câu hỏi',
-                        onPressed: () =>
-                            _sendMessage(advisorVm, _inputController.text),
+                        onPressed: advisorVm.isLoading
+                            ? null
+                            : () => _sendMessage(
+                                advisorVm,
+                                _inputController.text,
+                              ),
                       ),
                     ],
                   ),

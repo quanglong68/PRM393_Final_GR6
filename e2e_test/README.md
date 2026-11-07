@@ -47,3 +47,5 @@ Ngày 04/11: các trace trước bị quota; ca SDK sau restart còn gặp 429/5
 TC_11 có 1 PASS trên Pixel 7 emulator. Dữ liệu được xác minh bằng terminal report cùng hierarchy độc lập. Xem [kết quả](../evidence/artemis/results-20261105T103204181722Z.md). Khi chấm, kết nối Android thật, kiểm tra `adb devices -l`, đặt `DEVICE_SERIAL` theo serial máy thật và chạy lại. Batch đủ 3 lượt mỗi ca và exploratory vẫn cần thu.
 
 Lượt chạy ca tìm môn sau đó đã phát hiện hai dạng trường quan sát trong hành động cuối và một lỗi nhập query của agent. Đã cập nhật parser và thêm đối chiếu query với hierarchy. Gemini trả HTTP 429 khi chạy lại. [Trace và kết quả từng lần thử](../evidence/artemis/2026-11-05-search-run.md).
+
+Ngày 07/11/2026, TC_11 pass 3/3 lượt. Batch bổ sung bị dừng ở TC_09 sau lỗi quota HTTP 429. [Kết quả và trace](../evidence/artemis/2026-11-07-regression.md).

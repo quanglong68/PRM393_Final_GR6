@@ -1,0 +1,27 @@
+{
+  "date": "2026-11-07",
+  "device": "Pixel_7_API_35_Google_Play",
+  "apk_source_commit": "b69dc71",
+  "console": "Firebase Analytics DebugView",
+  "console_top_events_observed": {
+    "login_success": 3,
+    "search_course": 2,
+    "course_view": 1,
+    "advisor_query": 1,
+    "strategy_view": 1,
+    "sync_triggered": 1,
+    "export_report": 1,
+    "note_create": 1
+  },
+  "parameters_observed_in_android_sdk_log": {
+    "login_success": { "method": "google" },
+    "search_course": { "query_length": 3 },
+    "course_view": { "code": "PRM323" },
+    "advisor_query": { "topic": "course" },
+    "strategy_view": { "source": "advisor" },
+    "sync_triggered": { "trigger_type": "manual_button" },
+    "export_report": { "status": "success", "file_size_kb": 21, "duration_ms": 2648 },
+    "note_create": { "content_length": 0 }
+  },
+  "limits": "Counts were read from the DebugView Top Events panel. Parameters were cross-checked in Android logcat. The app restored an existing session, so login_success does not establish a fresh Google Sign-In. The remaining event types, including logout, were not part of this run."
+}

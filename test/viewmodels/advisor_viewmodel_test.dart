@@ -7,6 +7,41 @@ import '../helpers/mock_auth_service.dart';
 
 void main() {
   test(
+    'retry keeps one question and replaces its error with the answer',
+    () async {
+      final auth = MockAuthService(initialUserId: 'test-owner');
+      final academic = AcademicViewModel(
+        authService: auth,
+        firestoreService: FakeFirestoreService(),
+      );
+      var attempts = 0;
+      final vm = AdvisorViewModel(
+        authService: auth,
+        academicViewModel: academic,
+        askGemini: (_, _, _, _) async {
+          if (++attempts == 1) throw StateError('Unavailable');
+          return 'Câu trả lời sau khi thử lại';
+        },
+      )..grantConsent();
+      addTearDown(auth.dispose);
+      addTearDown(academic.dispose);
+      addTearDown(vm.dispose);
+
+      await vm.askQuestion('PRM323');
+      expect(vm.errorMessage, isNotNull);
+      await vm.retryLastQuestion();
+      expect(
+        vm.messages.where((message) => message.sender == 'user'),
+        hasLength(1),
+      );
+      expect(vm.errorMessage, isNull);
+      expect(vm.messages.last.text, contains('Câu trả lời sau khi thử lại'));
+      await vm.retryLastQuestion();
+      expect(attempts, 2);
+    },
+  );
+
+  test(
     'Gemini receives catalog facts after consent while grades stay local',
     () async {
       final auth = MockAuthService(initialUserId: 'test-owner');

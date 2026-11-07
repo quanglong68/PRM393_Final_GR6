@@ -40,7 +40,7 @@ App tạo PDF từ danh sách thật đang hiển thị. Consent quyết định
 2. Mở app, xác minh danh mục, tab môn và thử nhập dữ liệu riêng của tài khoản demo. Ghi model Android, phiên bản APK và bằng chứng theo ca.
 3. Mở web admin và xem số event trước thử. Bấm test crash trên điện thoại, mở lại app, chuyển sang FCM/PDF trong lúc đợi, rồi refresh web.
 4. Với FCM, chọn đúng UID demo và dùng lệnh server ở trên. Thử foreground, background và cold start, ghi riêng bằng chứng hiển thị và route.
-5. Nếu đã cấu hình Cloudinary, thử consent, upload, metadata và tải lại. Dùng tài khoản thứ hai để kiểm tra quyền. Nếu chưa có Cloudinary, ghi rõ phạm vi PDF local.
-6. Chạy ARTEMIS với `DEVICE_SERIAL` là máy thật, tài khoản thử riêng và quota đủ cho batch. Ca TC_11 đã pass một lượt trên emulator để xác minh harness. Kết quả máy thật cần thu riêng. Quay demo khi có điện thoại thật.
+5. Thử consent, upload, metadata và tải lại từ lịch sử Cloudinary. Dùng tài khoản thứ hai để kiểm tra quyền. Mở Cố vấn, xác nhận gửi câu hỏi mẫu về số tín chỉ PRM323 rồi chỉ phần đối chiếu trên thiết bị.
+6. Chạy ARTEMIS với `DEVICE_SERIAL` là máy thật, tài khoản thử riêng và quota đủ cho batch. Ca TC_11 đã pass 3/3 lượt trên Pixel 7 giả lập. Thu riêng kết quả và quay demo khi có điện thoại thật.
 
 Tham chiếu setup và lệnh chạy ở [admin-web/README.md](../admin-web/README.md). Slide được để sau theo yêu cầu.

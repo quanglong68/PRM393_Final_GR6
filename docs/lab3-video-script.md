@@ -1,6 +1,6 @@
 # Kịch bản demo Lab 3 trên điện thoại thật
 
-Thời lượng mục tiêu 7 phút 25 giây. Chuẩn bị Android có Google Play Services, APK đúng Firebase project, tài khoản FPT demo, web admin chạy trên máy chấm và kết nối mạng. Nếu demo Cloudinary qua USB, bật ADB reverse và chạy Media API trước khi quay.
+Thời lượng mục tiêu 7 phút 55 giây. Chuẩn bị Android có Google Play Services, APK đúng Firebase project, tài khoản FPT demo, web admin chạy trên máy chấm và kết nối mạng. Bật ADB reverse và chạy Media API trước khi quay Cloudinary và Gemini.
 
 | Cảnh | Thời lượng | Hành động và lời giải thích |
 |---|---:|---|
@@ -10,7 +10,8 @@ Thời lượng mục tiêu 7 phút 25 giây. Chuẩn bị Android có Google Pl
 | Lộ trình | 0:35 | Tìm PRM323, mở ba tab và kiểm tra dữ liệu thực. Giải thích lịch và đầu điểm chưa có thì app hiển thị trạng thái trống. |
 | Công việc và ghi chú | 0:50 | Tạo dữ liệu thử, hoàn thành task và bấm Hoàn tác. Mở ghi chú và giới thiệu cache Firestore. Chỉ nói đã thử offline nếu có kết quả thực. |
 | FCM | 0:55 | Mở code gửi trên server, chạy bằng UID tài khoản demo. Thử mở banner khi foreground, chạm notification khi background/cold start. Giải thích registration token và OAuth server. |
-| PDF | 0:50 | Mở consent, hủy một lần, xác nhận lần sau. Nếu có Cloudinary, quay upload, metadata và tải lại. Nếu chưa có, quay PDF cục bộ và share sheet, ghi rõ phạm vi demo. |
+| PDF | 0:50 | Mở hộp xác nhận, hủy một lần, đồng ý lần sau. Quay upload, metadata Firestore và tải lại từ Lịch sử báo cáo. |
+| Gemini | 0:30 | Mở Cố vấn, hỏi PRM323 có bao nhiêu tín chỉ, xác nhận gửi. Chỉ câu trả lời Gemini và phần đối chiếu trên thiết bị. |
 | Remote Config | 0:35 | Cho thấy giá trị 30 trong app và bằng chứng 31 → 30 cùng APK. Demo đổi live chỉ khi đã chuẩn bị cấu hình thử riêng. |
 | Web admin và Analytics | 0:55 | Tải lại dashboard web và chỉ nhóm crash vừa cập nhật nếu đã nhận. Dev mở Firebase Console để đối chiếu. Mở DebugView xem event và tham số có evidence. |
 | ARTEMIS và review | 0:40 | Chiếu report chạy máy thật khi có. Nêu kết quả theo số lượt thực, chỉ các finding và thay đổi đã xác minh. |
