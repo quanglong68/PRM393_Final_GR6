@@ -65,3 +65,4 @@ venv/
 e2e_test/results_run*.xml
 
 /admin-web/node_modules/
+/firebase/tests/node_modules/

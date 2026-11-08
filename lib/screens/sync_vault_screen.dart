@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:printing/printing.dart';
@@ -22,7 +25,9 @@ import '../widgets/app_button.dart';
 import '../widgets/app_components.dart';
 
 class SyncVaultScreen extends StatefulWidget {
-  const SyncVaultScreen({super.key});
+  const SyncVaultScreen({super.key, this.showLegacyMedia = true});
+
+  final bool showLegacyMedia;
 
   @override
   State<SyncVaultScreen> createState() => _SyncVaultScreenState();
@@ -342,6 +347,27 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
           _localPdfName =
               'study_report_${generatedAt.millisecondsSinceEpoch}.pdf';
         });
+        unawaited(
+          exporter
+              .recordLocalReport(
+                userId: uid,
+                fileName: _localPdfName!,
+                sizeBytes: bytes.length,
+                generatedAt: generatedAt,
+              )
+              .catchError((Object _) {
+                if (mounted &&
+                    context.read<AuthViewModel>().currentUserId == uid) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'PDF đã tạo. Chưa lưu được metadata vào Firestore.',
+                      ),
+                    ),
+                  );
+                }
+              }),
+        );
         try {
           await context.read<AnalyticsService>().logEvent(
             'export_report_local',
@@ -371,6 +397,28 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
       if (mounted) setState(() => _exportError = 'Xuất báo cáo thất bại: $e');
     } finally {
       if (mounted) setState(() => _isExporting = false);
+    }
+  }
+
+  Future<void> _saveLocalPdf() async {
+    final bytes = _localPdfBytes;
+    final name = _localPdfName;
+    if (bytes == null || name == null) return;
+    try {
+      final saved = await FilePicker.saveFile(fileName: name, bytes: bytes);
+      if (mounted && saved != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đã lưu PDF trên thiết bị.')),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Không lưu được PDF vào thư mục đã chọn.'),
+          ),
+        );
+      }
     }
   }
 
@@ -595,16 +643,17 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
                     'Offline persistence: Hoạt động (Unlimited cache)',
                   ),
                 ),
-                const Divider(height: 1),
-                const ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(
-                    Icons.folder_shared_outlined,
-                    color: AppColors.secondary,
+                if (widget.showLegacyMedia) const Divider(height: 1),
+                if (widget.showLegacyMedia)
+                  const ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(
+                      Icons.folder_shared_outlined,
+                      color: AppColors.secondary,
+                    ),
+                    title: Text('Cloud Storage Vault'),
+                    subtitle: Text('Đường dẫn: notes/{uid}/... (Max 10MB)'),
                   ),
-                  title: Text('Cloud Storage Vault'),
-                  subtitle: Text('Đường dẫn: notes/{uid}/... (Max 10MB)'),
-                ),
                 if (_syncResult != null) ...[
                   const SizedBox(height: AppSpacing.xs),
                   Text(
@@ -782,14 +831,16 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Export & Upload PDF',
+                  widget.showLegacyMedia
+                      ? 'Export & Upload PDF'
+                      : 'Báo cáo PDF',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: AppSpacing.xxs),
                 Text(
-                  'Tạo PDF từ lộ trình, việc cần làm và ghi chú. '
-                  'Bạn có thể chia sẻ từ thiết bị hoặc chọn tải lên '
-                  '${reportExporter.storageProvider} cùng metadata Firestore.',
+                  widget.showLegacyMedia
+                      ? 'Tạo PDF từ lộ trình, việc cần làm và ghi chú. Bạn có thể chia sẻ từ thiết bị hoặc chọn tải lên ${reportExporter.storageProvider} cùng metadata Firestore.'
+                      : 'Tạo và chia sẻ PDF từ thiết bị. Firestore lưu thông tin báo cáo.',
                   style: const TextStyle(
                     fontSize: AppFontSize.label,
                     color: AppColors.onSurfaceVariant,
@@ -837,6 +888,7 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
                             : () => _exportAndUploadReport(
                                 reportExporter,
                                 authVm.currentUserId,
+                                localOnly: !widget.showLegacyMedia,
                               ),
                         icon: const Icon(Icons.refresh, size: 16),
                         label: const Text('Thử lại'),
@@ -891,23 +943,24 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
                   ),
                 ],
                 const SizedBox(height: AppSpacing.xs),
-                AppButton(
-                  label: _exportResult == null
-                      ? reportExporter.storageProvider ==
-                                'Firebase Cloud Storage'
-                            ? 'Xuất & Tải PDF lên Cloud Storage'
-                            : 'Xuất & Tải PDF lên ${reportExporter.storageProvider}'
-                      : 'Xuất báo cáo mới',
-                  icon: Icons.picture_as_pdf_outlined,
-                  isLoading: _isExporting && !_isLocalExport,
-                  isExpanded: true,
-                  onPressed: _isExporting
-                      ? null
-                      : () => _exportAndUploadReport(
-                          reportExporter,
-                          authVm.currentUserId,
-                        ),
-                ),
+                if (widget.showLegacyMedia)
+                  AppButton(
+                    label: _exportResult == null
+                        ? reportExporter.storageProvider ==
+                                  'Firebase Cloud Storage'
+                              ? 'Xuất & Tải PDF lên Cloud Storage'
+                              : 'Xuất & Tải PDF lên ${reportExporter.storageProvider}'
+                        : 'Xuất báo cáo mới',
+                    icon: Icons.picture_as_pdf_outlined,
+                    isLoading: _isExporting && !_isLocalExport,
+                    isExpanded: true,
+                    onPressed: _isExporting
+                        ? null
+                        : () => _exportAndUploadReport(
+                            reportExporter,
+                            authVm.currentUserId,
+                          ),
+                  ),
                 if (_exportResult != null)
                   TextButton.icon(
                     onPressed: _isDownloadingReport || _isExporting
@@ -920,16 +973,23 @@ class _SyncVaultScreenState extends State<SyncVaultScreen> {
                           : 'Tải lại PDF từ cloud',
                     ),
                   ),
-                TextButton.icon(
-                  onPressed:
-                      authVm.currentUserId == null ||
-                          _isDownloadingReport ||
-                          _isExporting
-                      ? null
-                      : () => _showReportHistory(reportExporter),
-                  icon: const Icon(Icons.history),
-                  label: const Text('Lịch sử báo cáo'),
-                ),
+                if (widget.showLegacyMedia)
+                  TextButton.icon(
+                    onPressed:
+                        authVm.currentUserId == null ||
+                            _isDownloadingReport ||
+                            _isExporting
+                        ? null
+                        : () => _showReportHistory(reportExporter),
+                    icon: const Icon(Icons.history),
+                    label: const Text('Lịch sử báo cáo'),
+                  ),
+                if (_localPdfBytes != null)
+                  OutlinedButton.icon(
+                    onPressed: _isExporting ? null : _saveLocalPdf,
+                    icon: const Icon(Icons.save_alt),
+                    label: const Text('Lưu PDF trên thiết bị'),
+                  ),
                 if (_exportResult != null || _localPdfBytes != null) ...[
                   const SizedBox(height: AppSpacing.xs),
                   Row(

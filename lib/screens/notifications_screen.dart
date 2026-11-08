@@ -13,7 +13,9 @@ import '../widgets/app_states.dart';
 /// shows unread state, marks entries read on tap. Data comes from Firestore
 /// only; an account with no pushes sees the honest empty state.
 class NotificationsScreen extends StatelessWidget {
-  const NotificationsScreen({super.key});
+  const NotificationsScreen({super.key, this.showAnnouncements = false});
+
+  final bool showAnnouncements;
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +27,12 @@ class NotificationsScreen extends StatelessWidget {
         title: 'Trung tâm Thông báo',
         onBack: () => Navigator.pop(context),
         actions: [
+          if (showAnnouncements)
+            IconButton(
+              icon: const Icon(Icons.campaign_outlined),
+              tooltip: 'Thông báo từ nhà trường',
+              onPressed: () => Navigator.pushNamed(context, '/announcements'),
+            ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Tải lại',

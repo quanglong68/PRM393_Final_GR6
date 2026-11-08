@@ -58,6 +58,9 @@ class RemoteConfigService extends ChangeNotifier {
 
   // Default values
   static const Map<String, dynamic> _defaults = {
+    'study_plan_ai_enabled': false,
+    'study_plan_ai_model': "gemini-3.5-flash-lite",
+    'study_plan_ai_prompt': "Gợi ý một mục tiêu học tập và từ một đến bốn hành động ngắn, chung, phù hợp với kỳ học. Không yêu cầu hoặc tạo dữ liệu cá nhân.",
     'maintenance_mode': false,
     'feature_ai_advisor_enabled': true,
     'min_app_version': '1.0.0',
@@ -111,6 +114,19 @@ class RemoteConfigService extends ChangeNotifier {
       return false;
     }
   }
+
+  bool get isStudyPlanAiEnabled => _value(
+    'study_plan_ai_enabled',
+    (c) => c.getBool('study_plan_ai_enabled'),
+  );
+
+  String get studyPlanModel =>
+      _value('study_plan_ai_model', (c) => c.getString('study_plan_ai_model'));
+
+  String get studyPlanPrompt => _value(
+    'study_plan_ai_prompt',
+    (c) => c.getString('study_plan_ai_prompt'),
+  );
 
   // Parameter getters
   bool get isMaintenanceMode =>

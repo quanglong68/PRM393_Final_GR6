@@ -1,3 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:flutter/foundation.dart';
+import 'package:second_brain_core/second_brain_core.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +9,8 @@ import 'package:provider/provider.dart';
 
 import 'firebase/firebase_options.dart';
 import 'screens/advisor_screen.dart';
+import 'screens/announcements_screen.dart';
+import 'screens/study_plan_screen.dart';
 import 'screens/academic_profile_screen.dart';
 import 'viewmodels/academic_viewmodel.dart';
 import 'screens/course_detail_screen.dart';
@@ -56,6 +62,14 @@ Future<void> main() async {
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
+    );
+    await FirebaseAppCheck.instance.activate(
+      providerAndroid: kDebugMode
+          ? const AndroidDebugProvider()
+          : const AndroidPlayIntegrityProvider(),
+      providerApple: kDebugMode
+          ? const AppleDebugProvider()
+          : const AppleAppAttestProvider(),
     );
     debugPrint('[Firebase] Initialized successfully.');
 
@@ -120,6 +134,10 @@ class FptuSecondBrainApp extends StatelessWidget {
 
   bool get _usesRealComposition => authService == null;
 
+  static const _legacyMedia = bool.fromEnvironment('LAB3_LEGACY_MEDIA');
+
+  bool get _showLegacyMedia => !_usesRealComposition || _legacyMedia;
+
   @override
   Widget build(BuildContext context) {
     if (initError != null && _usesRealComposition) {
@@ -145,7 +163,7 @@ class FptuSecondBrainApp extends StatelessWidget {
       Provider<ReportMediaStorageService?>(
         create: (_) {
           const mediaUrl = String.fromEnvironment('REPORT_MEDIA_URL');
-          return _usesRealComposition && mediaUrl.isNotEmpty
+          return _usesRealComposition && _legacyMedia && mediaUrl.isNotEmpty
               ? ReportMediaStorageService(Uri.parse(mediaUrl))
               : null;
         },
@@ -251,21 +269,38 @@ class FptuSecondBrainApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),
         navigatorObservers: ctx.read<AnalyticsService>().navigatorObservers,
-        home: const AuthGate(),
+        home: AuthGate(checkRole: _usesRealComposition),
         routes: {
-          '/home': (_) => const AppShell(),
+          '/home': (_) => AuthGate(checkRole: _usesRealComposition),
           '/sign-in': (_) => const SignInScreen(),
           '/course-detail': (ctx) => CourseDetailScreen(
             courseId: ModalRoute.of(ctx)!.settings.arguments as String? ?? '',
           ),
           '/note-editor': (ctx) => NoteEditorScreen(
             noteId: ModalRoute.of(ctx)!.settings.arguments as String?,
+            showLegacyMedia: _showLegacyMedia,
           ),
-          '/academic-profile': (_) => const AcademicProfileScreen(),
+          '/academic-profile': (_) =>
+              AcademicProfileScreen(showStudyPlan: _usesRealComposition),
+          if (_usesRealComposition)
+            '/study-plan': (context) {
+              final uid = context.read<AuthViewModel>().currentUserId;
+              if (uid == null) return const SignInScreen();
+              return StudyPlanScreen(
+                store: FinalFirestore(FirebaseFirestore.instance),
+                uid: uid,
+              );
+            },
+          if (_usesRealComposition)
+            '/announcements': (_) => AnnouncementsScreen(
+              store: FinalFirestore(FirebaseFirestore.instance),
+            ),
           '/advisor': (_) => const AdvisorScreen(),
           '/strategy-sim': (_) => const StrategySimScreen(),
-          '/sync-vault': (_) => const SyncVaultScreen(),
-          '/notifications': (_) => const NotificationsScreen(),
+          '/sync-vault': (_) =>
+              SyncVaultScreen(showLegacyMedia: _showLegacyMedia),
+          '/notifications': (_) =>
+              NotificationsScreen(showAnnouncements: _usesRealComposition),
           '/roadmap': (_) => const RoadmapScreen(),
           '/tasks': (_) => const TasksScreen(),
           '/notes': (_) => const NotesScreen(),
@@ -337,7 +372,9 @@ class FirebaseConfigErrorApp extends StatelessWidget {
 ///    a user on an old APK cannot keep using removed/broken cloud calls.
 /// 2. `maintenance_mode` — blocks signed-in users while the backend is down.
 class AuthGate extends StatefulWidget {
-  const AuthGate({super.key});
+  const AuthGate({super.key, this.checkRole = false});
+
+  final bool checkRole;
 
   @override
   State<AuthGate> createState() => _AuthGateState();
@@ -391,8 +428,65 @@ class _AuthGateState extends State<AuthGate> {
       return MaintenanceScreen(checking: _checking, onRecheck: _retry);
     }
 
+    final uid = authVm.currentUserId;
+    if (widget.checkRole && uid != null) {
+      return _MobileRoleGate(key: ValueKey(uid), uid: uid);
+    }
     return const AppShell();
   }
+}
+
+class _MobileRoleGate extends StatefulWidget {
+  const _MobileRoleGate({super.key, required this.uid});
+
+  final String uid;
+
+  @override
+  State<_MobileRoleGate> createState() => _MobileRoleGateState();
+}
+
+class _MobileRoleGateState extends State<_MobileRoleGate> {
+  late final _profile = FirebaseFirestore.instance
+      .collection('users')
+      .doc(widget.uid)
+      .snapshots();
+
+  @override
+  Widget build(BuildContext context) => StreamBuilder(
+    stream: _profile,
+    builder: (context, snapshot) {
+      if (snapshot.hasError) {
+        return Scaffold(
+          body: Center(
+            child: TextButton(
+              onPressed: context.read<AuthViewModel>().signOut,
+              child: const Text('Không xác minh được vai trò. Đăng xuất'),
+            ),
+          ),
+        );
+      }
+      final profile = snapshot.data;
+      if (profile == null) {
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      }
+      final role = profile.data()?['role'] ?? 'user';
+      if (role == 'user') return const AppShell();
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Tài khoản Staff/Admin dùng cổng quản trị web.'),
+              TextButton(
+                onPressed: context.read<AuthViewModel>().signOut,
+                child: const Text('Đăng xuất'),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }
 
 /// Shown instead of the shell when Remote Config `min_app_version` is newer

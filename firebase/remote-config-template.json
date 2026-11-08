@@ -27,6 +27,24 @@
       },
       "valueType": "NUMBER",
       "description": "Vault sync interval displayed by the app, in minutes."
+    },
+    "study_plan_ai_enabled": {
+      "defaultValue": {
+        "value": "false"
+      },
+      "valueType": "BOOLEAN"
+    },
+    "study_plan_ai_model": {
+      "defaultValue": {
+        "value": "gemini-3.5-flash-lite"
+      },
+      "valueType": "STRING"
+    },
+    "study_plan_ai_prompt": {
+      "defaultValue": {
+        "value": "Gợi ý một mục tiêu học tập và từ một đến bốn hành động ngắn, chung, phù hợp với kỳ học. Không yêu cầu hoặc tạo dữ liệu cá nhân."
+      },
+      "valueType": "STRING"
     }
   },
   "conditions": []

@@ -12,10 +12,71 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    // Final data contracts are documented in docs/data-model.md.
+    function hasRole(roles) {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') in roles;
+    }
+
+    function validRole(role) {
+      return role in ['user', 'staff', 'admin'];
+    }
+
+    function validPlan(data) {
+      return data.keys().hasAll(['uid', 'semester', 'summary', 'status', 'reason', 'createdAt']) &&
+        data.keys().hasOnly(['uid', 'semester', 'summary', 'status', 'reason', 'createdAt', 'reviewedAt', 'reviewedBy']) &&
+        data.uid is string && data.uid.size() > 0 && data.uid.size() <= 128 &&
+        data.semester is int && data.semester >= 1 && data.semester <= 12 &&
+        data.summary is string && data.summary.size() > 0 && data.summary.size() <= 600 &&
+        data.reason is string && data.reason.size() <= 300 &&
+        data.createdAt is timestamp &&
+        ((data.status == 'pending' && data.reason == '' &&
+          !data.keys().hasAny(['reviewedAt', 'reviewedBy'])) ||
+         (data.status in ['approved', 'rejected'] && data.reason.size() > 0 &&
+          data.reviewedAt is timestamp && data.reviewedBy is string &&
+          data.reviewedBy.size() > 0 && data.reviewedBy.size() <= 128));
+    }
+
+    function validAnnouncement(data) {
+      return data.keys().hasOnly(['title', 'body', 'authorUid', 'publishedAt']) &&
+        data.title is string && data.title.size() > 0 && data.title.size() <= 120 &&
+        data.body is string && data.body.size() > 0 && data.body.size() <= 1000 &&
+        data.authorUid == request.auth.uid && data.publishedAt == request.time;
+    }
+
+    match /study_plan_submissions/{id} {
+      allow read: if isAuthenticated() &&
+        (resource.data.uid == request.auth.uid || hasRole(['staff', 'admin']));
+      allow create: if hasRole(['user']) && validPlan(request.resource.data) &&
+        request.resource.data.uid == request.auth.uid &&
+        id == request.auth.uid + '_' + ['1','2','3','4','5','6','7','8','9','10','11','12'][request.resource.data.semester - 1] &&
+        request.resource.data.status == 'pending' && request.resource.data.createdAt == request.time;
+      allow update: if hasRole(['staff', 'admin']) && validPlan(request.resource.data) &&
+        resource.data.status == 'pending' &&
+        request.resource.data.status in ['approved', 'rejected'] &&
+        request.resource.data.reviewedBy == request.auth.uid &&
+        request.resource.data.reviewedAt == request.time &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'reason', 'reviewedBy', 'reviewedAt']);
+    }
+
+    match /announcements/{id} {
+      allow read: if isAuthenticated();
+      allow create: if hasRole(['staff', 'admin']) && validAnnouncement(request.resource.data);
+    }
+
     // ──────────────────────── User Profile & Private Data ────────────────────────
     match /users/{userId} {
-      // User can only read and write their own profile
-      allow read, write: if isOwner(userId);
+      // Existing profiles contain private academic data and may lack a role.
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+        request.resource.data.get('role', 'user') == 'user';
+      allow update: if (isOwner(userId) &&
+        request.resource.data.get('role', 'user') == resource.data.get('role', 'user') &&
+        (request.resource.data.keys().hasAny(['role']) ||
+         !resource.data.keys().hasAny(['role']))) ||
+        (hasRole(['admin']) && !isOwner(userId) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']) &&
+         validRole(request.resource.data.role));
 
       // Tasks subcollection — owner only
       match /tasks/{taskId} {
@@ -43,11 +104,23 @@ service cloud.firestore {
       }
     }
 
-    // ──────────────────────── Public Academic Catalog (Read-Only) ────────────────────────
+    function validCourse(data, id) {
+      return data.code is string && data.code == id && data.code.matches('^[A-Z0-9]{2,16}$') &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 120 &&
+        data.credits is int && data.credits >= 0 && data.credits <= 30 &&
+        data.semester is int && data.semester >= 1 && data.semester <= 12 &&
+        data.major is string && data.major.size() > 0 && data.major.size() <= 40 &&
+        data.get('archived', false) is bool;
+    }
+
+    // Catalog editing preserves the seeded syllabus and other legacy fields.
     // Courses collection — all authenticated students can read course information
     match /courses/{courseId} {
       allow read: if isAuthenticated();
-      allow write: if false; // Only admin via Firebase Admin SDK / Console
+      allow create: if hasRole(['staff', 'admin']) && validCourse(request.resource.data, courseId) &&
+        request.resource.data.keys().hasOnly(['code', 'name', 'credits', 'semester', 'major', 'archived']);
+      allow update: if hasRole(['staff', 'admin']) && validCourse(request.resource.data, courseId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'credits', 'semester', 'major', 'archived']);
     }
 
     // Curriculums collection — all authenticated students can read curriculum data

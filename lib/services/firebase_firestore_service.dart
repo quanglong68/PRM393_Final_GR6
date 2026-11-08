@@ -39,7 +39,10 @@ class FirebaseFirestoreService implements FirestoreService {
       debugPrint(
         '[Firestore] Course catalog returned ${snapshot.docs.length} documents.',
       );
-      return snapshot.docs.map((doc) => {'id': doc.id, ...doc.data()}).toList();
+      return snapshot.docs
+          .where((doc) => doc.data()['archived'] != true)
+          .map((doc) => {'id': doc.id, ...doc.data()})
+          .toList();
     } catch (e) {
       debugPrint('[Firestore] getCourses error: $e');
       rethrow;
@@ -54,7 +57,7 @@ class FirebaseFirestoreService implements FirestoreService {
           .doc(courseId)
           .get(const GetOptions(source: Source.serverAndCache));
 
-      if (!doc.exists) return null;
+      if (!doc.exists || doc.data()?['archived'] == true) return null;
       return {'id': doc.id, ...doc.data()!};
     } catch (e) {
       debugPrint('[Firestore] getCourse error: $e');

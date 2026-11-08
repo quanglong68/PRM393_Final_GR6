@@ -132,6 +132,18 @@ class ReportExportService {
   ///
   /// Throws on any failing step (fail-loud: the caller surfaces the error and
   /// the event carries status='failed'); never returns a partial success.
+  Future<void> recordLocalReport({
+    required String userId,
+    required String fileName,
+    required int sizeBytes,
+    required DateTime generatedAt,
+  }) => _firestore.saveReportMetadata(userId, {
+    'fileName': fileName,
+    'sizeBytes': sizeBytes,
+    'generatedAt': generatedAt.toUtc().toIso8601String(),
+    'source': 'local_pdf',
+  });
+
   Future<ReportExportResult> exportStudyReport({
     required String userId,
     required List<CourseModel> courses,

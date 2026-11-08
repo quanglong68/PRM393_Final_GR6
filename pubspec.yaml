@@ -31,6 +31,8 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  second_brain_core:
+    path: packages/core
   flutter:
     sdk: flutter
 
@@ -51,6 +53,8 @@ dependencies:
   file_picker: ^13.3.0
   firebase_messaging: ^17.0.1
   intl: ^0.20.3
+  firebase_ai: ^5.1.0
+  firebase_app_check: ^0.5.1
 
 dev_dependencies:
   flutter_test:

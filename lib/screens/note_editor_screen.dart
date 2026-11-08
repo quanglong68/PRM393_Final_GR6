@@ -14,7 +14,9 @@ import '../widgets/app_components.dart';
 import '../widgets/app_text_field.dart';
 
 class NoteEditorScreen extends StatefulWidget {
-  const NoteEditorScreen({super.key, this.noteId});
+  const NoteEditorScreen({super.key, this.noteId, this.showLegacyMedia = true});
+
+  final bool showLegacyMedia;
 
   final String? noteId;
 
@@ -270,17 +272,18 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           if (!_saving) Navigator.pop(context);
         },
         actions: [
-          IconButton(
-            icon: _uploading
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.attach_file),
-            tooltip: 'Đính kèm tệp tin (${NoteAttachment.supportedFormats})',
-            onPressed: _transferring || isSaving ? null : _attachFile,
-          ),
+          if (widget.showLegacyMedia)
+            IconButton(
+              icon: _uploading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.attach_file),
+              tooltip: 'Đính kèm tệp tin (${NoteAttachment.supportedFormats})',
+              onPressed: _transferring || isSaving ? null : _attachFile,
+            ),
           IconButton(
             icon: const Icon(Icons.check),
             tooltip: 'Lưu ghi chú',
@@ -353,7 +356,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                         ),
                       ),
                     ),
-                    if (_attachmentPath != null)
+                    if (widget.showLegacyMedia && _attachmentPath != null)
                       IconButton(
                         tooltip: 'Tải tệp đính kèm',
                         onPressed: _transferring || isSaving
@@ -369,20 +372,21 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                               )
                             : const Icon(Icons.download_outlined),
                       ),
-                    IconButton(
-                      tooltip: 'Gỡ tệp khỏi ghi chú',
-                      onPressed: _transferring || isSaving
-                          ? null
-                          : () {
-                              _discardStagedAttachment();
-                              setState(() {
-                                _attachmentName = null;
-                                _attachmentPath = null;
-                                _attachmentUrl = null;
-                              });
-                            },
-                      icon: const Icon(Icons.close, size: 18),
-                    ),
+                    if (widget.showLegacyMedia)
+                      IconButton(
+                        tooltip: 'Gỡ tệp khỏi ghi chú',
+                        onPressed: _transferring || isSaving
+                            ? null
+                            : () {
+                                _discardStagedAttachment();
+                                setState(() {
+                                  _attachmentName = null;
+                                  _attachmentPath = null;
+                                  _attachmentUrl = null;
+                                });
+                              },
+                        icon: const Icon(Icons.close, size: 18),
+                      ),
                   ],
                 ),
               ),

@@ -11,7 +11,9 @@ import '../widgets/app_states.dart';
 
 /// Explicit user entry, with no seeded transcript or external FAP credentials.
 class AcademicProfileScreen extends StatefulWidget {
-  const AcademicProfileScreen({super.key});
+  const AcademicProfileScreen({super.key, this.showStudyPlan = false});
+
+  final bool showStudyPlan;
   @override
   State<AcademicProfileScreen> createState() => _AcademicProfileScreenState();
 }
@@ -92,6 +94,11 @@ class _AcademicProfileScreenState extends State<AcademicProfileScreen> {
         ViewState.data => ListView(
           padding: const EdgeInsets.all(AppSpacing.md),
           children: [
+            if (widget.showStudyPlan)
+              OutlinedButton(
+                onPressed: () => Navigator.pushNamed(context, '/study-plan'),
+                child: const Text('Duyệt kế hoạch học tập'),
+              ),
             const AppCard(
               child: Text(
                 'Nhập dữ liệu thật từ bảng điểm và lịch học của bạn. Dữ liệu được lưu trong hồ sơ Firebase riêng theo tài khoản; không gửi bảng điểm, lịch học hay nội dung câu hỏi vào Analytics hoặc dịch vụ AI bên ngoài.',

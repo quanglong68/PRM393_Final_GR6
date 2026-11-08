@@ -49,7 +49,7 @@ async def test_TC_S_07_fcm_native_notification_settings(artemis):
 async def test_TC_14_analytics_events_log(artemis, logcat):
     logcat.start('TC-14')
     observed = await artemis.run(
-        'From Home open Lộ trình, clear old query, type PRM, wait until results settle, open PRM323. Report shown course code and the final screen title. The test runner checks the actual analytics log for search_course and course_view.',
+        'From Home open Lộ trình. Tap the search field before typing PRM. Wait until the field visibly contains PRM and the list shows only matching courses. If the field still shows its placeholder, tap and type again. Open PRM323 only after verifying the filter. Report the shown course code and final screen title. The runner checks the actual logs for search_course and course_view.',
         {'course_code': 'literal course code'},
     )
     equals(observed,'course_code','PRM323')
@@ -61,7 +61,7 @@ async def test_TC_14_analytics_events_log(artemis, logcat):
 async def test_TC_13_fcm_token_registered(artemis, logcat):
     logcat.start('TC-13')
     observed = await artemis.run(
-        'Cold-start FPTU Second Brain with its existing session and network enabled; do not change accounts or permission. End on Home and report the final app title. The runner checks token registration logs, not token contents.',
+        'The harness has already cold-started FPTU Second Brain with its existing session. Observe the current Home screen and report its literal title. Do not relaunch the app or change accounts or permissions. The runner checks token registration logs.',
         {'screen_title': 'literal title'},
     )
     equals(observed,'screen_title','FPTU Second Brain')
