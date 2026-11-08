@@ -108,3 +108,40 @@ test('student listener receives staff decision without a refresh', async () => {
     unsubscribe?.();
   }
 });
+
+for (const name of ['tasks', 'notes', 'sync', 'notifications', 'tokens']) {
+  test(`legacy ${name} is private to its owner`, async () => {
+    const path = `users/student/${name}/private`;
+    await assertSucceeds(setDoc(doc(db('student'), path), { example: true }));
+    await assertSucceeds(getDoc(doc(db('student'), path)));
+    for (const outsider of ['peer', 'staff', 'admin', null]) {
+      await assertFails(getDoc(doc(db(outsider), path)));
+      await assertFails(setDoc(doc(db(outsider), path), { example: false }));
+    }
+  });
+}
+
+test('curriculum is signed-in read only and audit log is owner-attributed append only', async () => {
+  await env.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), 'curriculums/SE'), { name: 'Software Engineering' });
+  });
+  for (const role of ['student', 'staff', 'admin']) {
+    const firestore = db(role);
+    await assertSucceeds(getDoc(doc(firestore, 'curriculums/SE')));
+    await assertFails(updateDoc(doc(firestore, 'curriculums/SE'), { name: 'Changed' }));
+    const audit = doc(firestore, `audit_logs/${role}`);
+    await assertSucceeds(setDoc(audit, { userId: role, action: 'test' }));
+    await assertFails(getDoc(audit));
+    await assertFails(updateDoc(audit, { action: 'changed' }));
+    await assertFails(setDoc(doc(firestore, `audit_logs/forged-${role}`), { userId: 'peer' }));
+  }
+  await assertFails(getDoc(doc(db(), 'curriculums/SE')));
+});
+
+test('staff and admin cannot submit as students, students cannot read the review queue', async () => {
+  for (const role of ['staff', 'admin']) {
+    await assertFails(setDoc(doc(db(role), `study_plan_submissions/${role}_2`), plan(role, 2)));
+    await assertSucceeds(getDocs(collection(db(role), 'study_plan_submissions')));
+  }
+  await assertFails(getDocs(collection(db('student'), 'study_plan_submissions')));
+});
