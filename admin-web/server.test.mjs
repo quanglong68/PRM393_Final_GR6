@@ -67,6 +67,36 @@ test('admin auth protects HTML and reports, and validates report period', async 
   assert.deepEqual(await data.json(), { days: 30, issues: [] });
 });
 
+test('document answers require ownership and accept only supported files', async (context) => {
+  let calls = 0;
+  const base = await start(createMediaServer({
+    verifyToken: async () => ({ uid: 'student-a' }),
+    answerDocument: async ({ question, document }) => {
+      calls++;
+      assert.equal(question, 'Mã xác minh là gì?');
+      assert.deepEqual(document, { text: 'Mã xác minh là SAO-427.' });
+      return { status: 200, answer: 'SAO-427' };
+    },
+  }), context);
+  const path = base + '/api/document-answer/student-a';
+  const options = {
+    method: 'POST',
+    headers: { authorization: 'Bearer owner-token', 'content-type': 'application/json' },
+    body: JSON.stringify({
+      question: 'Mã xác minh là gì?', mimeType: 'text/plain',
+      base64: Buffer.from('Mã xác minh là SAO-427.').toString('base64'),
+    }),
+  };
+  assert.equal((await fetch(path, { ...options, headers: {} })).status, 401);
+  assert.equal((await fetch(path.replace('student-a', 'student-b'), options)).status, 403);
+  assert.equal((await fetch(path, { ...options, body: options.body.replace('text/plain', 'application/zip') })).status, 400);
+  assert.equal(calls, 0);
+  const response = await fetch(path, options);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { answer: 'SAO-427' });
+  assert.equal(calls, 1);
+});
+
 test('PDF route denies invalid identity, foreign owner, non-PDF and oversized uploads', async (context) => {
   let cloudCalls = 0;
   const server = createMediaServer({

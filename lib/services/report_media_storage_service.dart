@@ -44,7 +44,8 @@ class ReportMediaStorageService implements StorageService {
   }
 
   Uri _url(String path) {
-    if (!RegExp(r'^advisor/[A-Za-z0-9_-]{1,128}$').hasMatch(path)) {
+    if (!RegExp(r'^(advisor|document-answer)/[A-Za-z0-9_-]{1,128}$')
+        .hasMatch(path)) {
       _contentType(path);
     }
     return baseUri.replace(
@@ -91,6 +92,37 @@ class ReportMediaStorageService implements StorageService {
     if (response.statusCode != status) {
       throw StateError('Dịch vụ tệp trả HTTP ${response.statusCode}.');
     }
+  }
+
+  Future<String> askDocument({
+    required String question,
+    required String mimeType,
+    required Uint8List bytes,
+  }) {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) throw StateError('Cần đăng nhập trong app.');
+    return _send('POST', 'document-answer/$uid', (request) async {
+      request.headers.contentType = ContentType.json;
+      request.write(
+        jsonEncode({
+          'question': question,
+          'mimeType': mimeType,
+          'base64': base64Encode(bytes),
+        }),
+      );
+      final response = await request.close();
+      final data = jsonDecode(await utf8.decoder.bind(response).join());
+      if ((response.statusCode, data) case (
+        HttpStatus.ok,
+        {'answer': final String answer},
+      )) {
+        return answer;
+      }
+      if (data case {'error': final String error}) {
+        throw AdvisorRequestException(error);
+      }
+      throw StateError('Gemini chưa trả lời được.');
+    });
   }
 
   Future<String> askAdvisor(

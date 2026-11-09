@@ -147,7 +147,9 @@ class NotesViewModel extends BaseViewModel<List<NoteModel>> {
     } catch (_) {
       if (!isDisposed && uid == currentUserId) {
         setLastError(
-          'Tải tệp lên thất bại. Kiểm tra Cloud Storage và thử lại.',
+          mediaStorageService == null
+              ? 'Tải tệp lên thất bại. Kiểm tra Cloud Storage và thử lại.'
+              : 'Tải tệp lên thất bại. Kiểm tra Cloudinary và máy chủ Media API rồi thử lại.',
         );
       }
       return null;

@@ -6,7 +6,7 @@ import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { v2 as cloudinary } from 'cloudinary';
 import { projectId } from './firebase-api.mjs';
-import { createGeminiAdvisor, validateAdvisorInput } from './advisor.mjs';
+import { createDocumentAnswer, createGeminiAdvisor, validateAdvisorInput } from './advisor.mjs';
 
 const maxBytes = 10 * 1024 * 1024;
 const noteTypes = {
@@ -22,6 +22,8 @@ const noteTypes = {
 const noteRoute = /^\/api\/notes\/([A-Za-z0-9_-]{1,128})\/cloudinary\/(note_\d{16}\.([a-z]+))$/;
 const reportRoute = /^\/api\/reports\/([A-Za-z0-9_-]{1,128})\/(study_report_\d{13}\.pdf)$/;
 const advisorRoute = /^\/api\/advisor\/([A-Za-z0-9_-]{1,128})$/;
+const documentRoute = /^\/api\/document-answer\/([A-Za-z0-9_-]{1,128})$/;
+const maxDocumentBytes = 5 * 1024 * 1024;
 
 function uploadAsset(bytes, id) {
   return new Promise((resolve, reject) => {
@@ -60,7 +62,7 @@ async function downloadAsset(id) {
 }
 
 export function createMediaServer({
-  verifyToken, upload = uploadAsset, download = downloadAsset, advisor,
+  verifyToken, upload = uploadAsset, download = downloadAsset, advisor, answerDocument,
   remove = (id) => cloudinary.uploader.destroy(id, {
     resource_type: 'raw', type: 'authenticated', invalidate: true,
   }),
@@ -78,7 +80,8 @@ export function createMediaServer({
     const report = reportRoute.exec(req.url ?? '');
     const note = noteRoute.exec(req.url ?? '');
     const ask = advisorRoute.exec(req.url ?? '');
-    const route = report ?? note ?? ask;
+    const document = documentRoute.exec(req.url ?? '');
+    const route = report ?? note ?? ask ?? document;
     if (!route) return reply(404, { error: 'Không tìm thấy tệp.' });
 
     const bearer = /^Bearer (\S+)$/.exec(req.headers.authorization ?? '');
@@ -89,23 +92,49 @@ export function createMediaServer({
     if (!uid) return reply(401, { error: 'Cần đăng nhập trong app.' });
     if (uid !== route[1]) return reply(403, { error: 'Tệp thuộc tài khoản khác.' });
 
-    if (ask) {
+    if (ask || document) {
       if (req.method !== 'POST') return reply(405, { error: 'Chỉ hỗ trợ POST.' });
-      if (!advisor) return reply(503, { error: 'Chưa cấu hình Gemini trên máy chủ.' });
+      if (!(document ? answerDocument : advisor)) {
+        return reply(503, { error: 'Chưa cấu hình Gemini trên máy chủ.' });
+      }
       if (req.headers['content-type']?.split(';')[0] !== 'application/json') {
         return reply(415, { error: 'Yêu cầu phải dùng JSON.' });
       }
       try {
-        const input = await readFile(req, 24 * 1024, 'application/json');
+        const limit = document ? 4 * Math.ceil(maxDocumentBytes / 3) + 8192 : 24 * 1024;
+        const input = await readFile(req, limit, 'application/json');
         if (input.error) return reply(input.status, { error: input.error });
         let data;
         try { data = JSON.parse(input.bytes.toString('utf8')); }
         catch { return reply(400, { error: 'JSON không hợp lệ.' }); }
-        if (!validateAdvisorInput(data)) {
-          return reply(400, { error: 'Dữ liệu hỏi đáp không hợp lệ.' });
+        let result;
+        if (document) {
+          const { question, mimeType, base64 } = data ?? {};
+          if (typeof question !== 'string' || !question.trim() || question.length > 1000 ||
+              ![noteTypes.pdf, noteTypes.md, noteTypes.txt].includes(mimeType) ||
+              typeof base64 !== 'string') {
+            return reply(400, { error: 'Dữ liệu hỏi đáp không hợp lệ.' });
+          }
+          const bytes = Buffer.from(base64, 'base64');
+          if (bytes.length === 0 || bytes.length > maxDocumentBytes ||
+              bytes.toString('base64') !== base64) {
+            return reply(400, { error: 'Tệp hỏi đáp không hợp lệ.' });
+          }
+          if (mimeType === noteTypes.pdf && bytes.subarray(0, 5).toString('ascii') !== '%PDF-') {
+            return reply(415, { error: 'Dữ liệu phải là PDF.' });
+          }
+          const part = mimeType === noteTypes.pdf
+            ? { inlineData: { mimeType, data: base64 } }
+            : { text: bytes.toString('utf8') };
+          result = await answerDocument({ question, document: part });
+        } else {
+          if (!validateAdvisorInput(data)) {
+            return reply(400, { error: 'Dữ liệu hỏi đáp không hợp lệ.' });
+          }
+          const { question, level, catalog } = data;
+          result = await advisor({ question, level, catalog });
         }
-        const { question, level, catalog } = data;
-        const { status, answer } = await advisor({ question, level, catalog });
+        const { status, answer } = result;
         return reply(status, status === 200 ? { answer } : {
           error: status === 429 ? 'Gemini đang giới hạn lượt hỏi.' : 'Gemini chưa trả lời được.',
         });
@@ -180,6 +209,7 @@ if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) 
   createMediaServer({
     verifyToken: (token) => getAuth(app).verifyIdToken(token),
     advisor: createGeminiAdvisor(process.env.GEMINI_API_KEY, process.env.GEMINI_MODEL),
+    answerDocument: createDocumentAnswer(process.env.GEMINI_API_KEY),
   })
     .listen(port, '127.0.0.1', () => console.log(`Media API: http://127.0.0.1:${port}`));
 }

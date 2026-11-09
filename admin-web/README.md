@@ -34,7 +34,7 @@ adb -s ANDROID_SERIAL reverse tcp:8788 tcp:8788
 flutter run -d ANDROID_SERIAL --dart-define=REPORT_MEDIA_URL=http://127.0.0.1:8788
 ```
 
-- Trong **Ghi chú**, chọn tệp Markdown, PDF, DOCX, TXT, PNG hoặc JPEG dưới 10 MB. Đợi tiến độ kết thúc và lưu ghi chú. Mở lại ghi chú rồi bấm nút tải để lưu file. Firestore giữ tên và đường dẫn dưới `notes/{uid}/cloudinary/`. Tệp đã lưu bằng Firebase Storage vẫn tải qua adapter Firebase.
+- Trong **Ghi chú → Tải tệp lên**, chọn Markdown, PDF, DOCX, TXT, PNG hoặc JPEG dưới 10 MB. Đợi tiến độ kết thúc, kiểm tra tiêu đề và mã môn rồi lưu. Mở lại ghi chú để tải tệp xuống hoặc hỏi AI với nguồn hỗ trợ. Firestore giữ tên và đường dẫn dưới `notes/{uid}/cloudinary/`. Tệp đã lưu bằng Firebase Storage vẫn tải qua adapter Firebase.
 - Trong **Sync Vault**, chọn **Xuất & Tải PDF lên Cloudinary** rồi xác nhận. Kiểm tra metadata Firestore và dùng **Tải lại PDF từ cloud** để tải bản đã upload. Địa chỉ Media API cần phiên đăng nhập của app. Server giữ URL ký Cloudinary.
 - Mở **Lịch sử báo cáo** trong Sync Vault để tải lại tối đa 30 báo cáo gần đây. App chọn kho tải theo metadata Firestore của từng báo cáo.
 - Khi lưu ghi chú sau khi gỡ hoặc thay tệp, app đối chiếu đính kèm hiện tại trên Firestore rồi cập nhật liên kết. App xóa tệp cũ sau khi lưu thành công. Nếu kho lưu trữ từ chối xóa, app báo lại sau khi lưu.

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/app_state.dart';
+import '../models/note_draft.dart';
 import '../models/note_model.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
@@ -9,6 +10,7 @@ import '../viewmodels/notes_viewmodel.dart';
 import '../widgets/app_components.dart';
 import '../widgets/app_states.dart';
 import '../widgets/app_text_field.dart';
+import 'flm_import_screen.dart';
 
 class NotesScreen extends StatefulWidget {
   const NotesScreen({super.key});
@@ -35,6 +37,32 @@ class _NotesScreenState extends State<NotesScreen> {
       appBar: const CustomAppBar(title: 'Ghi chú học tập'),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: Wrap(
+              spacing: AppSpacing.xs,
+              children: [
+                TextButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const FlmImportScreen(),
+                    ),
+                  ),
+                  icon: const Icon(Icons.school_outlined),
+                  label: const Text('Nhập syllabus FLM'),
+                ),
+                TextButton.icon(
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    '/note-editor',
+                    arguments: const NoteDraft(pickAttachment: true),
+                  ),
+                  icon: const Icon(Icons.upload_file_outlined),
+                  label: const Text('Tải tệp lên'),
+                ),
+              ],
+            ),
+          ),
           // Search Bar
           Container(
             color: AppColors.surface,
@@ -44,7 +72,7 @@ class _NotesScreenState extends State<NotesScreen> {
             ),
             child: AppSearchBar(
               controller: _searchController,
-              hint: 'Tìm kiếm tiêu đề hoặc nội dung ghi chú...',
+              hint: 'Tìm theo mã môn, tiêu đề hoặc nội dung…',
               onChanged: (val) => notesVm.setSearchQuery(val),
             ),
           ),
@@ -186,7 +214,9 @@ class _NotesScreenState extends State<NotesScreen> {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    note.content,
+                    note.content.trim().isEmpty
+                        ? note.attachmentName ?? 'Ghi chú trống'
+                        : note.content,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium

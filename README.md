@@ -1,6 +1,6 @@
 > **PRM393 Final đang tích hợp.** [Đối chiếu yêu cầu](docs/gap-review.md) · [Hợp đồng Firestore cho web](docs/data-model.md) · [Luồng duyệt](docs/cross-role-flow.md) · [AI](docs/ai-feature.md) · [Kiểm thử](docs/test-report.md) · [Nội dung 14 slide](docs/final-slide-content.md).
 >
-> Build Android mặc định dùng PDF cục bộ và Firebase AI Logic. Bản demo Lab 3 với Media API dùng thêm `--dart-define=LAB3_LEGACY_MEDIA=true` và `--dart-define=REPORT_MEDIA_URL=http://127.0.0.1:8788`. Không dùng tài khoản cá nhân hoặc token trong tài liệu bàn giao.
+> Build Android mặc định dùng PDF cục bộ và Firebase AI Logic. Để bật upload Cloudinary cho bản demo, chạy Media API và thêm `--dart-define=REPORT_MEDIA_URL=http://127.0.0.1:8788`. Không dùng tài khoản cá nhân hoặc token trong tài liệu bàn giao.
 
 > **Demo ngày 05/11/2026.** Firebase Spark phục vụ đăng nhập và Firestore. Cloudinary Free đã được xác minh cho PDF báo cáo và tệp đính kèm trên giả lập. Khi chấm, kết nối điện thoại thật. Dev xem Firebase Console, admin xem web riêng. [Cách chạy web admin, FCM server và Media API](admin-web/README.md) · [Giải thích nguyên lý](docs/lab3-oral-defense.md) · [Minh chứng Cloudinary](evidence/app/cloudinary-2026-11-05/verification.json).
 

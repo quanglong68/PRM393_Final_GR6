@@ -1,17 +1,23 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/note_attachment.dart';
+import '../models/note_draft.dart';
+import '../models/note_model.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../viewmodels/notes_viewmodel.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_components.dart';
 import '../widgets/app_text_field.dart';
+import 'note_ai_screen.dart';
 
 class NoteEditorScreen extends StatefulWidget {
   const NoteEditorScreen({super.key, this.noteId, this.showLegacyMedia = true});
@@ -30,6 +36,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   final _contentController = TextEditingController();
   bool _isInitialized = false;
   String? _existingNoteId;
+  NoteModel? _savedNote;
+  bool _fromFlm = false;
+  bool _preview = false;
   String? _attachmentName;
   String? _attachmentUrl;
   String? _attachmentPath;
@@ -48,14 +57,26 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     if (!_isInitialized) {
       final notesVm = context.read<NotesViewModel>();
       _notesVm = notesVm;
-      final arg =
-          widget.noteId ??
-          ModalRoute.of(context)?.settings.arguments as String?;
+      final arg = widget.noteId ?? ModalRoute.of(context)?.settings.arguments;
 
-      if (arg != null) {
+      if (arg is NoteDraft) {
+        _titleController.text = arg.title;
+        _courseController.text = arg.courseCode;
+        _contentController.text = arg.content;
+        _fromFlm = arg.fromFlm;
+        _preview = _fromFlm;
+        if (arg.pickAttachment && widget.showLegacyMedia) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) unawaited(_attachFile());
+          });
+        }
+      } else if (arg is String) {
         final existing = notesVm.findNoteById(arg);
         if (existing != null) {
           _existingNoteId = existing.id;
+          _savedNote = existing;
+          _fromFlm = existing.tags.contains('flm');
+          _preview = _fromFlm;
           _titleController.text = existing.title;
           _courseController.text = existing.courseCode;
           _contentController.text = existing.content;
@@ -105,6 +126,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       );
       return;
     }
+    if (_fromFlm && course.isEmpty) {
+      _showAttachmentMessage('Nhập mã môn cho syllabus FLM.', failed: true);
+      return;
+    }
 
     final notesVm = context.read<NotesViewModel>();
     final attachmentChanged =
@@ -120,7 +145,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       attachmentName: _attachmentName,
       attachmentBefore: attachmentChanged ? _originalAttachment : null,
       preserveAttachment: !attachmentChanged && _existingNoteId != null,
-      tags: [course.toLowerCase()],
+      tags: {
+        ...?_savedNote?.tags.where(
+          (tag) => tag != _savedNote?.courseCode.toLowerCase(),
+        ),
+        if (_fromFlm) 'flm',
+        if (course.isNotEmpty) course.toLowerCase(),
+      }.toList(),
     );
     _saving = false;
     if (ok) _stagedAttachment = null;
@@ -184,6 +215,16 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       }
       if (!mounted || uid != notesVm.currentUserId) return;
       final bytes = buffer.takeBytes();
+      final mime = NoteAttachment.contentTypeFor(name);
+      String? importedText;
+      if ((mime == 'text/markdown' || mime == 'text/plain') &&
+          bytes.length <= 400 * 1024) {
+        try {
+          importedText = utf8.decode(bytes);
+        } on FormatException {
+          // Keep the original file attached even when its text is not UTF-8.
+        }
+      }
       final path = await notesVm.uploadAttachment(
         fileName: name,
         bytes: bytes,
@@ -210,6 +251,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         _attachmentUrl = null;
         _attachmentPath = path;
         _attachmentName = name;
+        if (_titleController.text.trim().isEmpty) {
+          _titleController.text = name.substring(0, name.lastIndexOf('.'));
+        }
+        if (_contentController.text.trim().isEmpty && importedText != null) {
+          _contentController.text = importedText;
+        }
       });
       _showAttachmentMessage(
         'Đã tải tệp lên. Lưu ghi chú để giữ tệp đính kèm.',
@@ -264,26 +311,19 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   Widget build(BuildContext context) {
     final isEditing = _existingNoteId != null;
     final isSaving = context.watch<NotesViewModel>().isSaving;
+    final saved = _savedNote;
 
     return Scaffold(
       appBar: CustomAppBar(
-        title: isEditing ? 'Chỉnh sửa ghi chú' : 'Soạn ghi chú mới',
+        title: _fromFlm
+            ? 'Syllabus FLM'
+            : isEditing
+            ? 'Chỉnh sửa ghi chú'
+            : 'Soạn ghi chú mới',
         onBack: () {
           if (!_saving) Navigator.pop(context);
         },
         actions: [
-          if (widget.showLegacyMedia)
-            IconButton(
-              icon: _uploading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.attach_file),
-              tooltip: 'Đính kèm tệp tin (${NoteAttachment.supportedFormats})',
-              onPressed: _transferring || isSaving ? null : _attachFile,
-            ),
           IconButton(
             icon: const Icon(Icons.check),
             tooltip: 'Lưu ghi chú',
@@ -309,11 +349,52 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                   flex: 1,
                   child: AppTextField(
                     controller: _courseController,
-                    hint: 'Môn học',
+                    hint: 'Mã môn',
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: AppSpacing.sm),
+
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: AppSpacing.xs,
+              children: [
+                TextButton.icon(
+                  label: Text(
+                    _attachmentName == null ? 'Tải tệp lên' : 'Thay tệp',
+                  ),
+                  icon: const Icon(Icons.cloud_upload_outlined),
+                  onPressed:
+                      !widget.showLegacyMedia || _transferring || isSaving
+                      ? null
+                      : _attachFile,
+                ),
+                TextButton.icon(
+                  label: Text(_preview ? 'Chỉnh sửa' : 'Xem nội dung'),
+                  icon: Icon(
+                    _preview ? Icons.edit_outlined : Icons.article_outlined,
+                  ),
+                  onPressed: () => setState(() => _preview = !_preview),
+                ),
+                if (saved != null &&
+                    (saved.content.trim().isNotEmpty ||
+                        NoteAiScreen.attachmentType(saved) != null))
+                  TextButton.icon(
+                    label: const Text('Hỏi AI'),
+                    icon: const Icon(Icons.auto_awesome_outlined),
+                    onPressed: _transferring || isSaving
+                        ? null
+                        : () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => NoteAiScreen(note: saved),
+                            ),
+                          ),
+                  ),
+              ],
+            ),
+            if (!widget.showLegacyMedia)
+              const Text('Bản này chưa cấu hình máy chủ lưu tài liệu.'),
             const SizedBox(height: AppSpacing.sm),
 
             if (_uploading) ...[
@@ -402,18 +483,38 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                   border: Border.all(color: AppColors.outline),
                 ),
                 padding: const EdgeInsets.all(AppSpacing.md),
-                child: TextField(
-                  controller: _contentController,
-                  decoration: const InputDecoration(
-                    hintText: 'Bắt đầu viết nội dung ghi chú...',
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  maxLines: null,
-                  expands: true,
-                  textAlignVertical: TextAlignVertical.top,
-                ),
+                child: _preview
+                    ? Markdown(
+                        data: _contentController.text.isEmpty
+                            ? 'Ghi chú chưa có nội dung văn bản.'
+                            : _contentController.text,
+                        padding: EdgeInsets.zero,
+                        selectable: true,
+                        onTapLink: (_, href, _) async {
+                          final url = Uri.tryParse(href ?? '');
+                          if (url?.scheme == 'https' &&
+                              url?.host == 'flm.fpt.edu.vn') {
+                            await launchUrl(
+                              url!,
+                              mode: LaunchMode.externalApplication,
+                            );
+                          }
+                        },
+                        imageBuilder: (_, title, alt) =>
+                            Text(alt ?? title ?? 'Ảnh'),
+                      )
+                    : TextField(
+                        controller: _contentController,
+                        decoration: const InputDecoration(
+                          hintText: 'Bắt đầu viết nội dung ghi chú...',
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        maxLines: null,
+                        expands: true,
+                        textAlignVertical: TextAlignVertical.top,
+                      ),
               ),
             ),
             const SizedBox(height: AppSpacing.md),

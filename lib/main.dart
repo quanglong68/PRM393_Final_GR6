@@ -135,8 +135,10 @@ class FptuSecondBrainApp extends StatelessWidget {
   bool get _usesRealComposition => authService == null;
 
   static const _legacyMedia = bool.fromEnvironment('LAB3_LEGACY_MEDIA');
+  static const _mediaUrl = String.fromEnvironment('REPORT_MEDIA_URL');
 
-  bool get _showLegacyMedia => !_usesRealComposition || _legacyMedia;
+  bool get _showLegacyMedia =>
+      !_usesRealComposition || _legacyMedia || _mediaUrl.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -162,9 +164,8 @@ class FptuSecondBrainApp extends StatelessWidget {
       ),
       Provider<ReportMediaStorageService?>(
         create: (_) {
-          const mediaUrl = String.fromEnvironment('REPORT_MEDIA_URL');
-          return _usesRealComposition && _legacyMedia && mediaUrl.isNotEmpty
-              ? ReportMediaStorageService(Uri.parse(mediaUrl))
+          return _usesRealComposition && _mediaUrl.isNotEmpty
+              ? ReportMediaStorageService(Uri.parse(_mediaUrl))
               : null;
         },
       ),
@@ -276,10 +277,8 @@ class FptuSecondBrainApp extends StatelessWidget {
           '/course-detail': (ctx) => CourseDetailScreen(
             courseId: ModalRoute.of(ctx)!.settings.arguments as String? ?? '',
           ),
-          '/note-editor': (ctx) => NoteEditorScreen(
-            noteId: ModalRoute.of(ctx)!.settings.arguments as String?,
-            showLegacyMedia: _showLegacyMedia,
-          ),
+          '/note-editor': (_) =>
+              NoteEditorScreen(showLegacyMedia: _showLegacyMedia),
           '/academic-profile': (_) =>
               AcademicProfileScreen(showStudyPlan: _usesRealComposition),
           if (_usesRealComposition)
