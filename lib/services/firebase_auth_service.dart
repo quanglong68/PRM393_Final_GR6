@@ -23,7 +23,6 @@ class FirebaseAuthService implements AuthService {
           googleSignIn ??
           GoogleSignIn(
             scopes: ['email', 'profile'],
-            hostedDomain: 'fpt.edu.vn',
           );
 
   final FirebaseAuth _auth;
@@ -58,18 +57,6 @@ class FirebaseAuthService implements AuthService {
       );
 
       await _auth.signInWithCredential(credential);
-
-      // Client-side domain check; backend restrictions must also use rules.
-      // Upgrade path: move to Firebase Auth blocking function or Firestore rules email check.
-      final email = _auth.currentUser?.email ?? '';
-      if (!email.endsWith('@fpt.edu.vn')) {
-        await _auth.signOut();
-        await _googleSignIn.signOut();
-        throw const AuthException(
-          'Chỉ tài khoản @fpt.edu.vn được phép đăng nhập.',
-          code: 'invalid-domain',
-        );
-      }
 
       debugPrint(
         '[Auth] Google Sign-In succeeded for uid: ${_auth.currentUser?.uid}',
