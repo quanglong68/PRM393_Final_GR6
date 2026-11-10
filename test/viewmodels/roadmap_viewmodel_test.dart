@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:prm323_lab3/models/course_model.dart';
-import 'package:prm323_lab3/viewmodels/roadmap_viewmodel.dart';
+import 'package:prm393_final_gr6/models/course_model.dart';
+import 'package:prm393_final_gr6/viewmodels/roadmap_viewmodel.dart';
 
 import '../helpers/mock_auth_service.dart';
 import '../helpers/mock_firestore_service.dart';

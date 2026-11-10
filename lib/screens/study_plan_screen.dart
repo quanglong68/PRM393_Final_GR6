@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:second_brain_core/second_brain_core.dart';
+import 'package:study_pilot_core/study_pilot_core.dart';
 
 import '../services/analytics_service.dart';
 import '../services/remote_config_service.dart';

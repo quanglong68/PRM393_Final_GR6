@@ -1,8 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:second_brain_core/second_brain_core.dart';
+import 'package:study_pilot_core/study_pilot_core.dart';
 
 import '../models/app_state.dart';
 import '../models/course_model.dart';
@@ -76,13 +75,19 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     // Standard AsyncViewState branches (§4.2)
     switch (roadmapVm.state.state) {
       case ViewState.loading:
-        return const Scaffold(
-          appBar: CustomAppBar(title: 'Chi tiết môn học'),
+        return Scaffold(
+          appBar: CustomAppBar(
+            title: 'Chi tiết môn học',
+            onBack: () => Navigator.of(context).pop(),
+          ),
           body: AppLoadingState(message: 'Đang tải thông tin môn học...'),
         );
       case ViewState.error:
         return Scaffold(
-          appBar: const CustomAppBar(title: 'Chi tiết môn học'),
+          appBar: CustomAppBar(
+            title: 'Chi tiết môn học',
+            onBack: () => Navigator.of(context).pop(),
+          ),
           body: AppErrorState(
             message:
                 roadmapVm.state.message ?? 'Không tải được dữ liệu môn học.',
@@ -98,7 +103,10 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
     if (course == null) {
       return Scaffold(
-        appBar: const CustomAppBar(title: 'Chi tiết môn học'),
+        appBar: CustomAppBar(
+          title: 'Chi tiết môn học',
+          onBack: () => Navigator.of(context).pop(),
+        ),
         body: AppEmptyState(
           message: 'Không tìm thấy thông tin môn học này trong lộ trình.',
           actionLabel: 'Quay lại lộ trình',
@@ -116,10 +124,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     final personalLecturer = roadmapVm.lecturerFor(course);
 
     final effectiveStore =
-        widget.store ??
-        (Firebase.apps.isNotEmpty
-            ? FinalFirestore(FirebaseFirestore.instance)
-            : null);
+        widget.store ?? (Firebase.apps.isEmpty ? null : context.read<FinalFirestore?>());
 
     String? activeUid = widget.currentUid;
     if (activeUid == null) {

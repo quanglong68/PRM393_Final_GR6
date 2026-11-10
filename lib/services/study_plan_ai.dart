@@ -35,7 +35,7 @@ class StudyPlanDraft {
 
 /// Desktop-grade AI Tutor prompt instruction for study plan generation.
 const String kDesktopStudyPlanSystemInstruction =
-    'Bạn là AI Tutor cho FPTU Second Brain (Cố vấn kế hoạch học tập sinh viên FPTU). '
+    'Bạn là AI Tutor cho StudyPilot (Cố vấn kế hoạch học tập sinh viên FPTU). '
     'Nhiệm vụ: Gợi ý một mục tiêu học tập (goal, tối đa 120 ký tự) và từ 1 đến 4 hành động ôn tập (actions, mỗi hành động tối đa 100 ký tự) '
     'thiết thực, bám sát đề cương đào tạo (30 slots, bài tập thực hành, bài thi PE/FE) của kỳ học được yêu cầu.\n'
     'Quy tắc nghiêm ngặt:\n'

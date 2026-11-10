@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:second_brain_core/second_brain_core.dart';
+import 'package:study_pilot_core/study_pilot_core.dart';
 
 import '../models/course_model.dart';
 import '../theme/app_colors.dart';

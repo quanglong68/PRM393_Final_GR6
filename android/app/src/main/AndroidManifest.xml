@@ -6,7 +6,7 @@
     <!-- Re-arm locally scheduled study reminders after a reboot or app update. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <application
-        android:label="prm323_lab3"
+        android:label="StudyPilot"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <!-- Explicit debug test opt-in is persisted by the native SDK. -->

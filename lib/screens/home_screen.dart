@@ -20,7 +20,7 @@ class HomeScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AppConfirmDialog(
         title: 'Đăng xuất',
-        message: 'Bạn có chắc chắn muốn đăng xuất khỏi FPTU Second Brain?',
+        message: 'Bạn có chắc chắn muốn đăng xuất khỏi StudyPilot?',
         onConfirm: () {
           Navigator.pop(ctx);
           authVm.signOut();
@@ -39,7 +39,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'FPTU Second Brain',
+        title: 'StudyPilot',
         actions: [
           IconButton(
             icon: Badge(

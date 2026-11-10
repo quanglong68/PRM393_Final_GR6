@@ -1,4 +1,4 @@
-import 'package:prm323_lab3/services/firestore_service.dart';
+import 'package:prm393_final_gr6/services/firestore_service.dart';
 
 /// Test double implementing [FirestoreService] for hermetic unit and widget
 /// testing.
@@ -13,6 +13,11 @@ class FakeFirestoreService implements FirestoreService {
   @override
   Future<List<Map<String, dynamic>>> getMajors() async =>
       List.from(majors);
+
+  @override
+  Stream<String?> watchUserRole(String userId) => Stream.value(role);
+
+  String? role;
 
   @override
   Future<List<Map<String, dynamic>>> getRecentReportMetadata(

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
-import 'package:prm323_lab3/main.dart';
-import 'package:prm323_lab3/screens/tasks_screen.dart';
-import 'package:prm323_lab3/services/remote_config_service.dart';
-import 'package:prm323_lab3/viewmodels/tasks_viewmodel.dart';
+import 'package:prm393_final_gr6/main.dart';
+import 'package:prm393_final_gr6/screens/tasks_screen.dart';
+import 'package:prm393_final_gr6/services/remote_config_service.dart';
+import 'package:prm393_final_gr6/viewmodels/tasks_viewmodel.dart';
 
 import 'helpers/fake_firestore_service.dart';
 import 'helpers/fake_storage_service.dart';
@@ -92,7 +92,7 @@ void main() {
       final rc = RemoteConfigService(overrides: flags);
       final auth = MockAuthService(initialUserId: 'owner-a');
       await tester.pumpWidget(
-        FptuSecondBrainApp(
+        StudyPilotApp(
           authService: auth,
           firestoreService: FakeFirestoreService()
             ..userProfile = {'major': 'SE'},
@@ -121,7 +121,7 @@ void main() {
       final store = FakeFirestoreService()..userProfile = {'major': 'SE'};
       final storage = FakeStorageService();
       await tester.pumpWidget(
-        FptuSecondBrainApp(
+        StudyPilotApp(
           authService: auth,
           firestoreService: store,
           storageService: storage,
@@ -175,7 +175,7 @@ void main() {
       ]);
     final storage = FakeStorageService();
     await tester.pumpWidget(
-      FptuSecondBrainApp(
+      StudyPilotApp(
         authService: auth,
         firestoreService: store,
         storageService: storage,
@@ -218,7 +218,7 @@ void main() {
     final store = seededStore();
     final storage = FakeStorageService()..shouldFailUpload = true;
     await tester.pumpWidget(
-      FptuSecondBrainApp(
+      StudyPilotApp(
         authService: auth,
         firestoreService: store,
         storageService: storage,

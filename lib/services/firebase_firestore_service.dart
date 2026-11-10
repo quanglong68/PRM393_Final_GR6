@@ -146,6 +146,13 @@ class FirebaseFirestoreService implements FirestoreService {
     }
   }
 
+  @override
+  Stream<String?> watchUserRole(String userId) => _firestore
+      .collection('users')
+      .doc(userId)
+      .snapshots()
+      .map((doc) => doc.data()?['role'] as String?);
+
   // ──────────────────── Per-student course progress ────────────────────
 
   @override

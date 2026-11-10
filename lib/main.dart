@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:second_brain_core/second_brain_core.dart';
+import 'package:study_pilot_core/study_pilot_core.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +25,7 @@ import 'screens/strategy_sim_screen.dart';
 import 'screens/sync_vault_screen.dart';
 import 'screens/tasks_screen.dart';
 import 'services/analytics_service.dart';
+import 'services/ai_service.dart';
 import 'services/app_check_service.dart';
 import 'services/auth_service.dart';
 import 'services/crashlytics_service.dart';
@@ -68,14 +69,30 @@ Future<void> main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    await AppCheckService.activate();
     debugPrint('[Firebase] Initialized successfully.');
 
-    // Initialize Crashlytics & Remote Config (single instances shared with DI).
+    // App Check is required by Firestore/AI Logic in production, but a failed
+    // activation must degrade (requests rejected + visible error) instead of
+    // blocking the whole app from starting.
+    try {
+      await AppCheckService.activate();
+    } catch (e) {
+      debugPrint('[AppCheck] Activation failed, continuing: $e');
+    }
+
+    // Crashlytics & Remote Config each fall back to their in-app defaults.
     final crashlytics = CrashlyticsService();
     final remoteConfig = RemoteConfigService();
-    await crashlytics.initialize();
-    await remoteConfig.initialize();
+    try {
+      await crashlytics.initialize();
+    } catch (e) {
+      debugPrint('[Crashlytics] Initialization failed, continuing: $e');
+    }
+    try {
+      await remoteConfig.initialize();
+    } catch (e) {
+      debugPrint('[RemoteConfig] Initialization failed, using defaults: $e');
+    }
     _sharedCrashlytics = crashlytics;
     _sharedRemoteConfig = remoteConfig;
 
@@ -94,7 +111,7 @@ Future<void> main() async {
   }
 
   runApp(
-    FptuSecondBrainApp(
+    StudyPilotApp(
       initError: _firebaseInitError,
       crashlyticsService: _sharedCrashlytics,
       remoteConfigService: _sharedRemoteConfig,
@@ -107,13 +124,14 @@ CrashlyticsService? _sharedCrashlytics;
 RemoteConfigService? _sharedRemoteConfig;
 LocalNotificationService? _sharedLocalNotifications;
 
-class FptuSecondBrainApp extends StatelessWidget {
-  const FptuSecondBrainApp({
+class StudyPilotApp extends StatelessWidget {
+  const StudyPilotApp({
     super.key,
     this.authService,
     this.firestoreService,
     this.storageService,
     this.analyticsService,
+    this.aiService,
     this.messagingService,
     this.crashlyticsService,
     this.remoteConfigService,
@@ -125,6 +143,7 @@ class FptuSecondBrainApp extends StatelessWidget {
   final FirestoreService? firestoreService;
   final StorageService? storageService;
   final AnalyticsService? analyticsService;
+  final AiService? aiService;
 
   /// Push transport (Lab 3 T12). Real composition builds
   /// [FirebaseMessagingService]; widget tests inject a fake under test/.
@@ -171,6 +190,13 @@ class FptuSecondBrainApp extends StatelessWidget {
       Provider<StorageService>(
         create: (_) => storageService ?? FirebaseStorageService(),
       ),
+      // Shared query layer for the course-tips / announcements features.
+      // Built once here (composition root) so widgets never touch the SDK.
+      Provider<FinalFirestore?>(
+        create: (_) => _usesRealComposition && Firebase.apps.isNotEmpty
+            ? FinalFirestore(FirebaseFirestore.instance)
+            : null,
+      ),
       Provider<ReportMediaStorageService?>(
         create: (_) {
           return _usesRealComposition && _mediaUrl.isNotEmpty
@@ -180,6 +206,9 @@ class FptuSecondBrainApp extends StatelessWidget {
       ),
       Provider<AnalyticsService>(
         create: (_) => analyticsService ?? FirebaseAnalyticsService(),
+      ),
+      Provider<AiService>(
+        create: (_) => aiService ?? GeminiAiService(),
       ),
       // Push transport. Nullable on purpose: hermetic widget tests run
       // without a real Firebase app, so we must NOT construct
@@ -268,6 +297,8 @@ class FptuSecondBrainApp extends StatelessWidget {
           remoteConfigService: ctx.read<RemoteConfigService>(),
           analyticsService: ctx.read<AnalyticsService>(),
           authService: ctx.read<AuthService>(),
+          aiService: ctx.read<AiService>(),
+          store: ctx.read<FinalFirestore?>(),
         ),
       ),
     ],
@@ -275,7 +306,7 @@ class FptuSecondBrainApp extends StatelessWidget {
       builder: (ctx) => MaterialApp(
         // Drop pushed private screens as well as tab state on identity change.
         key: ValueKey(ctx.watch<AuthViewModel>().currentUserId),
-        title: 'FPTU Second Brain',
+        title: 'StudyPilot',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),
         navigatorObservers: ctx.read<AnalyticsService>().navigatorObservers,
@@ -291,9 +322,7 @@ class FptuSecondBrainApp extends StatelessWidget {
                 : null;
             return CourseDetailScreen(
               courseId: ModalRoute.of(ctx)!.settings.arguments as String? ?? '',
-              store: _usesRealComposition
-                  ? FinalFirestore(FirebaseFirestore.instance)
-                  : null,
+              store: ctx.read<FinalFirestore?>(),
               currentUid: uid,
             );
           },
@@ -303,7 +332,7 @@ class FptuSecondBrainApp extends StatelessWidget {
               return CourseDetailScreen(
                 courseId:
                     ModalRoute.of(ctx)!.settings.arguments as String? ?? '',
-                store: FinalFirestore(FirebaseFirestore.instance),
+                store: ctx.read<FinalFirestore?>(),
                 currentUid: uid,
                 initialTab: 3,
               );
@@ -313,7 +342,7 @@ class FptuSecondBrainApp extends StatelessWidget {
               final uid = ctx.read<AuthViewModel>().currentUserId;
               if (uid == null) return const SignInScreen();
               return MyTipsScreen(
-                store: FinalFirestore(FirebaseFirestore.instance),
+                store: ctx.read<FinalFirestore?>()!,
                 uid: uid,
               );
             },
@@ -326,13 +355,13 @@ class FptuSecondBrainApp extends StatelessWidget {
               final uid = context.read<AuthViewModel>().currentUserId;
               if (uid == null) return const SignInScreen();
               return StudyPlanScreen(
-                store: FinalFirestore(FirebaseFirestore.instance),
+                store: ctx.read<FinalFirestore?>()!,
                 uid: uid,
               );
             },
           if (_usesRealComposition)
             '/announcements': (_) => AnnouncementsScreen(
-              store: FinalFirestore(FirebaseFirestore.instance),
+              store: ctx.read<FinalFirestore?>()!,
             ),
           '/advisor': (_) => const AdvisorScreen(),
           '/strategy-sim': (_) => const StrategySimScreen(),
@@ -359,7 +388,7 @@ class FirebaseConfigErrorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'FPTU Second Brain',
+    title: 'StudyPilot',
     debugShowCheckedModeBanner: false,
     theme: AppTheme.light(),
     home: Scaffold(
@@ -531,14 +560,13 @@ class _MobileRoleGate extends StatefulWidget {
 }
 
 class _MobileRoleGateState extends State<_MobileRoleGate> {
-  late final _profile = FirebaseFirestore.instance
-      .collection('users')
-      .doc(widget.uid)
-      .snapshots();
+  late final Stream<String?> _role = context
+      .read<FirestoreService>()
+      .watchUserRole(widget.uid);
 
   @override
-  Widget build(BuildContext context) => StreamBuilder(
-    stream: _profile,
+  Widget build(BuildContext context) => StreamBuilder<String?>(
+    stream: _role,
     builder: (context, snapshot) {
       if (snapshot.hasError) {
         return Scaffold(
@@ -550,11 +578,11 @@ class _MobileRoleGateState extends State<_MobileRoleGate> {
           ),
         );
       }
-      final profile = snapshot.data;
-      if (profile == null) {
+      if (snapshot.connectionState == ConnectionState.waiting &&
+          !snapshot.hasData) {
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
       }
-      final role = profile.data()?['role'] ?? 'user';
+      final role = snapshot.data ?? 'user';
       if (role == 'user') return widget.child;
       return Scaffold(
         body: Center(

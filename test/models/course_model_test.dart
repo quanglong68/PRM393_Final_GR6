@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:prm323_lab3/models/course_model.dart';
+import 'package:prm393_final_gr6/models/course_model.dart';
 
 void main() {
   group('CourseModel, CourseSlot & CourseLab parsing', () {

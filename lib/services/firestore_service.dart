@@ -18,6 +18,10 @@ abstract class FirestoreService {
   /// seeded demo data.
   Future<Map<String, dynamic>?> getUserProfile(String userId);
 
+  /// Live `users/{uid}.role` for the mobile role gate. Emits null while the
+  /// profile document does not exist yet.
+  Stream<String?> watchUserRole(String userId);
+
   /// Merge user-entered transcript without replacing other profile fields.
   Future<void> saveAcademicProfile(String userId, Map<String, dynamic> data);
 

@@ -1,12 +1,10 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_ai/firebase_ai.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
-import 'package:second_brain_core/second_brain_core.dart';
+import 'package:study_pilot_core/study_pilot_core.dart';
 
 import '../models/course_model.dart';
+import '../services/ai_service.dart';
 import '../services/analytics_service.dart';
 import '../services/app_check_service.dart';
 import '../services/auth_service.dart';
@@ -191,6 +189,8 @@ class AdvisorViewModel extends ChangeNotifier {
     this.academicViewModel,
     this.analyticsService,
     this.authService,
+    this.aiService,
+    this.store,
     this.askGemini,
   }) {
     _initDefaults();
@@ -241,6 +241,8 @@ class AdvisorViewModel extends ChangeNotifier {
   final AnalyticsService? analyticsService;
   final AuthService? authService;
   final AcademicViewModel? academicViewModel;
+  final AiService? aiService;
+  final FinalFirestore? store;
   final Future<String> Function(
     String uid,
     String question,
@@ -283,7 +285,7 @@ class AdvisorViewModel extends ChangeNotifier {
   bool get isAiEnabled => remoteConfigService?.isAiAdvisorEnabled ?? true;
   bool get hasConsent => _consentGranted;
   bool get usesGemini =>
-      askGemini != null || (Firebase.apps.isNotEmpty && isAiEnabled);
+      askGemini != null || (aiService != null && isAiEnabled);
 
   /// Currently selected consultation level (drives the UI selector).
   AdvisorLevel get selectedLevel => _selectedLevel;
@@ -611,7 +613,7 @@ class AdvisorViewModel extends ChangeNotifier {
       final local = _replyFor(useLevel, question.toLowerCase());
       final ask = askGemini;
       final aiAttemptable =
-          isAiEnabled && (ask != null || Firebase.apps.isNotEmpty);
+          isAiEnabled && (ask != null || aiService != null);
 
       if (!aiAttemptable) {
         _messages.add(
@@ -645,9 +647,9 @@ class AdvisorViewModel extends ChangeNotifier {
         return;
       }
 
-      if (_cachedApprovedTips.isEmpty && Firebase.apps.isNotEmpty) {
+      if (_cachedApprovedTips.isEmpty && store != null) {
         try {
-          _cachedApprovedTips = await FinalFirestore(FirebaseFirestore.instance)
+          _cachedApprovedTips = await store!
               .getApprovedExperienceNotes()
               .timeout(const Duration(seconds: 3));
         } catch (_) {}
@@ -1598,7 +1600,7 @@ class AdvisorViewModel extends ChangeNotifier {
     final modelName = aiModelLabel;
     final prompt =
         remoteConfigService?.aiAdvisorPrompt ??
-        'Bạn là Cố vấn học tập AI (AI Tutor) cho FPTU Second Brain. '
+        'Bạn là Cố vấn học tập AI (AI Tutor) cho StudyPilot. '
             'Tư vấn dựa trên đề cương từng môn (slot học, trọng số điểm PE/FE, chuẩn đầu ra) và kinh nghiệm từ tiền bối đã được kiểm duyệt. '
             'Quy tắc nghiêm ngặt:\n'
             '1. Tuân thủ nghiêm ngặt ngữ cảnh đề cương và dữ liệu được cung cấp.\n'
@@ -1607,29 +1609,23 @@ class AdvisorViewModel extends ChangeNotifier {
             '4. Định dạng câu trả lời rõ ràng bằng Markdown (bullet points, in đậm từ khóa quan trọng).\n'
             '5. Tuân thủ bảo mật Zero-PII (không yêu cầu hay tiết lộ thông tin cá nhân).';
 
-    final generator = FirebaseAI.googleAI().generativeModel(
-      model: modelName,
-      systemInstruction: Content.system(prompt),
-    );
-
-    final fullPrompt =
-        'CẤU TRÚC CHƯƠNG TRÌNH HỌC VÀ ĐỀ CƯƠNG FPTU:\n'
-        '<CONTEXT>\n$catalogContext\n</CONTEXT>\n\n'
-        'Cấp tư vấn: ${level.label} (${level.id})\n'
-        'Câu hỏi sinh viên: $question\n\n'
-        'Nhiệm vụ:\n'
-        '1. Trả lời câu hỏi sinh viên dựa trên đề cương chi tiết (slot học, bài tập, đầu điểm) và kinh nghiệm tiền bối trong <CONTEXT>.\n'
-        '2. Nếu ngữ cảnh không có thông tin, hãy nói rõ không có dữ liệu, không tự suy đoán quy chế hay lịch cá nhân.\n'
-        '3. Định dạng markdown rõ ràng, súc tích và hữu ích.';
-
-    final result = await generator
-        .generateContent([Content.text(fullPrompt)])
-        .timeout(const Duration(seconds: 45));
-
-    final text = result.text?.trim() ?? '';
-    if (text.isEmpty) {
-      throw StateError('Gemini trả về phản hồi trống.');
+    final ai = aiService;
+    if (ai == null) {
+      throw StateError('AI service chưa được cấu hình.');
     }
+    final text = await ai.generateText(
+      model: modelName,
+      systemPrompt: prompt,
+      prompt:
+          'CẤU TRÚC CHƯƠNG TRÌNH HỌC VÀ ĐỀ CƯƠNG FPTU:\n'
+          '<CONTEXT>\n$catalogContext\n</CONTEXT>\n\n'
+          'Cấp tư vấn: ${level.label} (${level.id})\n'
+          'Câu hỏi sinh viên: $question\n\n'
+          'Nhiệm vụ:\n'
+          '1. Trả lời câu hỏi sinh viên dựa trên đề cương chi tiết (slot học, bài tập, đầu điểm) và kinh nghiệm tiền bối trong <CONTEXT>.\n'
+          '2. Nếu ngữ cảnh không có thông tin, hãy nói rõ không có dữ liệu, không tự suy đoán quy chế hay lịch cá nhân.\n'
+          '3. Định dạng markdown rõ ràng, súc tích và hữu ích.',
+    );
     return text;
   }
 

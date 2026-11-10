@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:firebase_ai/firebase_ai.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:prm323_lab3/utils/ai_failure_messages.dart';
-import 'package:prm323_lab3/viewmodels/advisor_viewmodel.dart';
-import 'package:prm323_lab3/viewmodels/academic_viewmodel.dart';
+import 'package:prm393_final_gr6/utils/ai_failure_messages.dart';
+import 'package:prm393_final_gr6/viewmodels/advisor_viewmodel.dart';
+import 'package:prm393_final_gr6/viewmodels/academic_viewmodel.dart';
 
 import '../helpers/fake_firestore_service.dart';
 import '../helpers/mock_auth_service.dart';

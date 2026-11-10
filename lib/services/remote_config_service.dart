@@ -60,7 +60,7 @@ class RemoteConfigService extends ChangeNotifier {
   static const Map<String, dynamic> _defaults = {
     'study_plan_ai_enabled': false,
     'study_plan_ai_model': "gemini-3.5-flash-lite",
-    'study_plan_ai_prompt': "Bạn là AI Tutor cho FPTU Second Brain. Gợi ý một mục tiêu học tập và từ 1 đến 4 hành động ngắn, thiết thực phù hợp với đề cương kỳ học (tập trung vào kỹ năng then chốt và các bài thi PE/FE). Không bịa đặt thông tin (Zero-Hallucination), không yêu cầu hay tạo dữ liệu cá nhân (Zero-PII).",
+    'study_plan_ai_prompt': "Bạn là AI Tutor cho StudyPilot. Gợi ý một mục tiêu học tập và từ 1 đến 4 hành động ngắn, thiết thực phù hợp với đề cương kỳ học (tập trung vào kỹ năng then chốt và các bài thi PE/FE). Không bịa đặt thông tin (Zero-Hallucination), không yêu cầu hay tạo dữ liệu cá nhân (Zero-PII).",
     'maintenance_mode': false,
     'feature_ai_advisor_enabled': true,
     'ai_advisor_model': 'gemini-3.5-flash-lite',
