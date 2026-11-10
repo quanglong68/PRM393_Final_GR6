@@ -34,7 +34,7 @@ node --test
 | `node --test` (web) | **14/14 pass** | 9 parser FLM + 5 API server |
 | `node --check admin-web/app.js` | **PASS** | Cú pháp ES module |
 
-> **Phạm vi rules:** 15/15 là kết quả trên Firestore Emulator với project demo. Bản rules remote đang chạy vẫn là release 04/11; bản siết 10/11 (commit `e5256c1`) chưa deploy — hạng mục G-09. Không dùng kết quả emulator để nói rules mới đã live.
+> **Phạm vi rules:** 15/15 là kết quả trên Firestore Emulator với project demo. Bản rules siết 10/11 (commit `e5256c1`) **đã deploy live**: ruleset tạo 2026-11-10T15:09:37Z, logic khớp `firebase/firestore.rules` sau khi bỏ comment (`codeMatchIgnoringComments: true`) — xem `evidence/firebase/firestore/rules-api-verification-2026-11-10.json`. G-09 đã đóng.
 
 ### 2.1 Rules — phạm vi 15 test
 
@@ -67,14 +67,29 @@ Hai tệp dùng cùng system instruction/prompt với `lib/services/study_plan_a
 - TC_13 (FCM token sau cold start): `3 passed in 57.51s`, trace `a23c7a10…`, `034ff4e6…`, `4b13c8b5…`.
 - TC_11 (Remote Config): pass 3/3 trên giả lập, đối chiếu giá trị trước/sau.
 - Lượt timeout TC_02 được giữ trong lịch sử, không tính pass.
+- **10/11 trên điện thoại thật (GQDIV8HUPJWK79XC):** sau khi gỡ chặn HyperOS, TC_08 pass 92,20 s và TC_11 pass 41,56 s với model `gemini-3.5-flash-lite`. Batch regression 22 ca × 3 lượt đang chạy; kết quả từng lượt nằm trong `evidence/artemis/results-*.md`.
 
-### 3.2 Chưa đạt
+### 3.2 Sửa lỗi phát hiện từ Crashlytics (10/11)
+
+| Lỗi | Nguyên nhân | Sửa |
+|---|---|---|
+| `DocumentSnapshotPlatform.get._findKeyValueInMap` — "field reason does not exist" (3 event, 1 user) | `ExperienceNote.fromDocument` đọc `reason` bằng `as String` khi document cũ không có trường | Đọc qua `data()?.containsKey('reason')`, mặc định `''` |
+| `_StreamImpl.listen` — "Stream has already been listened to" (7 event, 2 user) | `watchCourseNotes` trả single-subscription stream, widget remount (đổi tab, recycle) listen lần hai | Broadcast controller + replay giá trị cuối cho listener mới |
+
+Cả hai sửa trong `packages/core/lib/study_pilot_core.dart`; `dart analyze` sạch, APK debug build lại và cài lên máy thật trước khi chạy batch.
+
+### 3.3 Dữ liệu kiểm thử
+
+Kịch bản cũ hardcode PRM323, nhưng catalog thật chỉ có PRM393 trong nhóm PRM (175 môn). Toàn bộ test case đã đổi sang **PRM393** (3 tín chỉ, học kỳ 8, tiên quyết PRO192, 60 slot). TC_08 được viết lại theo đường tất định: chip **Môn** → **Hỏi nhanh trên thiết bị** → chọn PRM393 → **Tóm tắt môn học**, thay vì phụ thuộc câu hỏi tự do.
+
+### 3.4 Chưa đạt
 
 | Mục | Trạng thái | Ghi chú |
 |---|---|---|
-| TC_14 Analytics `search_course`/`course_view` | **Fail** | Gemini trả HTTP 429 do giới hạn theo phút; trace `da4a9901…` |
+| TC_14 Analytics `search_course`/`course_view` | **Chạy lại trong batch 10/11** | Lượt trước fail vì Gemini HTTP 429; đã đổi model mặc định sang `gemini-3.5-flash-lite` |
 | Exploratory ≥ 15 phút | **Chưa đạt** | Lượt dài nhất ~9 phút; lượt thứ hai dừng ở 7,5 phút vì HTTP 429 |
-| 26 kịch bản Final trên **điện thoại thật** × 3 lượt | **Chưa chạy** | Thiết bị đang khóa (MIUI chặn ADB input); kịch bản nằm trong `docs/test-plan.md` |
+| 26 kịch bản Final trên **điện thoại thật** × 3 lượt | **Đang chạy 10/11** | Batch 22 ca hồi quy (trừ TC_01/02/12 cần đổi tài khoản); kết quả ghi theo từng lượt |
+| TC_01/02/12 (auth, đổi tài khoản) | **Skip** | Cần đặt `TEST_ACCOUNT_EMAIL` và `E2E_ALLOW_AUTH_CHANGES=1` |
 | Cross-role 3 lượt trên hệ thống deploy | **Chưa chạy** | Web đã deploy 10/11 (G-01); còn đo độ trễ khi demo |
 
 Ma trận 26 ca, tiền điều kiện và kết quả mong đợi: `docs/test-plan.md`. Không dùng kết quả giả lập thay cho yêu cầu thiết bị thật.

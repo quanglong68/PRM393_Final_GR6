@@ -580,8 +580,8 @@ void main() async {
         widths: [80, 330, 113],
       ),
       note(
-        'Rules trong repo đã được deploy bản 04/11; bản siết ngày 10/11 mới kiểm thử emulator. '
-        'Cần deploy lại trước khi chấm (G-09); Hosting đã live (G-01).',
+        'Bản rules siết 10/11 đã deploy live (ruleset tạo 2026-11-10T15:09:37Z, logic khớp repo sau khi bỏ comment; G-09 đóng). '
+        'Hosting đã live (G-01). Bằng chứng: evidence/firebase/firestore/rules-api-verification-2026-11-10.json.',
       ),
     ]),
   );
@@ -765,22 +765,22 @@ void main() async {
       table(
         ['Tham số', 'Vai trò'],
         [
-          ['ai_study_plan_enabled', 'Bật/tắt nút gợi ý AI'],
-          ['ai_study_plan_model', 'Tên model (gemini-3.5-flash-lite)'],
-          ['ai_study_plan_prompt', 'System instruction bổ sung'],
-          ['ai_advisor_enabled', 'Bật/tắt cố vấn AI'],
-          ['feature_ai_advisor_enabled', 'Cờ tương thích Lab 3'],
           ['maintenance_mode', 'Chặn app khi bảo trì'],
           ['min_app_version', 'Chặn phiên bản cũ'],
+          ['feature_ai_advisor_enabled', 'Bật/tắt cố vấn AI'],
+          ['ai_advisor_model', 'Model cố vấn (gemini-3.5-flash-lite)'],
+          ['ai_advisor_prompt', 'System prompt của cố vấn'],
           ['vault_sync_interval_mins', 'Chu kỳ đồng bộ Vault'],
-          ['support_email', 'Địa chỉ hỗ trợ hiển thị trong app'],
+          ['study_plan_ai_enabled', 'Bật/tắt gợi ý kế hoạch học tập'],
+          ['study_plan_ai_model', 'Model gợi ý kế hoạch'],
+          ['study_plan_ai_prompt', 'System prompt gợi ý kế hoạch'],
         ],
         widths: [210, 313],
         size: 8,
       ),
       p(
         'Remote Config được fetch/activate khi khởi động; giá trị mặc định trong firebase/remote-config-template.json khớp '
-        'đúng 9 tham số app đọc (CR-22). Khi tắt cờ, nút AI biến mất nhưng form thủ công vẫn hoạt động.',
+        'đúng 9 tham số app đọc (CR-22). Bản live trên project là Version 3, publish ngày 10/11/2026. Khi tắt cờ, nút AI biến mất nhưng form thủ công vẫn hoạt động.',
       ),
       sub('8.2. App Check và dữ liệu gửi đi'),
       for (final item in const [

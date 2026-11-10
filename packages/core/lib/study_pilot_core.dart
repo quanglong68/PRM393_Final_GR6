@@ -79,7 +79,9 @@ class ExperienceNote {
       examTip = doc.get('examTip') as String? ?? '',
       rating = (doc.get('rating') as num?)?.toInt() ?? 0,
       status = doc.get('status') as String? ?? 'pending',
-      reason = doc.get('reason') as String? ?? '',
+      reason = doc.data()?.containsKey('reason') == true
+          ? doc.get('reason') as String
+          : '',
       createdAt = (doc.get('createdAt') as Timestamp?)?.toDate(),
       reviewedAt = (doc.get('reviewedAt') as Timestamp?)?.toDate();
 
@@ -155,9 +157,13 @@ class FinalFirestore {
     String courseDocId, {
     required String uid,
   }) {
-    final controller = StreamController<List<ExperienceNote>>();
+    // Broadcast: a course page can remount its StreamBuilders (tab switch,
+    // scroll recycle) and would otherwise hit "Stream has already been
+    // listened to" on a single-subscription controller.
+    final controller = StreamController<List<ExperienceNote>>.broadcast();
     List<ExperienceNote>? approvedNotes;
     List<ExperienceNote>? myNotes;
+    List<ExperienceNote>? latest;
     StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? approvedSub;
     StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? mineSub;
 
@@ -175,6 +181,7 @@ class FinalFirestore {
           final right = b.createdAt?.millisecondsSinceEpoch ?? 0;
           return right.compareTo(left);
         });
+      latest = list;
       controller.add(list);
     }
 
@@ -202,7 +209,16 @@ class FinalFirestore {
       approvedSub?.cancel();
       mineSub?.cancel();
     };
-    return controller.stream;
+    final stream = controller.stream;
+    return Stream<List<ExperienceNote>>.multi((listener) {
+      final current = latest;
+      if (current != null) listener.add(current);
+      final subscription = stream.listen(
+        listener.add,
+        onError: listener.addError,
+      );
+      listener.onCancel = subscription.cancel;
+    });
   }
 
   Future<List<ExperienceNote>> getApprovedExperienceNotes({

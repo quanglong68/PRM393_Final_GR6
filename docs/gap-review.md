@@ -8,14 +8,14 @@ Nhóm GR6: Nguyễn Sỹ Thanh Tùng · Nguyễn Bá Thái Dương · Dương Qu
 
 | Tiêu chí | Điểm | Trạng thái | Bằng chứng / khoảng trống |
 |---|---|---|---|
-| **Mobile** — Lab 2 + Lab 3 hoàn chỉnh | 1,25 | Đạt phần lớn | 8 màn hình Lab 2 + các màn mở rộng nằm trong `lib/screens/` (18 file). 159 test pass, APK debug/release build được. Còn thiếu: lượt E2E trên **điện thoại thật** cho 26 kịch bản Final (máy đang khóa) và phiên exploratory ≥ 15 phút. |
+| **Mobile** — Lab 2 + Lab 3 hoàn chỉnh | 1,25 | Đạt phần lớn | 8 màn hình Lab 2 + các màn mở rộng nằm trong `lib/screens/` (18 file). 159 test pass, APK debug/release build được. 10/11/2026 đã chạy ARTEMIS trên **điện thoại thật** (TC_08, TC_11 pass) sau khi gỡ chặn HyperOS; batch 22 ca hồi quy đang chạy, phiên exploratory ≥ 15 phút còn chờ. |
 | **Mobile** — dữ liệu Firestore + inbox | 0,75 | Đạt | Không còn mock/seed; môn, đề cương, bí kíp, thông báo đọc từ Firestore. `AnnouncementsViewModel` + listener realtime (`f2b2cb0`). |
 | **Web** — 4 màn hình + form thông báo | 1,25 | Đạt trong code | `admin-web/`: đăng nhập, chuyên ngành (quản lý + import FLM), duyệt bí kíp, dashboard, thông báo. Loading/empty/error từng màn (`c9b9985`). 14/14 test Node pass. Chưa có ảnh checklist từng màn. |
 | **Web** — design system + deploy | 0,75 | Đạt | Deploy Firebase Hosting tại <https://prm323-lab2-gr6.web.app/> (kiểm tra 10/11/2026, trang đăng nhập mở được). Dùng token/màu của Lab 2 và layout rộng. Ảnh checklist từng màn sau đăng nhập còn thiếu (G-02). |
 | **Backend** — data model + rules | 1,0 | Đạt | `docs/data-model.md` đủ collection/trường/quyền/chuyển trạng thái. Rules deny-by-default, không `if true`; 15/15 test emulator pass. |
 | **Backend** — cross-role flow | 1,0 | Đạt trong code | Mobile gửi bí kíp `pending` → web duyệt kèm lý do → mobile nhận snapshot realtime. `docs/cross-role-flow.md` có sequence diagram. Chưa đo 3 lượt trên hệ thống đã deploy. |
-| **AI** — level 2 | 1,0 | Đạt phần lớn | Structured JSON → Dart model, người dùng sửa trước khi dùng; Remote Config 9 tham số; App Check; fallback thủ công; 3 input/output thật trong `evidence/ai/`. Chưa quay cảnh tắt cờ RC trên thiết bị. |
-| **Testing** — tests | 0,5 | Một phần | Rules 15/15, web 14/14, Flutter 159/159. ARTEMIS: 10 ca × 3 lượt pass trên giả lập; TC_14 analytics và exploratory 15 phút chưa đạt; 26 ca Final chưa chạy trên máy thật. |
+| **AI** — level 2 | 1,0 | Đạt phần lớn | Structured JSON → Dart model, người dùng sửa trước khi dùng; Remote Config **9 tham số, bản live v3 (10/11)**; App Check; fallback thủ công; 3 input/output thật trong `evidence/ai/`. Chưa quay cảnh tắt cờ RC trên thiết bị. |
+| **Testing** — tests | 0,5 | Một phần | Rules 15/15, web 14/14, Flutter 159/159. ARTEMIS: 10 ca × 3 lượt pass trên giả lập; 10/11 chạy trên máy thật với `gemini-3.5-flash-lite`; batch 22 ca × 3 lượt và exploratory 15 phút còn chờ kết quả cuối. |
 | **Testing** — kiến trúc + review | 0,5 | Đạt | MVVM + `packages/core`; CR-15…CR-26 đã sửa và có commit; CR-27 còn là nợ kỹ thuật, CR-28…CR-30 đã đóng hoặc xác nhận. |
 | **Slides + video** | 2,0 | Một phần | Slide 14 trang đã sinh tại `slides/Final_GR6_slides.pdf` (nguồn `tool/generate_final_slides_pdf.dart`); báo cáo 12 trang tại `report/Final_GR6.pdf`. Video 8–12 phút chưa quay, nên hạng mục chưa đóng. |
 
@@ -38,6 +38,7 @@ Nhóm GR6: Nguyễn Sỹ Thanh Tùng · Nguyễn Bá Thái Dương · Dương Qu
 
 - Đã đóng CR-01…CR-26; chi tiết quyết định và commit trong `docs/code-review.md`.
 - Gói dùng chung `packages/core` chứa model + Firestore service cho phần Final; mobile và web cùng đọc/ghi một hợp đồng dữ liệu.
+- 10/11 sửa hai lỗi Crashlytics thật trong `packages/core/lib/study_pilot_core.dart`: đọc `reason` khi trường không tồn tại và single-subscription `watchCourseNotes` bị listen lại khi widget remount. `dart analyze` sạch, APK cài lại trên máy thật.
 - Nợ kỹ thuật còn mở: CR-27 (`CommunityTipsSection`, `MyTipsScreen`, `StudyPlanScreen` gọi thẳng `FinalFirestore`). CR-28 (event AI thiếu `feature`), CR-29 (test `AnnouncementsViewModel`) đã đóng; CR-30 đã xác nhận `uv.lock` ghim đúng commit ARTEMIS.
 
 ## 3. Web admin
@@ -56,8 +57,9 @@ Khoảng trống: đã có URL công khai trong README và xác nhận trang đ�
 
 - `firebase/firestore.rules`: deny mặc định, kiểm tra role qua `users/{uid}.role`, chặn tự nâng quyền, giới hạn trường khi duyệt, append-only audit log.
 - `firebase/tests/final.test.mjs`: 15 test, mỗi collection có ít nhất một ca allow và một ca deny theo vai trò.
-- `firebase/remote-config-template.json` khớp 9 tham số app đọc.
-- App Check bật cho Firestore và AI Logic; mobile dùng debug token cố định cho bản demo (không thể qua Play Integrity trên APK sideload).
+- `firebase/remote-config-template.json` khớp 9 tham số app đọc; 10/11 đã publish thành **Version 3** trên project `prm323-lab2-gr6` (ảnh `evidence/firebase/remote-config/console-params*-2026-11-10.png`).
+- App Check trạng thái thật (10/11): Firestore **Monitoring 65% verified / 35% unverified**, Authentication **Monitoring**, Firebase AI Logic **Basic – Enforced 100%**, Storage chưa bật. Mobile dùng debug token cố định cho bản demo sideload (không thể qua Play Integrity).
+- Tên hiển thị ứng dụng Firebase đã đổi thành **StudyPilot** (Management API), Crashlytics/App Check hiển thị đúng tên mới.
 
 ## 5. AI
 
@@ -74,13 +76,13 @@ Khoảng trống: đã có URL công khai trong README và xác nhận trang đ�
 | G-01 | Deploy web lên Firebase Hosting | **Đã đóng 10/11/2026**: `https://prm323-lab2-gr6.web.app/` trả trang đăng nhập; ảnh lưu tại `evidence/firebase/auth/web-deploy-signin-2026-11-10.png` | — |
 | G-02 | Ảnh checklist web (5 màn + lỗi/rỗng/sai vai trò) | Chụp trên URL đã deploy | G-01 (đã xong), cần tài khoản staff/admin thử |
 | G-03 | 3 lượt cross-role trên hệ thống deploy, đo độ trễ | Quay màn hình hai client, ghi số giây | G-01 (đã xong) |
-| G-04 | ARTEMIS 26 ca Final trên điện thoại thật × 3 lượt | Mở khóa máy, chạy `e2e_test`, lưu trace/ảnh | Thiết bị: HyperOS chặn `adb shell input tap` (SecurityException) — cần bật **Gỡ lỗi USB (Cài đặt bảo mật)** và **Cài đặt qua USB** |
-| G-05 | TC_14 Analytics + exploratory ≥ 15 phút | Chạy lại khi hết giới hạn quota | Thiết bị + quota |
-| G-06 | Ảnh Console: RC tắt cờ, App Check, Analytics, Crashlytics | Chụp khi demo | Tài khoản chủ project |
+| G-04 | ARTEMIS 26 ca Final trên điện thoại thật × 3 lượt | Đã gỡ chặn HyperOS; 10/11 chạy batch 22 ca × 3 lượt trên GQDIV8HUPJWK79XC, kết quả từng lượt trong `evidence/artemis/results-*.md` | Thiết bị + quota AI |
+| G-05 | TC_14 Analytics + exploratory ≥ 15 phút | TC_14 nằm trong batch 10/11; exploratory chạy sau batch | Thiết bị + quota |
+| G-06 | Ảnh Console: RC tắt cờ, App Check, Analytics, Crashlytics | Đã có ảnh RC Version 3 (2 ảnh), App Check APIs/Apps, Crashlytics dashboard/issues, Analytics DebugView (10/11); DebugView còn chờ event debug | Tài khoản chủ project |
 | G-07 | Video 8–12 phút | Quay theo `docs/lab3-video-script.md` | G-01, G-04 |
 | G-08 | Đổi tên repo GitHub `PRM393_Final_GR6` | **Đã đóng 10/11/2026**: repo đổi tên, remote `personal` và README cập nhật | — |
-| G-09 | Deploy rules Firestore bản siết 10/11 | `firebase deploy --only firestore:rules`, kiểm tra lại release; bản remote hiện tại vẫn là release 04/11 | Cần đăng nhập Firebase CLI |
+| G-09 | Deploy rules Firestore bản siết 10/11 | **Đã đóng 10/11/2026**: ruleset live tạo 22:09 (15:09 UTC), logic khớp `firebase/firestore.rules` sau khi bỏ comment (`codeMatchIgnoringComments: true`); bằng chứng `evidence/firebase/firestore/rules-api-verification-2026-11-10.json` | — |
 
 ## 7. Kết luận
 
-Phần **code, rules, tài liệu và kiểm thử tự động** đã đóng. Các mục còn mở chủ yếu là bằng chứng runtime cần tài khoản Firebase, thiết bị mở khóa hoặc quota AI. Ngày 10/11 đã đóng G-01 (web deploy) và G-08 (đổi tên repo); ảnh checklist web (G-02), cross-role trên hệ thống deploy (G-03), ARTEMIS (G-04/G-05), ảnh Console (G-06), video (G-07) và rules deploy (G-09) vẫn chờ. Báo cáo và slide chỉ khẳng định những gì có bằng chứng tương ứng. Riêng rules, `evidence/firebase/firestore/rules-api-verification-2026-11-04.json` cho thấy bản remote là release 04/11 (`remoteCharacters: 2230`), chưa phải bản siết ngày 10/11 đã qua 15/15 test emulator — không được mô tả là đã live cho tới khi G-09 đóng.
+Phần **code, rules, tài liệu và kiểm thử tự động** đã đóng. Ngày 10/11 đã đóng G-01 (web deploy), G-08 (đổi tên repo) và G-09 (rules siết đã live — ruleset tạo 22:09, logic khớp local). Còn mở: ảnh checklist web sau đăng nhập (G-02), cross-role 3 lượt trên hệ thống deploy (G-03), kết quả cuối batch ARTEMIS máy thật + exploratory (G-04/G-05), ảnh Console còn thiếu cảnh tắt cờ RC và DebugView có event (G-06), video (G-07). Báo cáo và slide chỉ khẳng định những gì có bằng chứng tương ứng. Bằng chứng rules mới nhất: `evidence/firebase/firestore/rules-api-verification-2026-11-10.json` (`codeMatchIgnoringComments: true`, ruleset createTime 2026-11-10T15:09:37Z); bản 04/11 (`remoteCharacters: 2230`) đã lỗi thời.

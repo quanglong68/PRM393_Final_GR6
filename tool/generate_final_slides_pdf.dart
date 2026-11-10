@@ -583,7 +583,7 @@ void main() async {
         ],
       ),
       pw.Text(
-        'Bản rules 04/11 đã deploy; bản siết 10/11 mới kiểm thử emulator — cần deploy lại cùng Hosting (G-09).',
+        'Rules siết 10/11 đã deploy live (logic khớp repo, G-09 đóng); Hosting live (G-01).',
         style: t(8.5, color: PdfColors.brown900),
       ),
     ]),

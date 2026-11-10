@@ -17,6 +17,10 @@
 - [Lượt chạy ARTEMIS tìm môn, kết quả từng trace và lỗi quota](artemis/2026-11-05-search-run.md)
 - [ARTEMIS TC_11 pass 3/3 lượt ngày 07/11](artemis/2026-11-07-regression.md)
 - [Web deploy live, trang đăng nhập](firebase/auth/web-deploy-signin-2026-11-10.png) — `https://prm323-lab2-gr6.web.app/`, kiểm tra 10/11.
+- [Remote Config bản live Version 3, 9 tham số — ảnh 1](firebase/remote-config/console-params-2026-11-10.png) và [ảnh 2](firebase/remote-config/console-params-2-2026-11-10.png) — publish từ `firebase/remote-config-template.json`.
+- [App Check — tab APIs](firebase/app-check-console-2026-11-10.png) và [tab Apps sau khi đổi tên StudyPilot](firebase/app-check-apps-2026-11-10.png).
+- [Crashlytics dashboard sau đổi tên](firebase/crashlytics/dashboard-2026-11-10.png) và [danh sách issue](firebase/crashlytics/issues-2026-11-10.png) — hai lỗi `reason`/`_StreamImpl.listen` được sửa cùng ngày.
+- [Analytics DebugView trên Console](firebase/analytics/debugview-console-2026-11-10.png) — chụp lúc chưa có event debug.
 - [Tổng hợp 10 ca ARTEMIS và phiên exploratory 08/11](artemis/2026-11-08-completion.md)
 
 
