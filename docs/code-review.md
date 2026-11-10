@@ -1,47 +1,58 @@
-# AI-assisted code review — PRM393 Lab 3
+# AI-assisted code review — StudyPilot (GR6)
 
-Ngày: 04/11/2026. Công cụ: OpenAI Codex, review source local trên working tree của `main` (baseline `2337e00`) theo yêu cầu tiếp nhận và sửa lỗi.
+Tài liệu ghi lại các vòng review thực tế trên mã nguồn, quyết định xử lý và commit sửa. Review do AI hỗ trợ (Codex ở các vòng trước, Qoder ở vòng 10/11/2026), thực hiện trên working tree và lịch sử Git của nhánh `main`. Không có reviewer bên ngoài hay PR review độc lập; báo cáo không giả lập kết quả đó.
 
-**Trạng thái rubric: PARTIAL.** Bảng dưới là output của review thực tế và các sửa đã có trong working tree. Chưa review trên PR, chưa có external reviewer output, chưa tạo commit. Cột commit được để trống có chủ ý theo yêu cầu không tự commit/push của người dùng; không coi các sửa local là ba commit đạt rubric.
+## 1. Vòng review 10/11/2026 (bàn giao Lab 3 + Final)
 
-File:dòng trỏ tới vị trí **sau sửa**, không giả làm permalink của diff/PR chưa tồn tại.
+Phạm vi: toàn bộ thay đổi so với baseline `aebf28a`, tập trung vào tuân thủ MVVM, toàn vẹn dữ liệu, bảo mật rules và trạng thái lỗi của web.
 
-| ID | Tool | File:dòng | Kind / severity | Finding | Decision / lý do | Sửa và xác minh | Fix commit |
-|---|---|---|---|---|---|---|---|
-| CR-01 | Codex | `lib/services/firebase_firestore_service.dart:94` | Bug / High | getTasks chỉ trả document đầu, cắt mất task sau reload | Accepted — vi phạm dữ liệu thật và file phản ánh dữ liệu theo đề §3 | Map mọi doc, canonical ID; adapter regression 3 docs và device cold restart đủ 3 tasks | Chưa tạo |
-| CR-02 | Codex | `lib/viewmodels/tasks_viewmodel.dart:84` | Privacy / High | Response cũ có thể khôi phục private rows sau logout; catch ghi có thể rollback account cũ | Accepted — sign-out phải xóa local user data, đề §6 | Request version + UID + dispose guards cho các stores; delayed-read/delete regression tests | Chưa tạo |
-| CR-03 | Codex | `lib/screens/tasks_screen.dart:230` | Functional / High | Toggle không hiện error/Undo, trái flow Lab 2 | Accepted — đề §3 yêu cầu flow alternative/recovery khớp thiết kế | Restore captured completion, error Snackbar, Undo 8 giây; widget test ở giây thứ 7 và device smoke | Chưa tạo |
-| CR-04 | Codex | `lib/screens/sync_vault_screen.dart:268` | Data integrity / High | loadData bắt lỗi vào state nên Future.wait vẫn success; export có thể dùng stale data | Accepted — generated file phải phản ánh dữ liệu hợp lệ, đề §3 | Tái sử dụng SyncReloadService, chặn state error/identity switch; widget test xác nhận không consent/upload | Chưa tạo |
-| CR-05 | Codex | `lib/services/remote_config_service.dart:103` | State management / Medium | Plain service không báo thay đổi; refresh luôn báo thành công | Accepted — RC phải đổi hành vi không rebuild, đề §6 | ChangeNotifier + provider/gate subscription; giữ lastFetchError; widget test maintenance bật/tắt trên app đang chạy | Chưa tạo |
-| CR-06 | Codex | `lib/services/firebase_auth_service.dart:77` | Error handling / Medium | Cancel chỉ log; invalid-domain AuthException bị catch chung che message | Accepted — Authentication phải có feedback cancel/error, đề §6 | Cancel có AuthException, rethrow domain message; chưa thử account picker/domain runtime | Chưa tạo |
-| CR-07 | Codex | `lib/services/crashlytics_service.dart:20` | Observability / Medium | Thiếu test crash; non-fatal demo tự nhận dashboard success; chưa có real handled path | Accepted — đề §6 đòi test crash và non-fatal thật | Test crash có confirm, explicit debug collection, report-export failure record; dashboard chưa xác minh | Chưa tạo |
-| CR-08 | Codex | `lib/screens/tasks_screen.dart:220` | Bug / Medium | Hai FAB trong IndexedStack trùng default Hero tag, navigation phát sinh assertion | Accepted — route phải mở được, đề §3 | Tag riêng tasks/notes; export widget test phát hiện rồi pass, device mở Sync Vault không duplicate-Hero | Chưa tạo |
-| CR-09 | Codex | `lib/services/analytics_service.dart:26` | Tracking gap / Medium | Thiếu logout trong event plan/code; identity telemetry chưa clear | Accepted — plan phải cover logout, đề §6 | logLogout + clear IDs, cập nhật plan; unit test đúng một event, chưa DebugView | Chưa tạo |
+| ID | Mức | Phát hiện | Quyết định | Sửa và kiểm chứng | Commit |
+|---|---|---|---|---|---|
+| CR-15 | High | `AdvisorViewModel` import trực tiếp `cloud_firestore`, `firebase_ai`, `firebase_core` và tự dựng Firestore/Gemini; ViewModel phụ thuộc SDK, vi phạm kiến trúc. | Accepted | Tách `AiService`/`GeminiAiService`; inject `AiService` + `FinalFirestore` qua Provider. `flutter analyze` sạch, 158 test pass. | `bd4c989` |
+| CR-16 | High | Role gate trong `main.dart` đọc role bằng SDK Firestore ngay trong widget, không đi qua service layer. | Accepted | Thêm `FirestoreService.watchUserRole` và stream trong `_MobileRoleGate`; fake service trong test cập nhật theo. | `bd4c989` |
+| CR-17 | High | `main()` await App Check/Crashlytics/Remote Config; một dịch vụ lỗi có thể chặn toàn bộ app dù không bắt buộc. | Accepted | Cô lập từng bước trong `try/catch`, log và tiếp tục; lỗi Firebase cốt lõi vẫn dẫn tới màn hình cấu hình. | `bd4c989` |
+| CR-18 | High | Sync Vault viết task "Connectivity check" để thử Firestore nhưng không xoá, để lại dữ liệu giả trong tài khoản thật. | Accepted | Ghi marker có timestamp, đọc lại, xoá đúng các bản ghi vừa tạo; không đụng task khác. | `f2b2cb0` |
+| CR-19 | Medium | Màn Thông báo chỉ có `StreamBuilder` thô, thiếu nhánh loading/empty/error và không thử lại được. | Accepted | Thêm `AnnouncementsViewModel` + 4 trạng thái chuẩn, có nút thử lại. | `f2b2cb0` |
+| CR-20 | High | Rules cho phép hồ sơ tự khai trường `admin`, không giới hạn kích thước; audit log nhận mọi trường nên có thể giả bản ghi đặc quyền. | Accepted | Chặn `admin != false`, giới hạn 40 trường; audit log chỉ `userId/action/createdAt`, action 1–100 ký tự. | `e5256c1` |
+| CR-21 | Medium | Bốn listener web khi lỗi chỉ log console, màn hình trắng không có cách phục hồi; thiếu telemetry/App Check. | Accepted | Banner lỗi + nút thử lại từng màn; thêm Analytics/Remote Config/App Check scaffolding và event nghiệp vụ. | `c9b9985` |
+| CR-22 | Medium | Remote Config template chỉ có 4 tham số trong khi app đọc 9, dễ deploy thiếu cờ AI. | Accepted | Template và defaults khớp đủ 9 tham số. | `e5256c1` |
+| CR-23 | Medium | E2E còn test từ chối email ngoài `@fpt.edu.vn`, trong khi quy tắc đó đã bị bỏ; test sẽ fail giả. | Accepted | Thay bằng case huỷ Google picker, kiểm tra thông điệp và trạng thái đăng xuất. | `bd4c989` |
+| CR-24 | Low | Tài liệu `design-traceability`, `architecture`, `analytics-plan`, `test-plan` lệch code (tên dự án, số màn hình, event, đầu mối test). | Accepted | Viết lại theo code và kết quả chạy thật. | commit tài liệu |
+| CR-25 | Low | Gói dùng chung và app còn tên cũ "Second Brain/FPTU", không thống nhất thương hiệu. | Accepted | Đổi thành `study_pilot_core` / StudyPilot; giữ nguyên `applicationId` để không phá Firebase binding. | `bd4c989` |
+| CR-26 | Medium | Fixture rules test của `experience_notes` thiếu `title` dù UI và rules bắt buộc, khiến test đỏ dù sản phẩm đúng. | Accepted | Thêm `title` hợp lệ vào fixture; chạy emulator 15/15 pass. | `e5256c1` |
 
-## Quy trình hoàn tất review còn lại
+### Kiểm chứng sau sửa
 
-1. Người dùng cho phép các thao tác Git tương ứng, chuẩn bị PR reviewable chứa diff liên quan.
-2. Chạy reviewer trên PR và lưu nguyên output thực tế vào `evidence/code-review/`.
-3. Đối chiếu findings với diff được review; cập nhật locators theo PR thực.
-4. Thực hiện ít nhất ba fix độc lập có ID trong commit và liên kết commit; không tạo lịch sử giả cho các thay đổi đã làm.
-5. Nếu reviewer bổ sung findings, ghi Accepted/Modified/Rejected với lý do trước khi xử lý.
-
-Disclosure của đợt Codex này nằm trong `ai/ai-code-log.md`. Validation tổng hợp và các giới hạn nằm trong `docs/fix-verification-2026-11-04.md`.
-
-## Review local ngày 07/11/2026
-
-Codex review baseline `b69dc71` sau khi tích hợp Gemini và Cloudinary. Ba thay đổi đầu có tập file riêng để đưa vào ba commit. Bảng ghi kết quả review local. PR và hash commit sẽ được điền sau khi có trên Git.
-
-| ID | Loại | Phát hiện | Quyết định | Kiểm thử |
-|---|---|---|---|---|
-| CR-10 | UX | Thử lại thêm trùng câu hỏi. Gửi trong lúc đang chờ có thể xóa nội dung vừa gõ. Vị trí baseline `lib/viewmodels/advisor_viewmodel.dart:214`. | Accepted. Dùng lại câu hỏi cũ và chặn gửi khi đang chờ. | Flutter kiểm tra một câu hỏi qua hai lần gọi và câu trả lời thay lỗi cũ. |
-| CR-11 | Độ tin cậy | Analytics ném lỗi sau khi PDF và metadata đã lưu làm app báo xuất thất bại. Vị trí baseline `lib/services/report_export_service.dart:177`. | Accepted. Tách lỗi telemetry khỏi kết quả nghiệp vụ và giữ lỗi gốc khi export thất bại. | Flutter mô phỏng Analytics không sẵn sàng sau khi lưu. |
-| CR-12 | Kiểm tra đầu vào | Đuôi `.constructor` khớp thuộc tính kế thừa của bảng MIME. Vị trí baseline `admin-web/media-server.mjs:117`. | Accepted. Chỉ chấp nhận các mục được khai báo trong danh sách định dạng. | Test HTTP xác nhận GET với đuôi `.constructor` trả 415. |
-| CR-13 | Tính nhất quán | Asset PDF có thể còn trên cloud nếu đã upload nhưng lần ghi metadata thất bại. Vị trí baseline `lib/services/report_export_service.dart:164`. | Deferred. Cần xác định trạng thái ghi Firestore trước khi thu hồi asset và thiết kế retry theo một ID cố định. | Đã có test lỗi ghi metadata. Chưa có quy trình tự phục hồi. |
-| CR-14 | Vận hành | Endpoint cố vấn chưa giới hạn số câu hỏi theo UID. Vị trí baseline `admin-web/media-server.mjs:92`. | Deferred. Bản demo chạy loopback. Cần giới hạn quota khi đưa API ra môi trường chia sẻ. | Kiểm tra HTTP hiện có cho quyền truy cập và kích thước input. |
-
-| Commit dự kiến | Tệp |
+| Kiểm tra | Kết quả |
 |---|---|
-| `fix(CR-10): preserve advisor input and retry the existing question` | `lib/screens/advisor_screen.dart`, `lib/viewmodels/advisor_viewmodel.dart`, `test/viewmodels/advisor_viewmodel_test.dart` |
-| `fix(CR-11): isolate report exports from analytics errors` | `lib/services/report_export_service.dart`, `test/services/report_export_service_test.dart` |
-| `fix(CR-12): reject inherited attachment format names` | `admin-web/media-server.mjs`, `admin-web/server.test.mjs` |
+| `flutter analyze` | No issues found |
+| `flutter test` | 158/158 pass |
+| `flutter build apk --debug` / `--release` | Thành công |
+| Rules emulator (`firebase emulators:exec`) | 15/15 pass |
+| `node --test admin-web` | 14/14 pass |
+| `node --check admin-web/app.js` | Pass |
+
+## 2. Findings chấp nhận nhưng chưa xử lý trong đợt này
+
+| ID | Mức | Nội dung | Lý do / kế hoạch |
+|---|---|---|---|
+| CR-27 | Medium | `CommunityTipsSection`, `MyTipsScreen`, `StudyPlanScreen` gọi trực tiếp `FinalFirestore` thay vì qua ViewModel riêng. | Đây là repository facade, không phải SDK; refactor 1.000+ dòng widget có rủi ro hồi quy cao. Ghi nhận là nợ kiến trúc, ưu tiên sau demo. |
+| CR-28 | Medium | `study_plan_screen` ghi `ai_request`/`ai_error` bằng `logEvent` thô, thiếu tham số `feature`. | Không rò PII nhưng giảm khả năng phân tích. Sửa cùng lúc với việc tách ViewModel ở CR-27. |
+| CR-29 | Low | Chưa có test tự động cho `AnnouncementsViewModel` sau khi thêm. | Cần bổ sung test state/retry khi có thời gian; hành vi đã được review thủ công. |
+| CR-30 | Low | `e2e_test/uv.lock` mới được đưa vào repo, cần xác nhận phiên bản ARTEMIS pin đúng môi trường nhóm. | Kiểm tra khi chạy E2E thật. |
+
+## 3. Vòng review trước (04–07/11/2026)
+
+Các finding CR-01…CR-14 đã được ghi trong lịch sử tài liệu và xử lý ở các commit trước baseline. Tóm tắt nhóm chính:
+
+- **CR-01/CR-02/CR-03**: mất task sau reload, response cũ khôi phục dữ liệu sau logout, toggle thiếu Undo/error — đã sửa và có regression test.
+- **CR-04/CR-05**: export dùng dữ liệu cũ khi sync lỗi; Remote Config không phát thay đổi — đã sửa bằng `SyncReloadService` và `ChangeNotifier`.
+- **CR-06/CR-07/CR-08/CR-09**: huỷ đăng nhập bị che lỗi, thiếu test crash/non-fatal, trùng Hero tag, thiếu event logout — đã sửa.
+- **CR-10…CR-14**: giữ câu hỏi Advisor khi thử lại, tách lỗi Analytics khỏi export, chặn đuôi MIME kế thừa, và hai việc deferred (thu hồi asset khi ghi metadata lỗi, quota endpoint AI).
+
+## 4. Quy trình còn lại
+
+1. Khi có PR, chạy lại reviewer trên diff PR và lưu nguyên output vào `evidence/code-review/`.
+2. Với mỗi finding mới, ghi Accepted/Modified/Rejected kèm lý do trước khi sửa.
+3. Commit sửa phải chứa mã CR trong message; không tạo lịch sử giả cho thay đổi đã có.
+4. Disclose công cụ AI và phạm vi review trong báo cáo; không trình bày review AI như review của người ngoài.

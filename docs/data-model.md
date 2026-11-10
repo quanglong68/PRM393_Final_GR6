@@ -1,27 +1,56 @@
-# Hợp đồng dữ liệu mobile và web quản trị
+# Hợp đồng dữ liệu mobile ↔ web quản trị
 
-- Project `prm323-lab2-gr6`, Firestore Standard `(default)`.
-- Đăng nhập Google. Web quản trị đọc `users/{uid}` và chỉ cho `staff` hoặc `admin`. Mobile dành cho `user`.
-- Không còn fallback theo email `@fpt.edu.vn` / `@fe.edu.vn`. Vai trò chỉ lấy từ `users/{uid}.role` (hoặc custom claim `role` / `admin`).
-- Tài khoản Admin đầu tiên được gán thủ công trong Firebase Console. Sau đó Admin có thể cấp `staff`/`admin` cho tài khoản khác qua trường `role` (rules chỉ cho Admin sửa đúng trường này).
-- Không có seed/mock data trong repo phục vụ chương trình đào tạo. Dữ liệu ngành và môn học chỉ đến từ file HTML FLM do cán bộ nhập trên web.
+Nguồn sự thật duy nhất về cấu trúc Firestore mà mobile, web và rules cùng tuân theo. Mọi thay đổi schema phải cập nhật đồng thời `firebase/firestore.rules`, `packages/core/lib/study_pilot_core.dart` và tài liệu này.
 
-| Path | Trường | Quyền |
-| --- | --- | --- |
-| `users/{uid}` | `role` thuộc `user/staff/admin`; các trường hồ sơ học tập | Chủ đọc/cập nhật hồ sơ của mình nhưng không được đổi `role`. Chỉ Admin đọc/sửa `role` của người khác và đọc hồ sơ người khác; Staff không đọc hồ sơ riêng của sinh viên. |
-| `majors/{code}` | `code`, `name`, `nameEn`, `description`, `totalSemesters` 1–12, `source` (`manual`/`flm_html`), `archived` | Người đăng nhập đọc. Staff/Admin tạo/sửa/xóa. `code` phải trùng document ID. |
-| `courses/{major}__{code}` | `code`, `name`, `nameVi`, `credits` 0–30, `semester` 0–12, `major`, `prerequisites`, `overview`, `studentTasks`, `tools`, `lecturer`, `link`, `resourceLinks`, `syllabusId`, `syllabusStatus` (`complete`/`partial`/`metadata`/`manual`), `slots`, `labs`, `learningOutcomes`, `courseMaterials`, `constructiveQuestions`, `totalSlots`, `completedSlots`, `archived` | Người đăng nhập đọc. Staff/Admin tạo/sửa/xóa. ID dạng `BIT_SE_K19B__PRF192` để cùng một môn có thể nằm trong nhiều ngành. Rules vẫn chấp nhận ID cũ `{code}` để tương thích dữ liệu cũ. |
-| `experience_notes/{id}` | `courseDocId`, `courseCode`, `courseName`, `major`, `uid`, `authorName`, `content` 20–2000, `lecturerTip` ≤500, `examTip` ≤500, `rating` 0–5, `status`, `createdAt`; sau duyệt thêm `reason`, `reviewedBy`, `reviewedAt` | Sinh viên tạo `pending` với `uid` của mình; môn học phải tồn tại. Chủ đọc note của mình, mọi người đọc note `approved`, Staff/Admin đọc tất cả. Staff/Admin duyệt `pending` → `approved`/`rejected`, bắt buộc lý do 1–300 và `reviewedBy` đúng UID. Chủ được xóa note `pending`; Admin xóa mọi note. |
-| `announcements/{id}` | `title` 1–120, `body` 1–1000, `authorUid`, `publishedAt` | Staff/Admin đăng bằng UID của mình. Người đăng nhập đọc. Chỉ Admin xóa. |
-| `study_plan_submissions/{uid}_{semester}` | `uid`, `semester` 1–12, `summary` 1–600, `status`, `reason` ≤300, `createdAt` | Giữ cho tính năng kế hoạch học tập trên mobile. Web quản trị **không còn duyệt** collection này. |
-| `users/{uid}/{tasks,notes,tokens,notifications,sync}/{id}` | Dữ liệu riêng của sinh viên | Chỉ chủ sở hữu. |
-| `curriculums/{id}` | Dữ liệu Lab 3 cũ | Chỉ đọc khi đăng nhập; web quản trị được phép xóa khi dọn dữ liệu. Không tạo/cập nhật mới. |
-| `audit_logs/{id}` | Bản ghi audit | Chỉ tạo bản ghi gắn UID; không đọc/sửa/xóa từ client. |
+## 1. Quy ước chung
 
-## Quy ước nghiệp vụ
+- Project `prm323-lab2-gr6`, Firestore Native `(default)`.
+- Đăng nhập Google; vai trò đọc từ `users/{uid}.role` (`user|staff|admin`). Custom claim `role`/`admin` chỉ là fallback phụ.
+- Mobile dành cho `user`; web quản trị dành cho `staff`/`admin`. Staff/Admin bị chặn nộp bài như sinh viên.
+- Không seed/mock dữ liệu chương trình đào tạo. Ngành/môn chỉ đến từ file FLM hoặc form nhập tay của cán bộ.
+- Mọi document ghi từ client đều có `createdAt`/`publishedAt`/`receivedAt` bằng `request.time` khi rules yêu cầu.
+- Xoá dữ liệu cũ trên web chỉ tác động `majors`, `courses`, `curriculums`; không xoá người dùng, thông báo, bí kíp hay đơn kế hoạch.
 
-- **Điểm số do sinh viên tự nhập** trong hồ sơ học tập trên mobile. Admin chỉ quản lý chương trình, môn học và môn tiên quyết; không nhập điểm thay sinh viên.
-- **Môn tiên quyết** nằm trong `courses.prerequisites` và được Admin nhập/sửa cùng đề cương. Mobile dùng danh sách này để cảnh báo khi lập kế hoạch.
-- **Đề cương thiếu dữ liệu**: khi chỉ import trang chương trình, môn học được ghi với `syllabusStatus: "metadata"` và các mảng chi tiết rỗng. Mobile hiển thị “chưa cập nhật đề cương”, không sinh slot/LO/giáo trình giả.
-- **Dashboard** dùng `getCountFromServer` (aggregation query) cho `users`, `experience_notes` theo trạng thái và `majors`; các bảng/card cập nhật realtime bằng `onSnapshot`.
-- **Dọn dữ liệu cũ** chỉ xóa `majors`, `courses`, `curriculums`. Giữ nguyên `users`, `announcements`, `experience_notes`, `study_plan_submissions`.
+## 2. Bảng collection
+
+| Path | Trường chính | Quyền |
+|---|---|---|
+| `users/{uid}` | `role`, tên hiển thị, chuyên ngành, học kỳ, hồ sơ học vụ, `componentScores`, `academicDataSource`, `academicUpdatedAt` | Chủ đọc/cập nhật hồ sơ, **không được đổi `role`**; admin đổi đúng trường `role` cho người khác. Tạo mới chỉ với `role=user`, `admin=false`, tối đa 40 trường. |
+| `users/{uid}/tasks/{taskId}` | `id` (trùng doc ID), `title`, `category`, `dueDate`, `isCompleted`, `courseCode`, … | Chỉ chủ sở hữu. Doc ID canonical; legacy `data.id` khác doc ID được giữ ở `legacyId`. |
+| `users/{uid}/notes/{noteId}` | `title`, `content`, `courseCode`, `updatedAt`, `attachments[]` (`name`, `path`, `storage`, `size`, `contentType`) | Chỉ chủ sở hữu. Đính kèm có thể ở Firebase Storage hoặc Cloudinary tùy metadata. |
+| `users/{uid}/sync/{syncId}` | Metadata lần đồng bộ gần nhất | Chỉ chủ sở hữu. |
+| `users/{uid}/courseProgress/{courseDocId}` | `courseDocId`, `completedSlotNumbers` (int[]), `courseCompleted` (bool), `lecturer` (string) | Chỉ chủ sở hữu. Không ghi vào `courses`, vì tiến độ là dữ liệu cá nhân. |
+| `users/{uid}/notifications/{notificationId}` | `title` ≤140, `body` ≤300, `type`, `read`, `receivedAt`, `route`, `routeArgument`, `recipientId`, `actorId` | Chủ đọc/sửa/xoá. Ngoại lệ duy nhất: người chấm bí kíp được **tạo một** bản ghi `tip_rating` cho tác giả với ID `tip_rating_<...>`, route `/course-tips`, `read=false`, `receivedAt=request.time`. |
+| `users/{uid}/tokens/{tokenPrefix}` | `token`, `updatedAt` | Chỉ chủ sở hữu. Doc ID là 24 ký tự đầu của token để mỗi thiết bị một dòng. Không log token. |
+| `majors/{code}` | `code`, `name`, `nameEn`, `description`, `totalSemesters` 1–12, `source` (`manual`/`flm_html`), `archived` | Đăng nhập đọc; staff/admin ghi. `code` phải trùng doc ID. |
+| `courses/{major}__{code}` hoặc `courses/{code}` | `code`, `name`, `nameVi`, `credits` 0–30, `semester` 0–12, `major`, `overview`, `studentTasks`, `tools`, `degreeLevel`, `timeAllocation`, `scoringScale`, `minAvgMarkToPass`, `learningTeachingMethod`, `note`, `decisionNo`, `approvedDate`, `prerequisites`, `slots`, `labs`, `learningOutcomes`, `courseMaterials`, `constructiveQuestions`, `electiveGroups`, `totalSlots`, `completedSlots`, `resourceLinks`, `link`, `syllabusId`, `syllabusStatus` (`complete|partial|metadata|manual`), `archived` | Đăng nhập đọc; staff/admin ghi. ID ghép cho phép cùng môn nằm trong nhiều ngành; rules vẫn nhận ID cũ `{code}`. |
+| `curriculums/{id}` | Dữ liệu Lab 3 cũ | Đăng nhập đọc; staff/admin chỉ xoá; không tạo/cập nhật. |
+| `experience_notes/{noteId}` | `courseDocId`, `courseCode`, `courseName`, `major`, `uid`, `authorName`, `title` 3–120, `content` 20–2000, `lecturerTip` ≤500, `examTip` ≤500, `rating` 0–5, `status`, `createdAt`; sau duyệt thêm `reason`, `reviewedBy`, `reviewedAt` | Sinh viên tạo `pending`, `uid` của mình, môn phải tồn tại. Chủ đọc note của mình; mọi người đọc `approved`; staff/admin đọc tất cả và duyệt `pending → approved/rejected` với lý do 1–300. Chủ xoá `pending`; admin xoá mọi note. |
+| `tip_ratings/{tipId}__{uid}` | `tipId`, `courseDocId`, `uid`, `displayName` ≤80, `stars` 1–5, `createdAt` | Đăng nhập đọc; mỗi sinh viên tạo/sửa/xoá đánh giá của mình. ID ghép bảo đảm một đánh giá/tip/người. |
+| `tip_comments/{commentId}` | `tipId`, `courseDocId`, `courseCode`, `uid`, `authorName`, `content` 1–1000, `createdAt` | Đăng nhập đọc/tạo; không sửa; tác giả hoặc admin xoá. Bình luận không kiểm duyệt. |
+| `announcements/{id}` | `title` 1–120, `body` 1–1000, `authorUid`, `publishedAt` | Staff/admin đăng bằng UID mình; đăng nhập đọc; admin xoá. |
+| `study_plan_submissions/{uid}_{semester}` | `uid`, `semester` 1–12, `summary` 1–600, `status`, `reason` ≤300, `createdAt`; sau duyệt thêm `reviewedAt`, `reviewedBy` | Sinh viên tạo `pending` đúng ID cố định; staff/admin duyệt một lần sang `approved/rejected`. Web hiện **không** có màn duyệt collection này. |
+| `audit_logs/{id}` | `userId`, `action` 1–100, `createdAt` | Append-only; chỉ tạo bản ghi của chính mình, tối đa 3 trường; không đọc/sửa/xoá từ client. |
+
+## 3. Chuyển trạng thái
+
+```text
+experience_notes:  (none) ──create(pending)──► pending ──staff/admin──► approved | rejected
+study_plan:        (none) ──create(pending)──► pending ──staff/admin──► approved | rejected
+```
+
+- Không có chuyển ngược hoặc duyệt lại; rules chặn bằng `resource.data.status == 'pending'` và `affectedKeys().hasOnly([...])`.
+- Lý do bắt buộc khi duyệt/từ chối; `reviewedBy` phải bằng UID người duyệt; `reviewedAt` phải bằng `request.time`.
+
+## 4. Ràng buộc nghiệp vụ
+
+- **Điểm do sinh viên tự nhập** trong hồ sơ; admin không nhập điểm thay. `componentScores` lưu theo môn, có `academicDataSource: user_entered`.
+- **Tiên quyết** nằm trong `courses.prerequisites` (mã môn hoặc ghi chú điều kiện). Mobile chỉ cảnh báo, không tự sửa catalog.
+- **Đề cương thiếu**: `syllabusStatus: metadata` + mảng rỗng; mobile hiện "chưa cập nhật đề cương", không sinh slot/LO giả.
+- **Đính kèm**: metadata ghi rõ `storage: cloudinary|firebase`; app chọn đúng adapter khi tải/xoá.
+- **Dashboard web**: `getCountFromServer` cho số liệu tổng hợp; `onSnapshot` cho bảng/biểu đồ realtime.
+- **Thông báo tip**: chỉ dùng cho hoạt động chấm bí kíp; nội dung cố định, không chứa dữ liệu cá nhân ngoài tên hiển thị do người dùng đã công khai.
+
+## 5. Index
+
+`firebase/firestore.indexes.json` khai báo index cho các truy vấn lọc `status`/`courseDocId`/`uid` kết hợp sắp xếp `createdAt`. Khi thêm truy vấn mới, cập nhật index và deploy cùng rules.
