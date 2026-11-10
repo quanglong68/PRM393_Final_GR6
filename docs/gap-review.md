@@ -74,7 +74,7 @@ Khoảng trống: đã có URL công khai trong README và xác nhận trang đ�
 | G-01 | Deploy web lên Firebase Hosting | **Đã đóng 10/11/2026**: `https://prm323-lab2-gr6.web.app/` trả trang đăng nhập; ảnh lưu tại `evidence/firebase/auth/web-deploy-signin-2026-11-10.png` | — |
 | G-02 | Ảnh checklist web (5 màn + lỗi/rỗng/sai vai trò) | Chụp trên URL đã deploy | G-01 (đã xong), cần tài khoản staff/admin thử |
 | G-03 | 3 lượt cross-role trên hệ thống deploy, đo độ trễ | Quay màn hình hai client, ghi số giây | G-01 (đã xong) |
-| G-04 | ARTEMIS 26 ca Final trên điện thoại thật × 3 lượt | Mở khóa máy, chạy `e2e_test`, lưu trace/ảnh | Thiết bị |
+| G-04 | ARTEMIS 26 ca Final trên điện thoại thật × 3 lượt | Mở khóa máy, chạy `e2e_test`, lưu trace/ảnh | Thiết bị: HyperOS chặn `adb shell input tap` (SecurityException) — cần bật **Gỡ lỗi USB (Cài đặt bảo mật)** và **Cài đặt qua USB** |
 | G-05 | TC_14 Analytics + exploratory ≥ 15 phút | Chạy lại khi hết giới hạn quota | Thiết bị + quota |
 | G-06 | Ảnh Console: RC tắt cờ, App Check, Analytics, Crashlytics | Chụp khi demo | Tài khoản chủ project |
 | G-07 | Video 8–12 phút | Quay theo `docs/lab3-video-script.md` | G-01, G-04 |
