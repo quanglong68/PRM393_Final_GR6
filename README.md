@@ -4,6 +4,8 @@ Hệ thống học tập một backend Firebase, hai client: **ứng dụng Andr
 
 Nhóm GR6: Nguyễn Sỹ Thanh Tùng · Nguyễn Bá Thái Dương · Dương Quang Long · Võ Anh Duy.
 
+Repo nộp: <https://github.com/quanglong68/prm323-lab3-second-brain>. Tên repo cần đổi thành `PRM393_Final_GR6` trước hạn nộp (hạng mục G-08); nội dung trên nhánh `main` đã là bản Final.
+
 | Tài liệu | Nội dung |
 |---|---|
 | [docs/gap-review.md](docs/gap-review.md) | Đối chiếu Lab 2/Lab 3 với rubric Final, phần đã đóng và còn mở |
