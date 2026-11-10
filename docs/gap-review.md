@@ -16,7 +16,7 @@ Nhóm GR6: Nguyễn Sỹ Thanh Tùng · Nguyễn Bá Thái Dương · Dương Qu
 | **Backend** — cross-role flow | 1,0 | Đạt trong code | Mobile gửi bí kíp `pending` → web duyệt kèm lý do → mobile nhận snapshot realtime. `docs/cross-role-flow.md` có sequence diagram. Chưa đo 3 lượt trên hệ thống đã deploy. |
 | **AI** — level 2 | 1,0 | Đạt phần lớn | Structured JSON → Dart model, người dùng sửa trước khi dùng; Remote Config 9 tham số; App Check; fallback thủ công; 3 input/output thật trong `evidence/ai/`. Chưa quay cảnh tắt cờ RC trên thiết bị. |
 | **Testing** — tests | 0,5 | Một phần | Rules 15/15, web 14/14, Flutter 159/159. ARTEMIS: 10 ca × 3 lượt pass trên giả lập; TC_14 analytics và exploratory 15 phút chưa đạt; 26 ca Final chưa chạy trên máy thật. |
-| **Testing** — kiến trúc + review | 0,5 | Đạt | MVVM + `packages/core`; CR-15…CR-26 đã sửa và có commit; CR-27…CR-30 ghi nhận là nợ kỹ thuật. |
+| **Testing** — kiến trúc + review | 0,5 | Đạt | MVVM + `packages/core`; CR-15…CR-26 đã sửa và có commit; CR-27 còn là nợ kỹ thuật, CR-28…CR-30 đã đóng hoặc xác nhận. |
 | **Slides + video** | 2,0 | Một phần | Slide 14 trang đã sinh tại `slides/Final_GR6_slides.pdf` (nguồn `tool/generate_final_slides_pdf.dart`); báo cáo 12 trang tại `report/Final_GR6.pdf`. Video 8–12 phút chưa quay, nên hạng mục chưa đóng. |
 
 ## 2. Mobile — đối chiếu Lab 2 / Lab 3
