@@ -1,5 +1,7 @@
 # Firestore Catalog Seed (Safe, Idempotent)
 
+> **Đã thay thế và xóa file seed (09/11/2026):** không còn seed chương trình đào tạo từ file mẫu và `firebase/seed_data.json` đã được bỏ khỏi repo. Cán bộ nhập chuyên ngành thật từ HTML FLM tại **Web quản trị → Chuyên ngành → Thêm chuyên ngành → Nhập từ file HTML FLM** (xem `docs/cross-role-flow.md`). Tài liệu dưới đây chỉ còn giá trị lịch sử cho Lab 3.
+
 Purpose: populate Roadmap catalog when `courses` is empty. No code, Rules, billing, or cloud data changes happen automatically.
 
 ## Why emulator shows empty Roadmap

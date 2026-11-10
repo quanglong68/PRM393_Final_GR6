@@ -32,21 +32,49 @@ class AcademicViewModel extends BaseViewModel<AcademicProfile> {
   bool _saving = false;
   AcademicProfile _profile = const AcademicProfile();
   List<CourseModel> _courses = [];
+  List<MajorModel> _availableMajors = const [];
   final Map<String, double> _plannedGrades = {};
   AcademicProfile get profile => _profile;
   List<CourseModel> get courses => List.unmodifiable(_courses);
+  List<MajorModel> get availableMajors => List.unmodifiable(_availableMajors);
   bool get isSaving => _saving;
-  List<CourseModel> get semesterCourses =>
-      _courses.where((c) => c.semester == selectedSemester).toList();
+
+  /// Number of semesters in the selected curriculum, used by the transcript
+  /// semester picker instead of asking the student to type it.
+  int get majorTotalSemesters {
+    final major = _profile.major.trim().toUpperCase();
+    final match = _availableMajors.where(
+      (m) => m.code.toUpperCase() == major,
+    );
+    if (match.isNotEmpty) return match.first.totalSemesters;
+    final fromCourses = _courses.fold<int>(
+      0,
+      (max, course) => course.semester > max ? course.semester : max,
+    );
+    return fromCourses > 0 ? fromCourses : 9;
+  }
+  List<CourseModel> get majorCourses {
+    final major = _profile.major.trim().toUpperCase();
+    if (major.isEmpty) return _courses;
+    return _courses
+        .where((c) => c.major.isEmpty || c.major.toUpperCase() == major)
+        .toList();
+  }
+
+  List<CourseModel> get semesterCourses => majorCourses
+      .where((c) => c.semester == selectedSemester)
+      .toList();
   int? _selectedSemester;
   int? get selectedSemester =>
       _selectedSemester ??
       _profile.currentSemester ??
-      (_courses.isEmpty
+      (majorCourses.isEmpty
           ? null
-          : _courses.map((c) => c.semester).reduce((a, b) => a > b ? a : b));
+          : majorCourses
+              .map((c) => c.semester)
+              .reduce((a, b) => a > b ? a : b));
   List<int> get semesters =>
-      _courses.map((c) => c.semester).toSet().toList()..sort();
+      majorCourses.map((c) => c.semester).toSet().toList()..sort();
   void selectSemester(int value) {
     _selectedSemester = value;
     notifyListeners();
@@ -73,28 +101,147 @@ class AcademicViewModel extends BaseViewModel<AcademicProfile> {
             ) /
             plannedCredits;
 
-  List<String> missingPrerequisites(CourseModel course) => course.prerequisites
-      .where((code) => !_profile.completedCodes.contains(code))
-      .toList();
-  bool isRetake(CourseModel course) =>
-      _profile.transcript.any(
-        (entry) => entry.courseCode == course.code && !entry.passed,
-      ) &&
-      !_profile.completedCodes.contains(course.code);
-  List<String> get conflicts {
-    final codes = plannedCourses.map((c) => c.code).toSet();
-    final entries = _profile.timetable
-        .where((e) => codes.contains(e.courseCode))
+  List<String> missingPrerequisites(CourseModel course) {
+    final completed = _profile.completedCodes
+        .map((code) => code.trim().toUpperCase())
+        .toSet();
+    return course.prerequisites
+        .where((code) => !completed.contains(code.trim().toUpperCase()))
         .toList();
-    return [
-      for (var i = 0; i < entries.length; i++)
-        for (var j = i + 1; j < entries.length; j++)
-          if (entries[i].courseCode != entries[j].courseCode &&
-              entries[i].overlaps(entries[j]))
-            '${entries[i].courseCode} / ${entries[j].courseCode}: thứ ${entries[i].weekday + 1}, slot ${entries[i].startSlot}–${entries[i].endSlot}',
-    ];
   }
 
+  bool isRetake(CourseModel course) {
+    final code = course.code.trim().toUpperCase();
+    final completed = _profile.completedCodes
+        .map((entry) => entry.trim().toUpperCase())
+        .toSet();
+    return _profile.transcript.any(
+          (entry) =>
+              entry.courseCode.trim().toUpperCase() == code && !entry.passed,
+        ) &&
+        !completed.contains(code);
+  }
+
+  /// Component scores the student already saved for [courseCode], keyed by
+  /// assessment id from the FLM syllabus.
+  Map<String, double> componentScoresFor(String courseCode) =>
+      Map<String, double>.from(
+        _profile.componentScores[courseCode.trim().toUpperCase()] ?? const {},
+      );
+
+  static double totalWeight(CourseModel course) => course.labs.fold<double>(
+    0,
+    (sum, lab) => (lab.weight ?? 0) > 0 ? sum + lab.weight! : sum,
+  );
+
+  /// Weighted average on the 0–10 scale. Returns null until every assessment
+  /// with a positive weight has a score — a partial average would mislead.
+  static double? weightedTotal(
+    CourseModel course,
+    Map<String, double> scores,
+  ) {
+    var weighted = 0.0;
+    var weights = 0.0;
+    for (final lab in course.labs) {
+      final weight = lab.weight ?? 0;
+      if (weight <= 0) continue;
+      final score = scores[lab.id];
+      if (score == null) return null;
+      weighted += score * weight;
+      weights += weight;
+    }
+    if (weights <= 0) return null;
+    return weighted / weights;
+  }
+
+  /// Saves component scores for [course]. When [applyToTranscript] is set, the
+  /// weighted total is also written as the course grade (pass = total >= 5),
+  /// because the student explicitly asked to record it.
+  Future<bool> saveComponentScores({
+    required CourseModel course,
+    required Map<String, double> scores,
+    bool applyToTranscript = false,
+  }) async {
+    if (_saving) return false;
+    final uid = authService.currentUserId;
+    if (uid == null) {
+      setLastError('Chưa đăng nhập.');
+      return false;
+    }
+    final code = course.code.trim().toUpperCase();
+    for (final score in scores.values) {
+      if (!score.isFinite || score < 0 || score > 10) {
+        setLastError('Điểm thành phần phải nằm trong khoảng 0–10.');
+        return false;
+      }
+    }
+    final total = weightedTotal(course, scores);
+    if (applyToTranscript && total == null) {
+      setLastError(
+        'Cần nhập đủ điểm các đầu điểm có trọng số trước khi ghi vào bảng điểm.',
+      );
+      return false;
+    }
+    try {
+      _saving = true;
+      clearLastError();
+      notifyListeners();
+      final merged = <String, Map<String, double>>{
+        ..._profile.componentScores,
+        code: Map<String, double>.from(scores),
+      };
+      await firestoreService.saveComponentScores(
+        uid,
+        merged.map(
+          (key, value) => MapEntry(key, Map<String, double>.from(value)),
+        ),
+      );
+      var transcript = _profile.transcript;
+      if (applyToTranscript && total != null) {
+        final existingIndex = transcript.indexWhere(
+          (entry) => entry.courseCode.trim().toUpperCase() == code,
+        );
+        final existing = existingIndex == -1 ? null : transcript[existingIndex];
+        final entry = TranscriptEntry(
+          courseCode: code,
+          credits: existing?.credits ??
+              (course.credits > 0 ? course.credits : 3),
+          grade: (total * 100).round() / 100,
+          semester: existing?.semester ??
+              _profile.currentSemester ??
+              (course.semester > 0 ? course.semester : 1),
+          passed: total >= 5,
+        );
+        transcript = [...transcript];
+        if (existingIndex == -1) {
+          transcript.add(entry);
+        } else {
+          transcript[existingIndex] = entry;
+        }
+        await firestoreService.saveAcademicProfile(uid, {
+          'transcript': transcript.map((e) => e.toMap()).toList(),
+          'academicDataSource': 'user_entered',
+        });
+      }
+      if (isDisposed || uid != authService.currentUserId) return false;
+      _profile = _profile.copyWith(
+        componentScores: merged,
+        transcript: transcript,
+      );
+      setState(AsyncViewState.data(_profile));
+      return true;
+    } catch (e) {
+      if (uid == authService.currentUserId) {
+        setLastError(
+          'Không lưu được điểm thành phần. Kiểm tra kết nối và thử lại.',
+        );
+      }
+      return false;
+    } finally {
+      _saving = false;
+      notifyListeners();
+    }
+  }
   @override
   Future<void> loadData() async {
     final version = ++_version;
@@ -109,13 +256,27 @@ class AcademicViewModel extends BaseViewModel<AcademicProfile> {
     }
     try {
       final profile = await firestoreService.getUserProfile(uid);
-      final courses = await firestoreService.getCourses(uid);
       if (isDisposed ||
           version != _version ||
           uid != authService.currentUserId) {
         return;
       }
       _profile = AcademicProfile.fromMap(profile);
+      try {
+        final remoteMajors = await firestoreService.getMajors();
+        _availableMajors = remoteMajors.map(MajorModel.fromMap).toList();
+      } catch (_) {}
+      // No major yet: the student must pick one first, so do not download any
+      // course catalog. Once picked, only that curriculum is fetched.
+      final major = _profile.major.trim();
+      final courses = major.isEmpty
+          ? const <Map<String, dynamic>>[]
+          : await firestoreService.getCoursesForMajor(major);
+      if (isDisposed ||
+          version != _version ||
+          uid != authService.currentUserId) {
+        return;
+      }
       _courses = courses.map(CourseModel.fromMap).toList();
       setState(AsyncViewState.data(_profile));
     } catch (e) {
@@ -180,54 +341,154 @@ class AcademicViewModel extends BaseViewModel<AcademicProfile> {
     return result;
   }
 
-  /// Each timetable row: code,ISO weekday,startSlot,slotCount.
-  static List<TimetableEntry> parseTimetable(String input) {
-    return input.split('\n').where((line) => line.trim().isNotEmpty).map((row) {
-      final p = row.split(',').map((s) => s.trim()).toList();
-      if (p.length != 4) {
-        throw const FormatException(
-          'Lịch học: mã môn,thứ ISO(1=T2…7=CN),slot đầu,số slot.',
-        );
-      }
-      final day = int.tryParse(p[1]);
-      final start = int.tryParse(p[2]);
-      final count = int.tryParse(p[3]);
-      if (p[0].isEmpty ||
-          day == null ||
-          day < 1 ||
-          day > 7 ||
-          start == null ||
-          start < 1 ||
-          count == null ||
-          count < 1) {
-        throw const FormatException(
-          'Lịch học không hợp lệ. Thứ ISO 1–7; slot và số slot là số nguyên dương.',
-        );
-      }
-      return TimetableEntry(
-        courseCode: p[0].toUpperCase(),
-        weekday: day,
-        startSlot: start,
-        slotCount: count,
-      );
-    }).toList();
-  }
-
   String get transcriptText => _profile.transcript
       .map(
         (e) =>
             '${e.courseCode},${e.credits},${e.grade},${e.semester},${e.passed}',
       )
       .join('\n');
-  String get timetableText => _profile.timetable
-      .map((e) => '${e.courseCode},${e.weekday},${e.startSlot},${e.slotCount}')
-      .join('\n');
+
+  /// Records a course-level grade immediately, so satisfying a prerequisite
+  /// does not require going through the whole transcript form first.
+  Future<bool> recordCourseGrade({
+    required String courseCode,
+    required double grade,
+    int credits = 0,
+    int? semester,
+  }) async {
+    if (_saving) return false;
+    final uid = authService.currentUserId;
+    if (uid == null) {
+      setLastError('Chưa đăng nhập.');
+      return false;
+    }
+    final code = courseCode.trim().toUpperCase();
+    if (code.isEmpty || !grade.isFinite || grade < 0 || grade > 10) {
+      setLastError('Điểm phải nằm trong khoảng 0–10.');
+      return false;
+    }
+    final catalog = _courses
+        .where((c) => c.code.trim().toUpperCase() == code)
+        .toList();
+    final catalogCourse = catalog.isEmpty ? null : catalog.first;
+    try {
+      _saving = true;
+      clearLastError();
+      notifyListeners();
+      final transcript = [..._profile.transcript];
+      final index = transcript.indexWhere(
+        (entry) => entry.courseCode.trim().toUpperCase() == code,
+      );
+      final existing = index == -1 ? null : transcript[index];
+      final entry = TranscriptEntry(
+        courseCode: code,
+        credits: existing?.credits ??
+            (credits > 0 ? credits : (catalogCourse?.credits ?? 3)),
+        grade: (grade * 100).round() / 100,
+        semester: existing?.semester ??
+            semester ??
+            _profile.currentSemester ??
+            (catalogCourse?.semester ?? 1),
+        passed: grade >= 5,
+      );
+      if (index == -1) {
+        transcript.add(entry);
+      } else {
+        transcript[index] = entry;
+      }
+      await firestoreService.saveAcademicProfile(uid, {
+        'transcript': transcript.map((e) => e.toMap()).toList(),
+        'academicDataSource': 'user_entered',
+      });
+      if (isDisposed || uid != authService.currentUserId) return false;
+      _profile = _profile.copyWith(transcript: transcript);
+      setState(AsyncViewState.data(_profile));
+      return true;
+    } catch (_) {
+      if (uid == authService.currentUserId) {
+        setLastError('Không lưu được điểm. Kiểm tra kết nối và thử lại.');
+      }
+      return false;
+    } finally {
+      _saving = false;
+      notifyListeners();
+    }
+  }
+
+  /// Clears the stored major so the onboarding gate asks again. Transcript and
+  /// component scores are preserved.
+  Future<bool> resetMajor() async {
+    if (_saving) return false;
+    final uid = authService.currentUserId;
+    if (uid == null) {
+      setLastError('Chưa đăng nhập.');
+      return false;
+    }
+    try {
+      _saving = true;
+      clearLastError();
+      notifyListeners();
+      await firestoreService.saveAcademicProfile(uid, {'major': ''});
+      if (isDisposed || uid != authService.currentUserId) return false;
+      _profile = _profile.copyWith(major: '');
+      _courses = [];
+      _selectedSemester = null;
+      setState(AsyncViewState.data(_profile));
+      return true;
+    } catch (_) {
+      if (uid == authService.currentUserId) {
+        setLastError('Không xoá được chuyên ngành. Kiểm tra kết nối và thử lại.');
+      }
+      return false;
+    } finally {
+      _saving = false;
+      notifyListeners();
+    }
+  }
+
+  String get currentMajor => _profile.major;
+
+  /// Saves the first curriculum choice and loads only that major's courses.
+  Future<bool> chooseMajor(String code) async {
+    if (_saving) return false;
+    final uid = authService.currentUserId;
+    if (uid == null) {
+      setLastError('Chưa đăng nhập.');
+      return false;
+    }
+    final normalized = code.trim();
+    if (normalized.isEmpty) {
+      setLastError('Hãy chọn một chuyên ngành.');
+      return false;
+    }
+    try {
+      _saving = true;
+      clearLastError();
+      notifyListeners();
+      await firestoreService.saveAcademicProfile(uid, {'major': normalized});
+      final docs = await firestoreService.getCoursesForMajor(normalized);
+      if (isDisposed || uid != authService.currentUserId) return false;
+      _profile = _profile.copyWith(major: normalized);
+      _courses = docs.map(CourseModel.fromMap).toList();
+      _selectedSemester = null;
+      setState(AsyncViewState.data(_profile));
+      return true;
+    } catch (e) {
+      if (uid == authService.currentUserId) {
+        setLastError(
+          'Không lưu được chuyên ngành. Kiểm tra kết nối và thử lại.',
+        );
+      }
+      return false;
+    } finally {
+      _saving = false;
+      notifyListeners();
+    }
+  }
 
   Future<bool> save({
     required String transcript,
-    required String timetable,
-    required int semester,
-    required double targetGpa,
+    double? targetGpa,
   }) async {
     if (_saving) return false;
     final uid = authService.currentUserId;
@@ -237,25 +498,19 @@ class AcademicViewModel extends BaseViewModel<AcademicProfile> {
     }
     try {
       final grades = parseTranscript(transcript);
-      final schedule = parseTimetable(timetable);
-      if (semester < 1 ||
-          !targetGpa.isFinite ||
-          targetGpa < 0 ||
-          targetGpa > 10) {
-        throw const FormatException('Kỳ học hoặc mục tiêu GPA không hợp lệ.');
+      if (targetGpa != null &&
+          (!targetGpa.isFinite || targetGpa < 0 || targetGpa > 10)) {
+        throw const FormatException('Mục tiêu GPA không hợp lệ.');
       }
       _saving = true;
       clearLastError();
       notifyListeners();
       await firestoreService.saveAcademicProfile(uid, {
         'transcript': grades.map((e) => e.toMap()).toList(),
-        'timetable': schedule.map((e) => e.toMap()).toList(),
-        'currentSemester': semester,
-        'targetGpa': targetGpa,
+        'targetGpa': ?targetGpa,
         'academicDataSource': 'user_entered',
       });
       if (isDisposed || uid != authService.currentUserId) return false;
-      _selectedSemester = semester;
       await loadData();
       return state.state == ViewState.data;
     } on FormatException catch (e) {

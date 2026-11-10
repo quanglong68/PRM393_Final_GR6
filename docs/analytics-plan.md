@@ -20,7 +20,7 @@
 | `export_report_local` | Local PDF generated after consent | `file_size_kb`, `course_count`, `task_count`, `note_count` (int) | How many reports are generated locally? Does not claim cloud upload or successful delivery to another app. |
 | `export_report` | PDF export succeeds/fails | `status` (string), `file_size_kb` (int), `duration_ms` (int) | How many exports lead to storage? |
 | `notification_received` | Push handled (foreground banner or tap) | `type` (string), `action` (string: 'foreground'/'tap') — không chứa nội dung message | Do pushes drive vault returns? |
-| `strategy_view` | User opens Strategy Simulator (tap 'Mô phỏng GPA') | `source` (string: 'advisor'/'direct') | Do learners who see advice go on to plan with the simulator? (guide §6.4 'xem strategy') |
+| `strategy_view` | User opens Strategy Simulator (tap 'Mô phỏng GPA' on home) | `source` (string: 'home'/'direct') | Do learners who see advice go on to plan with the simulator? (guide §6.4 'xem strategy') |
 | `strategy_preset_applied` | User applies a preset scenario in the simulator | `preset` (string slug) | Which strategy scenarios do students actually try? (guide §6.4 'tạo strategy'; điểm mô phỏng KHÔNG được log — quy tắc PII) |
 
 ## Flow mapping

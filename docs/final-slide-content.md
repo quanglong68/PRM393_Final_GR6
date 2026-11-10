@@ -30,7 +30,7 @@
 
 - **Trên slide:** Đăng nhập → Trang chủ → Lộ trình → chi tiết môn và tiên quyết. Việc cần làm, Ghi chú và Hồ sơ học tập dùng dữ liệu tài khoản. PDF tạo trên thiết bị và chia sẻ bằng hệ điều hành.
 - **Hình:** Bốn ảnh từ APK trên máy thật khi có.
-- **Lời nói:** “Mã môn và danh mục đến từ Firestore. Điểm và thời khóa biểu được nhập vào hồ sơ riêng. Khi xuất PDF, file ở thiết bị. Firestore ghi tên file, dung lượng và thời điểm tạo.”
+- **Lời nói:** “Mã môn và danh mục đến từ Firestore. Điểm được nhập vào hồ sơ riêng. Khi xuất PDF, file ở thiết bị. Firestore ghi tên file, dung lượng và thời điểm tạo.”
 
 ## 06 — Web Staff/Admin
 

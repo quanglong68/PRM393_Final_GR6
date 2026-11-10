@@ -8,6 +8,12 @@ import 'package:prm323_lab3/services/firestore_service.dart';
 /// [notifications]) and inspect those lists afterwards. Failure flags arm
 /// simulated remote errors.
 class FakeFirestoreService implements FirestoreService {
+  final List<Map<String, dynamic>> majors = [];
+
+  @override
+  Future<List<Map<String, dynamic>>> getMajors() async =>
+      List.from(majors);
+
   @override
   Future<List<Map<String, dynamic>>> getRecentReportMetadata(
     String userId,
@@ -16,6 +22,8 @@ class FakeFirestoreService implements FirestoreService {
       .take(30)
       .toList();
   final List<Map<String, dynamic>> courses = [];
+  final List<Map<String, dynamic>> courseProgress = [];
+  final List<Map<String, dynamic>> announcements = [];
   final List<Map<String, dynamic>> tasks = [];
   final List<Map<String, dynamic>> notes = [];
   final List<Map<String, dynamic>> reports = [];
@@ -38,6 +46,14 @@ class FakeFirestoreService implements FirestoreService {
     userProfile = {...?userProfile, ...data};
   }
 
+  @override
+  Future<void> saveComponentScores(
+    String userId,
+    Map<String, dynamic> componentScores,
+  ) async {
+    userProfile = {...?userProfile, 'componentScores': componentScores};
+  }
+
   bool shouldFailTaskUpdate = false;
   bool shouldFailTaskDelete = false;
   bool shouldFailNoteSave = false;
@@ -56,6 +72,23 @@ class FakeFirestoreService implements FirestoreService {
   }
 
   @override
+  Future<List<Map<String, dynamic>>> getCoursesForMajor(
+    String majorCode,
+  ) async {
+    if (shouldFailCourseLoad) {
+      throw Exception('Simulated course read failure');
+    }
+    final code = majorCode.trim().toUpperCase();
+    if (code.isEmpty) return [];
+    return courses
+        .where(
+          (course) =>
+              (course['major'] ?? '').toString().toUpperCase() == code,
+        )
+        .toList();
+  }
+
+  @override
   Future<Map<String, dynamic>?> getCourse(String courseId) async {
     for (final c in courses) {
       if (c['id'] == courseId) return c;
@@ -66,6 +99,40 @@ class FakeFirestoreService implements FirestoreService {
   @override
   Future<Map<String, dynamic>?> getUserProfile(String userId) async =>
       userProfile;
+
+  @override
+  Future<List<Map<String, dynamic>>> getCourseProgress(String userId) async =>
+      List.from(courseProgress);
+
+  @override
+  Future<void> saveCourseProgress(
+    String userId,
+    String courseDocId,
+    Map<String, dynamic> data,
+  ) async {
+    final idx = courseProgress.indexWhere(
+      (p) => p['courseDocId'] == courseDocId || p['id'] == courseDocId,
+    );
+    final item = {
+      'courseDocId': courseDocId,
+      'id': courseDocId,
+      ...?idx == -1 ? null : courseProgress[idx],
+      ...data,
+    };
+    if (idx == -1) {
+      courseProgress.add(item);
+    } else {
+      courseProgress[idx] = item;
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getAnnouncements() async =>
+      List.from(announcements);
+
+  @override
+  Stream<List<Map<String, dynamic>>> watchAnnouncements() =>
+      Stream.value(List.from(announcements));
 
   @override
   Future<List<Map<String, dynamic>>> getTasks(String userId) async {

@@ -21,7 +21,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Thông báo từ nhà trường')),
+    appBar: AppBar(title: const Text('Thông báo hệ thống')),
     body: StreamBuilder<List<Announcement>>(
       stream: _announcements,
       builder: (context, snapshot) {

@@ -8,6 +8,7 @@ import '../services/analytics_service.dart';
 import '../services/remote_config_service.dart';
 import '../services/study_plan_ai.dart';
 import '../theme/app_spacing.dart';
+import '../viewmodels/academic_viewmodel.dart';
 
 class StudyPlanScreen extends StatefulWidget {
   const StudyPlanScreen({super.key, required this.store, required this.uid});
@@ -52,10 +53,23 @@ class _StudyPlanScreenState extends State<StudyPlanScreen> {
     });
     unawaited(analytics.logEvent('ai_request'));
     try {
+      String? curriculumContext;
+      try {
+        final academic = context.read<AcademicViewModel>();
+        final courses = academic.courses.where((c) => c.semester == _semester).toList();
+        if (courses.isNotEmpty) {
+          curriculumContext = courses
+              .map((c) =>
+                  '${c.code} (${c.name}, ${c.credits} tín chỉ, ${c.slots.length} slots${c.lecturer.isNotEmpty ? ', GV: ${c.lecturer}' : ''})')
+              .join('; ');
+        }
+      } catch (_) {}
+
       final draft = await generateStudyPlan(
         semester: _semester,
         model: config.studyPlanModel,
         prompt: config.studyPlanPrompt,
+        curriculumContext: curriculumContext,
       );
       if (mounted && config.isStudyPlanAiEnabled) {
         setState(() => _draft = draft);

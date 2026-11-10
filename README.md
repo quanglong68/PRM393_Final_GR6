@@ -1,4 +1,4 @@
-> **PRM393 Final đang tích hợp.** [Đối chiếu yêu cầu](docs/gap-review.md) · [Hợp đồng Firestore cho web](docs/data-model.md) · [Luồng duyệt](docs/cross-role-flow.md) · [AI](docs/ai-feature.md) · [Kiểm thử](docs/test-report.md) · [Nội dung 14 slide](docs/final-slide-content.md).
+> **PRM393 Final đang tích hợp.** [Đối chiếu yêu cầu](docs/gap-review.md) · [Hợp đồng Firestore cho web](docs/data-model.md) · [Luồng nhập chương trình & duyệt bí kíp](docs/cross-role-flow.md) · [AI](docs/ai-feature.md) · [Kiểm thử](docs/test-report.md) · [Nội dung 14 slide](docs/final-slide-content.md).
 >
 > Build Android mặc định dùng PDF cục bộ và Firebase AI Logic. Để bật upload Cloudinary cho bản demo, chạy Media API và thêm `--dart-define=REPORT_MEDIA_URL=http://127.0.0.1:8788`. Không dùng tài khoản cá nhân hoặc token trong tài liệu bàn giao.
 
@@ -31,7 +31,7 @@ flutter build apk --debug
 | Kiến trúc | [docs/architecture.md](docs/architecture.md) |
 | Test plan (ma trận TC ↔ flow, living doc) | [docs/test-plan.md](docs/test-plan.md) |
 | Báo cáo runtime T03-M1…M11E | [docs/](docs/) |
-| Security rules + seed + RC defaults | [firebase/](firebase/) |
+| Security rules + RC defaults (không seed dữ liệu ngành/môn) | [firebase/](firebase/) |
 | AI code log (policy) | [ai/ai-code-log.md](ai/ai-code-log.md) |
 | Evidence matrix | [evidence/README.md](evidence/README.md) — matrix và yêu cầu bằng chứng; chưa có bộ ảnh/trace hoàn chỉnh |
 | Report/slides PDFs | [report/Lab03_STUDENT_ID.pdf](report/Lab03_STUDENT_ID.pdf) (10 trang), [slides/Lab03_STUDENT_ID_slides.pdf](slides/Lab03_STUDENT_ID_slides.pdf) (15 slide); kịch bản video tại [docs/lab3-video-script.md](docs/lab3-video-script.md) |

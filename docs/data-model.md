@@ -1,17 +1,27 @@
-# Hợp đồng tích hợp mobile và web
+# Hợp đồng dữ liệu mobile và web quản trị
 
-- Project hiện có `prm323-lab2-gr6`, Firestore Standard `(default)`.
-- Đăng nhập Google. Web đọc chính `users/{uid}` và chỉ cho `staff` hoặc `admin`. Mobile dành cho `user`. Hồ sơ Lab 3 thiếu role được nhận là sinh viên; mobile gán `user` qua giao dịch trước khi gửi lần đầu.
-- Người quản trị bootstrap Admin trong Console sau khi rà các giá trị role đã tồn tại. Rules Lab 3 từng cho chủ hồ sơ ghi trường tùy ý, vì vậy **rà role trước khi deploy Rules mới**. Không ghi email thật hoặc token demo trong Git.
+- Project `prm323-lab2-gr6`, Firestore Standard `(default)`.
+- Đăng nhập Google. Web quản trị đọc `users/{uid}` và chỉ cho `staff` hoặc `admin`. Mobile dành cho `user`.
+- Không còn fallback theo email `@fpt.edu.vn` / `@fe.edu.vn`. Vai trò chỉ lấy từ `users/{uid}.role` (hoặc custom claim `role` / `admin`).
+- Tài khoản Admin đầu tiên được gán thủ công trong Firebase Console. Sau đó Admin có thể cấp `staff`/`admin` cho tài khoản khác qua trường `role` (rules chỉ cho Admin sửa đúng trường này).
+- Không có seed/mock data trong repo phục vụ chương trình đào tạo. Dữ liệu ngành và môn học chỉ đến từ file HTML FLM do cán bộ nhập trên web.
 
 | Path | Trường | Quyền |
 | --- | --- | --- |
-| `users/{uid}` | `role` thuộc `user/staff/admin`; các trường hồ sơ học tập Lab 3 | Chủ đọc và cập nhật hồ sơ, giữ role. Admin cập nhật riêng trường role của tài khoản khác. Staff không đọc hồ sơ riêng. |
-| `courses/{CODE}` | `code`, `name`, `credits`, `semester`, `major`, `archived` tùy chọn | Người đăng nhập đọc. Staff/Admin tạo và sửa các trường quản lý. Giữ nguyên syllabus hiện có. Archive bằng `archived: true`; app bỏ qua môn đó khi tải. Không xóa. |
-| `study_plan_submissions/{uid}_{semester}` | `uid`, `semester` int 1–12, `summary` string 1–600, `status`, `reason` string tối đa 300, `createdAt` timestamp; sau duyệt thêm `reviewedAt`, `reviewedBy` | Sinh viên tạo pending, reason rỗng, đúng UID. Chủ/Staff/Admin đọc. Staff/Admin chỉ duyệt pending thành approved/rejected, lý do bắt buộc. Một hồ sơ mỗi kỳ, không xóa hoặc duyệt lại. |
-| `announcements/{id}` | `title` 1–120, `body` 1–1000, `authorUid`, `publishedAt` timestamp | Staff/Admin đăng bằng UID của mình. Người đăng nhập đọc. Không cập nhật/xóa. |
-| `users/{uid}/sync/{id}` | Metadata Lab 3. PDF cục bộ thêm `fileName`, `sizeBytes`, `generatedAt` ISO, `source: local_pdf`, `createdAt` timestamp | Chỉ chủ. Không tải PDF cục bộ lên cloud. |
-| `users/{uid}/{tasks,notes,notifications,tokens}/{id}` | Dữ liệu riêng Lab 3 | Quyền owner hiện có. |
-| `curriculums/{id}`, `audit_logs/{id}` | Dữ liệu Lab 3 | Curriculum chỉ đọc khi đăng nhập. Audit chỉ tạo bản ghi gắn UID. |
+| `users/{uid}` | `role` thuộc `user/staff/admin`; các trường hồ sơ học tập | Chủ đọc/cập nhật hồ sơ của mình nhưng không được đổi `role`. Chỉ Admin đọc/sửa `role` của người khác và đọc hồ sơ người khác; Staff không đọc hồ sơ riêng của sinh viên. |
+| `majors/{code}` | `code`, `name`, `nameEn`, `description`, `totalSemesters` 1–12, `source` (`manual`/`flm_html`), `archived` | Người đăng nhập đọc. Staff/Admin tạo/sửa/xóa. `code` phải trùng document ID. |
+| `courses/{major}__{code}` | `code`, `name`, `nameVi`, `credits` 0–30, `semester` 0–12, `major`, `prerequisites`, `overview`, `studentTasks`, `tools`, `lecturer`, `link`, `resourceLinks`, `syllabusId`, `syllabusStatus` (`complete`/`partial`/`metadata`/`manual`), `slots`, `labs`, `learningOutcomes`, `courseMaterials`, `constructiveQuestions`, `totalSlots`, `completedSlots`, `archived` | Người đăng nhập đọc. Staff/Admin tạo/sửa/xóa. ID dạng `BIT_SE_K19B__PRF192` để cùng một môn có thể nằm trong nhiều ngành. Rules vẫn chấp nhận ID cũ `{code}` để tương thích dữ liệu cũ. |
+| `experience_notes/{id}` | `courseDocId`, `courseCode`, `courseName`, `major`, `uid`, `authorName`, `content` 20–2000, `lecturerTip` ≤500, `examTip` ≤500, `rating` 0–5, `status`, `createdAt`; sau duyệt thêm `reason`, `reviewedBy`, `reviewedAt` | Sinh viên tạo `pending` với `uid` của mình; môn học phải tồn tại. Chủ đọc note của mình, mọi người đọc note `approved`, Staff/Admin đọc tất cả. Staff/Admin duyệt `pending` → `approved`/`rejected`, bắt buộc lý do 1–300 và `reviewedBy` đúng UID. Chủ được xóa note `pending`; Admin xóa mọi note. |
+| `announcements/{id}` | `title` 1–120, `body` 1–1000, `authorUid`, `publishedAt` | Staff/Admin đăng bằng UID của mình. Người đăng nhập đọc. Chỉ Admin xóa. |
+| `study_plan_submissions/{uid}_{semester}` | `uid`, `semester` 1–12, `summary` 1–600, `status`, `reason` ≤300, `createdAt` | Giữ cho tính năng kế hoạch học tập trên mobile. Web quản trị **không còn duyệt** collection này. |
+| `users/{uid}/{tasks,notes,tokens,notifications,sync}/{id}` | Dữ liệu riêng của sinh viên | Chỉ chủ sở hữu. |
+| `curriculums/{id}` | Dữ liệu Lab 3 cũ | Chỉ đọc khi đăng nhập; web quản trị được phép xóa khi dọn dữ liệu. Không tạo/cập nhật mới. |
+| `audit_logs/{id}` | Bản ghi audit | Chỉ tạo bản ghi gắn UID; không đọc/sửa/xóa từ client. |
 
-Web cập nhật quyết định bằng một write gồm `status, reason, reviewedBy, reviewedAt`, với `reviewedAt: serverTimestamp()`. Form thông báo dùng `publishedAt: serverTimestamp()`. Dashboard có thể chạy count theo ba trạng thái trong `study_plan_submissions`, rồi vẽ biểu đồ ba nhóm.
+## Quy ước nghiệp vụ
+
+- **Điểm số do sinh viên tự nhập** trong hồ sơ học tập trên mobile. Admin chỉ quản lý chương trình, môn học và môn tiên quyết; không nhập điểm thay sinh viên.
+- **Môn tiên quyết** nằm trong `courses.prerequisites` và được Admin nhập/sửa cùng đề cương. Mobile dùng danh sách này để cảnh báo khi lập kế hoạch.
+- **Đề cương thiếu dữ liệu**: khi chỉ import trang chương trình, môn học được ghi với `syllabusStatus: "metadata"` và các mảng chi tiết rỗng. Mobile hiển thị “chưa cập nhật đề cương”, không sinh slot/LO/giáo trình giả.
+- **Dashboard** dùng `getCountFromServer` (aggregation query) cho `users`, `experience_notes` theo trạng thái và `majors`; các bảng/card cập nhật realtime bằng `onSnapshot`.
+- **Dọn dữ liệu cũ** chỉ xóa `majors`, `courses`, `curriculums`. Giữ nguyên `users`, `announcements`, `experience_notes`, `study_plan_submissions`.

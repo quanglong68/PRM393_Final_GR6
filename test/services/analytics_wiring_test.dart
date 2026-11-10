@@ -24,6 +24,7 @@ void main() {
       firestore = FakeFirestoreService()
         ..userProfile = {
           'id': 'user_1',
+          'major': 'SE',
           'passedCourses': ['PRO192', 'CSD201', 'MAD101'],
         }
         ..courses.add({

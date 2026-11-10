@@ -111,8 +111,7 @@ lib/
 
 firebase/
 ├── firestore.rules            # Security rules (Strict owner RBAC, cấm open rules)
-├── storage.rules              # Storage rules (Owner-only path, size limit 10MB)
-└── seed_data.json             # Dữ liệu mẫu courses, tasks, notes (không có PII)
+└── storage.rules              # Storage rules (Owner-only path, size limit 10MB)
 ```
 
 ---
