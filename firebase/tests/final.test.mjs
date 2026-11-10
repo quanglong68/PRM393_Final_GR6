@@ -224,6 +224,7 @@ test('experience notes: students submit pending, staff approve, approved notes a
     major: 'BIT_SE_K19B',
     uid,
     authorName: 'Student ' + uid,
+    title: 'Kinh nghiem hoc PRM393',
     content: 'Thay Tung day rat de hieu, nen hoc ky nay de qua mon.',
     lecturerTip: 'Chon thay Tung',
     examTip: 'On PE theo de mau',

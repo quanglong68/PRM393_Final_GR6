@@ -97,7 +97,9 @@ service cloud.firestore {
       // Owner reads their own profile; only Admin may inspect other profiles.
       allow read: if isOwner(userId) || hasRole(['admin']);
       allow create: if isOwner(userId) &&
-        request.resource.data.get('role', 'user') == 'user';
+        request.resource.data.get('role', 'user') == 'user' &&
+        request.resource.data.get('admin', false) == false &&
+        request.resource.data.size() <= 40;
       allow update: if (isOwner(userId) &&
         request.resource.data.get('role', 'user') == resource.data.get('role', 'user') &&
         (request.resource.data.keys().hasAny(['role']) ||
@@ -309,9 +311,18 @@ service cloud.firestore {
     }
 
     // ──────────────────────── Audit & System Logs ────────────────────────
-    // Audit logs can be written by authenticated users (append only)
+    // Audit logs can be appended by the signed-in user for their own actions
+    // only; the shape is fixed so a client cannot forge a privileged record.
     match /audit_logs/{logId} {
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasOnly(['userId', 'action', 'createdAt']) &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.action is string &&
+        request.resource.data.action.size() > 0 &&
+        request.resource.data.action.size() <= 100 &&
+        (!request.resource.data.keys().hasAny(['createdAt']) ||
+          request.resource.data.createdAt == request.time) &&
+        request.resource.data.size() <= 3;
       allow read, update, delete: if false;
     }
 
