@@ -298,7 +298,7 @@ void main() async {
           [
             'Mobile: Lab 2 + Lab 3',
             'Đạt phần lớn',
-            '18 màn hình, 158 test, APK debug/release; E2E máy thật còn chờ'
+            '18 màn hình, 159 test, APK debug/release; E2E máy thật còn chờ'
           ],
           [
             'Mobile: dữ liệu + inbox',
@@ -806,7 +806,7 @@ void main() async {
         ['Lớp', 'Kết quả', 'Ghi chú'],
         [
           ['flutter analyze', '0 issue', 'Toàn bộ lib, packages, test, tool'],
-          ['flutter test', '158/158 pass', 'Hermetic, service giả'],
+          ['flutter test', '159/159 pass', 'Hermetic, service giả'],
           ['Build APK', 'debug + release pass', 'build/app/outputs/flutter-apk'],
           ['Rules emulator', '15/15 pass', 'project demo-second-brain-final'],
           ['Web Node', '14/14 pass', '9 parser FLM + 5 API server'],
@@ -872,8 +872,9 @@ void main() async {
         size: 7.4,
       ),
       p(
-        'Nợ kỹ thuật còn mở: CR-27 (ba widget gọi thẳng FinalFirestore), CR-28 (event AI thiếu feature), '
-        'CR-29 (thiếu test AnnouncementsViewModel), CR-30 (pin uv.lock).',
+        'Nợ kỹ thuật còn mở: CR-27 (ba widget gọi thẳng FinalFirestore). '
+        'CR-28 (event AI thiếu feature) và CR-29 (test AnnouncementsViewModel) đã đóng; '
+        'CR-30 đã xác nhận uv.lock ghim đúng commit ARTEMIS.',
       ),
     ]),
   );

@@ -416,7 +416,7 @@ void main() async {
         ],
       ),
       kv('Số màn hình', '18 file trong lib/screens (8 màn Lab 2 + mở rộng)'),
-      kv('Bằng chứng', '158/158 test · APK debug/release pass · 10 ca ARTEMIS × 3 lượt trên giả lập'),
+      kv('Bằng chứng', '159/159 test · APK debug/release pass · 10 ca ARTEMIS × 3 lượt trên giả lập'),
       kv('Giới hạn', 'E2E trên điện thoại thật chưa chạy vì thiết bị đang khóa'),
     ]),
   );
@@ -691,7 +691,7 @@ void main() async {
         ['Lớp', 'Kết quả', 'Ghi chú'],
         [
           ['flutter analyze', '0 issue', 'Toàn repo'],
-          ['flutter test', '158/158 pass', 'Hermetic'],
+          ['flutter test', '159/159 pass', 'Hermetic'],
           ['Rules emulator', '15/15 pass', 'Allow + deny theo vai trò'],
           ['Web Node', '14/14 pass', 'Parser + API'],
           ['ARTEMIS', '10 ca × 3 lượt', 'Giả lập; TC_14 fail'],
@@ -749,8 +749,8 @@ void main() async {
           pw.Expanded(
             child: box('Nợ kỹ thuật', [
               'CR-27: 3 widget gọi thẳng FinalFirestore',
-              'CR-28: thiếu tham số feature',
-              'CR-29/30: test và pin môi trường',
+              'CR-28/29 đã đóng: event AI + test',
+              'CR-30: uv.lock đã ghim ARTEMIS',
             ], color: PdfColors.amber50),
           ),
         ],

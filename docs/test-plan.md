@@ -21,7 +21,7 @@ Cập nhật: 2026-11-10. Tài liệu phân tách rõ **kiểm thử tự độn
 | Lệnh | Kết quả | Ghi chú |
 |---|---|---|
 | `flutter analyze` | **PASS — No issues found** | Toàn bộ `lib/`, `test/`, `tool/` |
-| `flutter test` | **PASS — 158 tests** | Chạy hermetic, không cần Firebase thật |
+| `flutter test` | **PASS — 159 tests** | Chạy hermetic, không cần Firebase thật |
 | `flutter build apk --debug` | **PASS** | `build/app/outputs/flutter-apk/app-debug.apk` |
 | `flutter build apk --release` | **PASS** | `build/app/outputs/flutter-apk/app-release.apk` |
 | `cd firebase/tests && npm run test:emulator` | **PASS — 15/15 tests** | Firestore Emulator, project `demo-second-brain-final` |
@@ -120,7 +120,7 @@ Cột **Kết quả (3 lượt)** để trống có chủ đích: chỉ điền 
 
 ## 5. Trạng thái thực thi
 
-- **Đã xong**: toàn bộ kiểm thử tự động ở mục 2, gồm 158 test Flutter, 15 test rules trên emulator và 14 test web.
+- **Đã xong**: toàn bộ kiểm thử tự động ở mục 2, gồm 159 test Flutter, 15 test rules trên emulator và 14 test web.
 - **Đang chặn**: ARTEMIS cần thao tác trên thiết bị thật. Máy đang khóa và MIUI chặn `adb shell input` (`INJECT_EVENTS`), nên không thể tự mở khóa. Khi người dùng mở khóa, chạy:
   ```bash
   cd e2e_test

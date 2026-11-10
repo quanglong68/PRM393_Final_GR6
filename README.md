@@ -135,7 +135,7 @@ Chi tiết: [docs/architecture.md](docs/architecture.md).
 | Lớp | Kết quả | Bằng chứng |
 |---|---|---|
 | `flutter analyze` | 0 issue | — |
-| `flutter test` | 158/158 pass | — |
+| `flutter test` | 159/159 pass | — |
 | Rules emulator | 15/15 pass | `firebase/tests/final.test.mjs` |
 | Web Node | 14/14 pass | `admin-web/*.test.mjs` |
 | Build APK | debug + release pass | `build/app/outputs/flutter-apk/` |

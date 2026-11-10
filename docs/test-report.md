@@ -27,7 +27,7 @@ node --test
 | Lệnh | Kết quả | Ghi chú |
 |---|---|---|
 | `flutter analyze` | **0 issue** | Toàn bộ `lib/`, `packages/`, `test/`, `tool/` |
-| `flutter test` | **158/158 pass** | Hermetic, fake service, không cần Firebase |
+| `flutter test` | **159/159 pass** | Hermetic, fake service, không cần Firebase |
 | `flutter build apk --debug` | **PASS** | `build/app/outputs/flutter-apk/app-debug.apk` |
 | `flutter build apk --release` | **PASS** | `build/app/outputs/flutter-apk/app-release.apk` |
 | Rules Emulator | **15/15 pass** | `firebase/tests/final.test.mjs` |
@@ -91,18 +91,18 @@ Review chạy trên working tree và lịch sử Git nhánh `main`; không giả
 
 | ID | Phát hiện | Quyết định | Kiểm chứng |
 |---|---|---|---|
-| CR-15 | `AdvisorViewModel` import trực tiếp `cloud_firestore`, `firebase_ai` | Tách `AiService`/`GeminiAiService`, inject qua Provider | Analyze sạch, 158 test pass (`bd4c989`) |
+| CR-15 | `AdvisorViewModel` import trực tiếp `cloud_firestore`, `firebase_ai` | Tách `AiService`/`GeminiAiService`, inject qua Provider | Analyze sạch, 159 test pass (`bd4c989`) |
 | CR-16 | Role gate đọc Firestore SDK trong widget | Thêm `watchUserRole` ở service layer | Test role gate pass (`bd4c989`) |
 | CR-17 | Một dịch vụ Firebase lỗi chặn toàn app | Cô lập từng bước trong `try/catch`, lỗi cốt lõi vẫn chặn | Build/run ổn định (`bd4c989`) |
 | CR-18 | Sync Vault để lại task "Connectivity check" | Ghi marker, đọc lại, xóa đúng bản ghi vừa tạo | Chạy lại sync không còn rác (`f2b2cb0`) |
 | CR-20 | Rules cho phép hồ sơ tự khai `admin`, audit log nhận mọi trường | Chặn `admin != false`, giới hạn 40 trường; audit log 3 trường | Rules 15/15 (`e5256c1`) |
 | CR-21 | Listener web lỗi chỉ log console, màn trắng | Banner lỗi + nút thử lại từng màn; thêm Analytics/RC/App Check | `node --check` + test web pass (`c9b9985`) |
 
-Nợ kỹ thuật còn mở: CR-27 (ba widget gọi thẳng `FinalFirestore`), CR-28 (event AI thiếu `feature`), CR-29 (thiếu test `AnnouncementsViewModel`), CR-30 (pin `uv.lock`).
+Nợ kỹ thuật còn mở: CR-27 (ba widget gọi thẳng `FinalFirestore`). CR-28 (event AI thiếu `feature`) và CR-29 (test `AnnouncementsViewModel`) đã đóng ở `4142399`; CR-30 đã xác nhận `uv.lock` ghim commit ARTEMIS.
 
 ## 6. Điều kiện thoát
 
-- [x] Analyze 0 issue, 158 test pass, build debug/release.
+- [x] Analyze 0 issue, 159 test pass, build debug/release.
 - [x] Rules 15/15 trên emulator.
 - [x] Web 14/14 test.
 - [x] AI có 3 output thật + 1 ca lỗi được xử lý.

@@ -8,14 +8,14 @@ Nhóm GR6: Nguyễn Sỹ Thanh Tùng · Nguyễn Bá Thái Dương · Dương Qu
 
 | Tiêu chí | Điểm | Trạng thái | Bằng chứng / khoảng trống |
 |---|---|---|---|
-| **Mobile** — Lab 2 + Lab 3 hoàn chỉnh | 1,25 | Đạt phần lớn | 8 màn hình Lab 2 + các màn mở rộng nằm trong `lib/screens/` (18 file). 158 test pass, APK debug/release build được. Còn thiếu: lượt E2E trên **điện thoại thật** cho 26 kịch bản Final (máy đang khóa) và phiên exploratory ≥ 15 phút. |
+| **Mobile** — Lab 2 + Lab 3 hoàn chỉnh | 1,25 | Đạt phần lớn | 8 màn hình Lab 2 + các màn mở rộng nằm trong `lib/screens/` (18 file). 159 test pass, APK debug/release build được. Còn thiếu: lượt E2E trên **điện thoại thật** cho 26 kịch bản Final (máy đang khóa) và phiên exploratory ≥ 15 phút. |
 | **Mobile** — dữ liệu Firestore + inbox | 0,75 | Đạt | Không còn mock/seed; môn, đề cương, bí kíp, thông báo đọc từ Firestore. `AnnouncementsViewModel` + listener realtime (`f2b2cb0`). |
 | **Web** — 4 màn hình + form thông báo | 1,25 | Đạt trong code | `admin-web/`: đăng nhập, chuyên ngành (quản lý + import FLM), duyệt bí kíp, dashboard, thông báo. Loading/empty/error từng màn (`c9b9985`). 14/14 test Node pass. Chưa có ảnh checklist từng màn. |
 | **Web** — design system + deploy | 0,75 | **Chưa đạt** | Dùng token/màu của Lab 2 và layout rộng, nhưng **chưa deploy Firebase Hosting** nên chưa có URL công khai để mở cửa sổ ẩn danh. |
 | **Backend** — data model + rules | 1,0 | Đạt | `docs/data-model.md` đủ collection/trường/quyền/chuyển trạng thái. Rules deny-by-default, không `if true`; 15/15 test emulator pass. |
 | **Backend** — cross-role flow | 1,0 | Đạt trong code | Mobile gửi bí kíp `pending` → web duyệt kèm lý do → mobile nhận snapshot realtime. `docs/cross-role-flow.md` có sequence diagram. Chưa đo 3 lượt trên hệ thống đã deploy. |
 | **AI** — level 2 | 1,0 | Đạt phần lớn | Structured JSON → Dart model, người dùng sửa trước khi dùng; Remote Config 9 tham số; App Check; fallback thủ công; 3 input/output thật trong `evidence/ai/`. Chưa quay cảnh tắt cờ RC trên thiết bị. |
-| **Testing** — tests | 0,5 | Một phần | Rules 15/15, web 14/14, Flutter 158/158. ARTEMIS: 10 ca × 3 lượt pass trên giả lập; TC_14 analytics và exploratory 15 phút chưa đạt; 26 ca Final chưa chạy trên máy thật. |
+| **Testing** — tests | 0,5 | Một phần | Rules 15/15, web 14/14, Flutter 159/159. ARTEMIS: 10 ca × 3 lượt pass trên giả lập; TC_14 analytics và exploratory 15 phút chưa đạt; 26 ca Final chưa chạy trên máy thật. |
 | **Testing** — kiến trúc + review | 0,5 | Đạt | MVVM + `packages/core`; CR-15…CR-26 đã sửa và có commit; CR-27…CR-30 ghi nhận là nợ kỹ thuật. |
 | **Slides + video** | 2,0 | Một phần | Slide 14 trang đã sinh tại `slides/Final_GR6_slides.pdf` (nguồn `tool/generate_final_slides_pdf.dart`); báo cáo 12 trang tại `report/Final_GR6.pdf`. Video 8–12 phút chưa quay, nên hạng mục chưa đóng. |
 
@@ -38,7 +38,7 @@ Nhóm GR6: Nguyễn Sỹ Thanh Tùng · Nguyễn Bá Thái Dương · Dương Qu
 
 - Đã đóng CR-01…CR-26; chi tiết quyết định và commit trong `docs/code-review.md`.
 - Gói dùng chung `packages/core` chứa model + Firestore service cho phần Final; mobile và web cùng đọc/ghi một hợp đồng dữ liệu.
-- Nợ kỹ thuật còn mở: CR-27 (`CommunityTipsSection`, `MyTipsScreen`, `StudyPlanScreen` gọi thẳng `FinalFirestore`), CR-28 (event AI thiếu tham số `feature`), CR-29 (chưa có test `AnnouncementsViewModel`), CR-30 (pin `uv.lock` khi chạy ARTEMIS).
+- Nợ kỹ thuật còn mở: CR-27 (`CommunityTipsSection`, `MyTipsScreen`, `StudyPlanScreen` gọi thẳng `FinalFirestore`). CR-28 (event AI thiếu `feature`), CR-29 (test `AnnouncementsViewModel`) đã đóng; CR-30 đã xác nhận `uv.lock` ghim đúng commit ARTEMIS.
 
 ## 3. Web admin
 
