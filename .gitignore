@@ -64,6 +64,9 @@ venv/
 .pytest_cache/
 e2e_test/results_run*.xml
 
+# Firebase CLI deploy cache
+.firebase/
+
 /admin-web/node_modules/
 /firebase/tests/node_modules/
 

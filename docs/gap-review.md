@@ -11,7 +11,7 @@ Nhóm GR6: Nguyễn Sỹ Thanh Tùng · Nguyễn Bá Thái Dương · Dương Qu
 | **Mobile** — Lab 2 + Lab 3 hoàn chỉnh | 1,25 | Đạt phần lớn | 8 màn hình Lab 2 + các màn mở rộng nằm trong `lib/screens/` (18 file). 159 test pass, APK debug/release build được. Còn thiếu: lượt E2E trên **điện thoại thật** cho 26 kịch bản Final (máy đang khóa) và phiên exploratory ≥ 15 phút. |
 | **Mobile** — dữ liệu Firestore + inbox | 0,75 | Đạt | Không còn mock/seed; môn, đề cương, bí kíp, thông báo đọc từ Firestore. `AnnouncementsViewModel` + listener realtime (`f2b2cb0`). |
 | **Web** — 4 màn hình + form thông báo | 1,25 | Đạt trong code | `admin-web/`: đăng nhập, chuyên ngành (quản lý + import FLM), duyệt bí kíp, dashboard, thông báo. Loading/empty/error từng màn (`c9b9985`). 14/14 test Node pass. Chưa có ảnh checklist từng màn. |
-| **Web** — design system + deploy | 0,75 | **Chưa đạt** | Dùng token/màu của Lab 2 và layout rộng, nhưng **chưa deploy Firebase Hosting** nên chưa có URL công khai để mở cửa sổ ẩn danh. |
+| **Web** — design system + deploy | 0,75 | Đạt | Deploy Firebase Hosting tại <https://prm323-lab2-gr6.web.app/> (kiểm tra 10/11/2026, trang đăng nhập mở được). Dùng token/màu của Lab 2 và layout rộng. Ảnh checklist từng màn sau đăng nhập còn thiếu (G-02). |
 | **Backend** — data model + rules | 1,0 | Đạt | `docs/data-model.md` đủ collection/trường/quyền/chuyển trạng thái. Rules deny-by-default, không `if true`; 15/15 test emulator pass. |
 | **Backend** — cross-role flow | 1,0 | Đạt trong code | Mobile gửi bí kíp `pending` → web duyệt kèm lý do → mobile nhận snapshot realtime. `docs/cross-role-flow.md` có sequence diagram. Chưa đo 3 lượt trên hệ thống đã deploy. |
 | **AI** — level 2 | 1,0 | Đạt phần lớn | Structured JSON → Dart model, người dùng sửa trước khi dùng; Remote Config 9 tham số; App Check; fallback thủ công; 3 input/output thật trong `evidence/ai/`. Chưa quay cảnh tắt cờ RC trên thiết bị. |
@@ -50,7 +50,7 @@ Nhóm GR6: Nguyễn Sỹ Thanh Tùng · Nguyễn Bá Thái Dương · Dương Qu
 | Dashboard | Đạt trong code | ≥ 3 số liệu aggregation (`getCountFromServer`) + 1 biểu đồ. |
 | Form thông báo | Đạt trong code | Ghi `announcements`; mobile inbox nhận realtime. |
 
-Khoảng trống: chưa deploy Hosting, chưa chụp ảnh checklist từng màn, chưa có URL công khai trong README.
+Khoảng trống: đã có URL công khai trong README và xác nhận trang đăng nhập mở được; còn thiếu ảnh checklist các màn sau đăng nhập (G-02) — cần tài khoản staff/admin thử khi chụp.
 
 ## 4. Backend
 
@@ -71,16 +71,16 @@ Khoảng trống: chưa deploy Hosting, chưa chụp ảnh checklist từng màn
 
 | # | Việc | Cách đóng | Phụ thuộc |
 |---|---|---|---|
-| G-01 | Deploy web lên Firebase Hosting | `firebase deploy --only hosting`, thêm domain vào Authorized domains, dán URL vào README | Cần đăng nhập Firebase CLI |
-| G-02 | Ảnh checklist web (5 màn + lỗi/rỗng/sai vai trò) | Chụp trên URL đã deploy | G-01 |
-| G-03 | 3 lượt cross-role trên hệ thống deploy, đo độ trễ | Quay màn hình hai client, ghi số giây | G-01 |
+| G-01 | Deploy web lên Firebase Hosting | **Đã đóng 10/11/2026**: `https://prm323-lab2-gr6.web.app/` trả trang đăng nhập; ảnh lưu tại `evidence/firebase/auth/web-deploy-signin-2026-11-10.png` | — |
+| G-02 | Ảnh checklist web (5 màn + lỗi/rỗng/sai vai trò) | Chụp trên URL đã deploy | G-01 (đã xong), cần tài khoản staff/admin thử |
+| G-03 | 3 lượt cross-role trên hệ thống deploy, đo độ trễ | Quay màn hình hai client, ghi số giây | G-01 (đã xong) |
 | G-04 | ARTEMIS 26 ca Final trên điện thoại thật × 3 lượt | Mở khóa máy, chạy `e2e_test`, lưu trace/ảnh | Thiết bị |
 | G-05 | TC_14 Analytics + exploratory ≥ 15 phút | Chạy lại khi hết giới hạn quota | Thiết bị + quota |
 | G-06 | Ảnh Console: RC tắt cờ, App Check, Analytics, Crashlytics | Chụp khi demo | Tài khoản chủ project |
 | G-07 | Video 8–12 phút | Quay theo `docs/lab3-video-script.md` | G-01, G-04 |
-| G-08 | Đổi tên repo GitHub `PRM393_Final_GR6` | Rename trên GitHub, cập nhật remote/README | Quyền repo |
+| G-08 | Đổi tên repo GitHub `PRM393_Final_GR6` | **Đã đóng 10/11/2026**: repo đổi tên, remote `personal` và README cập nhật | — |
 | G-09 | Deploy rules Firestore bản siết 10/11 | `firebase deploy --only firestore:rules`, kiểm tra lại release; bản remote hiện tại vẫn là release 04/11 | Cần đăng nhập Firebase CLI |
 
 ## 7. Kết luận
 
-Phần **code, rules, tài liệu và kiểm thử tự động** đã đóng. Các mục còn mở đều là bằng chứng runtime/deploy cần tài khoản Firebase, thiết bị mở khóa hoặc quyền đổi tên repo — không thể tự sinh trong môi trường hiện tại. Báo cáo và slide chỉ khẳng định những gì có bằng chứng tương ứng; các mục G-01…G-09 được đánh dấu rõ là "chờ" thay vì suy diễn. Riêng rules, `evidence/firebase/firestore/rules-api-verification-2026-11-04.json` cho thấy bản remote là release 04/11 (`remoteCharacters: 2230`), chưa phải bản siết ngày 10/11 đã qua 15/15 test emulator — không được mô tả là đã live cho tới khi G-09 đóng.
+Phần **code, rules, tài liệu và kiểm thử tự động** đã đóng. Các mục còn mở chủ yếu là bằng chứng runtime cần tài khoản Firebase, thiết bị mở khóa hoặc quota AI. Ngày 10/11 đã đóng G-01 (web deploy) và G-08 (đổi tên repo); ảnh checklist web (G-02), cross-role trên hệ thống deploy (G-03), ARTEMIS (G-04/G-05), ảnh Console (G-06), video (G-07) và rules deploy (G-09) vẫn chờ. Báo cáo và slide chỉ khẳng định những gì có bằng chứng tương ứng. Riêng rules, `evidence/firebase/firestore/rules-api-verification-2026-11-04.json` cho thấy bản remote là release 04/11 (`remoteCharacters: 2230`), chưa phải bản siết ngày 10/11 đã qua 15/15 test emulator — không được mô tả là đã live cho tới khi G-09 đóng.

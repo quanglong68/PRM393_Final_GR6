@@ -455,10 +455,10 @@ void main() async {
           ),
           pw.SizedBox(width: 8),
           pw.Expanded(
-            child: box('Chưa đóng', [
-              'Chưa deploy Hosting',
-              'Chưa có URL công khai',
-              'Chưa chụp checklist 5 màn',
+            child: box('Deploy', [
+              'Live: prm323-lab2-gr6.web.app',
+              'URL công khai trong README',
+              'Còn: ảnh checklist 5 màn',
             ], color: PdfColors.amber50),
           ),
         ],
@@ -506,7 +506,7 @@ void main() async {
         widths: [130, 300, 180, 120],
       ),
       pw.Text(
-        'Bí kíp đã duyệt trở thành ngữ cảnh công khai cho AI. Chưa đo độ trễ 3 lượt vì web chưa deploy.',
+        'Bí kíp đã duyệt trở thành ngữ cảnh công khai cho AI. Chưa đo độ trễ 3 lượt trên hệ thống deploy.',
         style: t(8.5, color: PdfColors.brown900),
       ),
     ]),
@@ -785,8 +785,8 @@ void main() async {
           pw.SizedBox(width: 8),
           pw.Expanded(
             child: box('Link nộp', [
-              'Repo: PRM393_Final_GR6 (chờ rename)',
-              'Web URL: chờ deploy Hosting',
+              'Repo: PRM393_Final_GR6',
+              'Web: prm323-lab2-gr6.web.app',
               'Video: chờ quay 8–12 phút',
             ], color: PdfColors.amber50),
           ),

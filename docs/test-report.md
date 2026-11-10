@@ -75,7 +75,7 @@ Hai tệp dùng cùng system instruction/prompt với `lib/services/study_plan_a
 | TC_14 Analytics `search_course`/`course_view` | **Fail** | Gemini trả HTTP 429 do giới hạn theo phút; trace `da4a9901…` |
 | Exploratory ≥ 15 phút | **Chưa đạt** | Lượt dài nhất ~9 phút; lượt thứ hai dừng ở 7,5 phút vì HTTP 429 |
 | 26 kịch bản Final trên **điện thoại thật** × 3 lượt | **Chưa chạy** | Thiết bị đang khóa (MIUI chặn ADB input); kịch bản nằm trong `docs/test-plan.md` |
-| Cross-role 3 lượt trên hệ thống deploy | **Chưa chạy** | Chờ G-01 deploy web |
+| Cross-role 3 lượt trên hệ thống deploy | **Chưa chạy** | Web đã deploy 10/11 (G-01); còn đo độ trễ khi demo |
 
 Ma trận 26 ca, tiền điều kiện và kết quả mong đợi: `docs/test-plan.md`. Không dùng kết quả giả lập thay cho yêu cầu thiết bị thật.
 
@@ -83,7 +83,7 @@ Ma trận 26 ca, tiền điều kiện và kết quả mong đợi: `docs/test-p
 
 - 14/14 test Node pass (parser FLM, API server).
 - Đã kiểm tra thủ công trên trình duyệt: sign-in render, empty state không có dữ liệu mẫu, luồng thêm chuyên ngành thủ công, import 5 file HTML FLM thật (49 môn, 4 đề cương).
-- **Chưa có** ảnh checklist 5 màn trên URL deploy; chưa deploy Hosting.
+- **Chưa có** ảnh checklist 5 màn sau đăng nhập trên URL deploy. Ngày 10/11 đã xác nhận `https://prm323-lab2-gr6.web.app/` trả trang đăng nhập (`evidence/firebase/auth/web-deploy-signin-2026-11-10.png`); phần chụp trong app cần tài khoản staff/admin thử.
 
 ## 5. Review code mới (AI hỗ trợ)
 

@@ -16,6 +16,7 @@
 - [Tám loại event trên DebugView và tham số đối chiếu từ SDK](firebase/analytics/debugview-2026-11-07.json), gồm xuất PDF cloud và tạo ghi chú.
 - [Lượt chạy ARTEMIS tìm môn, kết quả từng trace và lỗi quota](artemis/2026-11-05-search-run.md)
 - [ARTEMIS TC_11 pass 3/3 lượt ngày 07/11](artemis/2026-11-07-regression.md)
+- [Web deploy live, trang đăng nhập](firebase/auth/web-deploy-signin-2026-11-10.png) — `https://prm323-lab2-gr6.web.app/`, kiểm tra 10/11.
 - [Tổng hợp 10 ca ARTEMIS và phiên exploratory 08/11](artemis/2026-11-08-completion.md)
 
 

@@ -307,8 +307,8 @@ void main() async {
           ],
           [
             'Web: 4 màn + form',
-            'Đạt trong code',
-            'Chuyên ngành, duyệt, dashboard, thông báo; còn thiếu URL deploy'
+            'Đạt',
+            'Chuyên ngành, duyệt, dashboard, thông báo; live tại prm323-lab2-gr6.web.app'
           ],
           [
             'Backend: model + rules',
@@ -318,7 +318,7 @@ void main() async {
           [
             'Cross-role',
             'Đạt trong code',
-            'Gửi bí kíp → duyệt → mobile cập nhật; đo 3 lượt chờ deploy'
+            'Gửi bí kíp → duyệt → mobile cập nhật; chờ đo 3 lượt live'
           ],
           [
             'AI level 2',
@@ -339,7 +339,7 @@ void main() async {
         widths: [118, 82, 323],
       ),
       note(
-        'Nguyên tắc: chỉ ghi "đạt" khi có bằng chứng tương ứng. Các mục chờ deploy/thiết bị được liệt kê ở §11 và '
+        'Nguyên tắc: chỉ ghi "đạt" khi có bằng chứng tương ứng. Các mục còn chờ bằng chứng/thiết bị được liệt kê ở §11 và '
         'trong docs/gap-review.md, không tính vào điểm đã hoàn thành.',
       ),
     ]),
@@ -581,7 +581,7 @@ void main() async {
       ),
       note(
         'Rules trong repo đã được deploy bản 04/11; bản siết ngày 10/11 mới kiểm thử emulator. '
-        'Cần deploy lại cùng Hosting trước khi chấm (G-01/G-09).',
+        'Cần deploy lại trước khi chấm (G-09); Hosting đã live (G-01).',
       ),
     ]),
   );
@@ -633,12 +633,11 @@ void main() async {
       sub('5.3. Design system và deploy'),
       p(
         'Web dùng token/màu và thành phần tinh thần của Lab 2, bố cục rộng cho màn hình quản trị. '
-        'Trạng thái hiện tại: SPA chạy được cục bộ qua Firebase Emulator Hosting và đã qua 14/14 test Node, '
-        'nhưng chưa deploy lên Firebase Hosting nên chưa có URL công khai.',
+        'SPA đã qua 14/14 test Node và được deploy lên Firebase Hosting tại '
+        'https://prm323-lab2-gr6.web.app/ ; trang đăng nhập mở được từ URL công khai (kiểm tra 10/11/2026).',
       ),
       note(
-        'Điều kiện đóng: firebase deploy --only hosting, thêm domain vào Authorized domains, mở URL bằng cửa sổ ẩn danh, '
-        'chụp ảnh từng màn và dán URL vào README (G-01, G-02).',
+        'Còn lại: đăng nhập bằng tài khoản staff/admin thử, chụp ảnh checklist từng màn và các trạng thái lỗi/rỗng/sai vai trò (G-02).',
       ),
     ]),
   );
@@ -707,8 +706,8 @@ void main() async {
         widths: [120, 185, 140, 78],
       ),
       note(
-        'Chưa đo độ trễ thực tế giữa write trên web và snapshot trên mobile vì web chưa deploy. '
-        'Khi demo cần 3 lượt, giữ app mở và ghi số giây (G-03).',
+        'Chưa đo độ trễ thực tế giữa write trên web và snapshot trên mobile trên hệ thống deploy; '
+        'khi demo cần 3 lượt, giữ app mở và ghi số giây (G-03).',
       ),
     ]),
   );
@@ -895,7 +894,7 @@ void main() async {
       table(
         ['Hạng mục', 'Trạng thái', 'Cách đóng'],
         [
-          ['Web URL', 'Chưa deploy', 'Deploy Hosting, thêm domain, dán URL (G-01)'],
+          ['Web URL', 'Đã deploy', 'Live tại prm323-lab2-gr6.web.app (G-01)'],
           ['Checklist web', 'Chưa chụp', 'Ảnh 5 màn + lỗi/rỗng/sai vai trò (G-02)'],
           ['Cross-role 3 lượt', 'Chưa đo', 'Quay hai client, ghi độ trễ (G-03)'],
           ['ARTEMIS máy thật', 'Chưa chạy', 'Mở khóa máy, chạy 26 ca × 3 (G-04)'],
@@ -905,7 +904,7 @@ void main() async {
             'Chưa có',
             'Ảnh RC/App Check/Analytics; quay 8–12 phút (G-06/G-07)'
           ],
-          ['Đổi tên repo', 'Chưa đổi', 'Rename PRM393_Final_GR6 (G-08)'],
+          ['Đổi tên repo', 'Đã xong', 'Repo PRM393_Final_GR6 (G-08)'],
         ],
         widths: [110, 100, 313],
       ),
@@ -928,12 +927,12 @@ void main() async {
       table(
         ['Hạng mục', 'Trạng thái'],
         [
-          ['Repo tiếp nối Lab 3, đổi tên PRM393_Final_GR6', 'Chờ rename'],
+          ['Repo tiếp nối Lab 3, đổi tên PRM393_Final_GR6', 'Đạt'],
           ['Mobile trên Firestore + inbox realtime', 'Đạt'],
           ['Web 4 màn + form thông báo', 'Đạt trong code'],
-          ['Web deploy + URL công khai', 'Chờ deploy'],
+          ['Web deploy + URL công khai', 'Đạt'],
           ['Data model + rules deny mặc định + test', 'Đạt'],
-          ['Cross-role documented + chạy live 3 lượt', 'Tài liệu đạt; live chờ deploy'],
+          ['Cross-role documented + chạy live 3 lượt', 'Tài liệu đạt; live chờ đo'],
           ['AI level 2 + RC + App Check + fallback', 'Đạt phần lớn'],
           ['ARTEMIS + rules + web checklist có bằng chứng', 'Một phần'],
           ['MVVM + shared package + ≥ 3 finding review', 'Đạt'],
@@ -944,8 +943,9 @@ void main() async {
       sub('11.2. Kết luận'),
       p(
         'StudyPilot đã ghép Lab 2 và Lab 3 thành một hệ thống có hai client, một backend và một tính năng AI có kiểm soát. '
-        'Phần code, rules, tài liệu và kiểm thử tự động đã hoàn tất; các hạng mục còn lại là bằng chứng runtime và deploy, '
-        'được liệt kê công khai thay vì suy diễn. Khi hoàn tất G-01…G-08, hệ thống đáp ứng đầy đủ rubric Final.',
+        'Phần code, rules, tài liệu và kiểm thử tự động đã hoàn tất; web đã deploy và repo đã đổi tên. '
+        'Các hạng mục còn lại là bằng chứng runtime (checklist web, cross-role live, ARTEMIS, Console, video) '
+        'được liệt kê công khai thay vì suy diễn.',
       ),
       sub('11.3. Đường dẫn bằng chứng'),
       for (final item in const [

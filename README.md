@@ -4,7 +4,7 @@ Hệ thống học tập một backend Firebase, hai client: **ứng dụng Andr
 
 Nhóm GR6: Nguyễn Sỹ Thanh Tùng · Nguyễn Bá Thái Dương · Dương Quang Long · Võ Anh Duy.
 
-Repo nộp: <https://github.com/quanglong68/prm323-lab3-second-brain>. Tên repo cần đổi thành `PRM393_Final_GR6` trước hạn nộp (hạng mục G-08); nội dung trên nhánh `main` đã là bản Final.
+Repo nộp: <https://github.com/quanglong68/PRM393_Final_GR6>. Web admin: <https://prm323-lab2-gr6.web.app/>.
 
 | Tài liệu | Nội dung |
 |---|---|
@@ -34,15 +34,11 @@ Repo nộp: <https://github.com/quanglong68/prm323-lab3-second-brain>. Tên repo
 
 ## 2. Web admin URL
 
-**Chưa deploy.** Bản chạy cục bộ: `firebase emulators:start --only hosting,firestore,auth` rồi mở `http://127.0.0.1:5000/?emulator=true`.
+**Đã deploy:** <https://prm323-lab2-gr6.web.app/>
 
-Khi deploy, chạy `firebase deploy --only hosting`, thêm domain vào **Authentication → Settings → Authorized domains**, rồi dán URL vào đây:
+Bản chạy cục bộ (không cần mạng tới production): `firebase emulators:start --only hosting,firestore,auth` rồi mở `http://127.0.0.1:5000/?emulator=true`.
 
-```text
-https://<project-id>.web.app
-```
-
-Đây là hạng mục G-01 trong gap review; URL phải mở được trong cửa sổ ẩn danh trước hạn nộp.
+Khi deploy lại, chạy `firebase deploy --only hosting` và giữ domain `prm323-lab2-gr6.web.app` trong **Authentication → Settings → Authorized domains**. Đây là hạng mục G-01 trong gap review.
 
 ## 3. Chạy mobile
 
@@ -181,7 +177,8 @@ Kịch bản quay: [docs/lab3-video-script.md](docs/lab3-video-script.md) — mo
 
 ## 12. Ghi chú nộp bài
 
-- Repo cần đổi tên thành `PRM393_Final_GR6` trên GitHub (hạng mục G-08).
+- Repo GitHub: `PRM393_Final_GR6` (đã đổi tên, hạng mục G-08).
+- Web admin đã deploy tại <https://prm323-lab2-gr6.web.app/> (hạng mục G-01).
 - Báo cáo và slide được sinh bằng `dart run tool/generate_final_report_pdf.dart` và `dart run tool/generate_final_slides_pdf.dart`.
 - `google-services.json` và khóa bí mật không commit; clone mới cần cấu hình Firebase riêng.
 - Ảnh/log trong `evidence/` đã lọc email, UID và token trước khi lưu.
