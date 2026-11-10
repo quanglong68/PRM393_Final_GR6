@@ -3,7 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>FPTU Second Brain · Cổng Quản trị Học vụ</title>
+  <!-- reCAPTCHA v3 site key for App Check; fill after registering the Web App. -->
+  <meta name="recaptcha-site-key" content="">
+  <title>StudyPilot · Cổng Quản trị Học vụ</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,7 +22,7 @@
       <span class="material-symbols-outlined">school</span>
     </div>
     <div>
-      <h1 class="brand-title">FPTU Second Brain</h1>
+      <h1 class="brand-title">StudyPilot</h1>
       <p class="brand-subtitle">Cổng Quản trị Học vụ &amp; Chương trình đào tạo</p>
     </div>
   </div>
@@ -37,6 +39,11 @@
     </button>
   </div>
 </header>
+
+<div id="maintenance-banner" style="display: none; align-items: center; gap: 12px; padding: 12px 24px; background: var(--color-warning-container, #FEF0C7); color: var(--color-on-warning-container, #93370D); font-weight: 500;">
+  <span class="material-symbols-outlined">engineering</span>
+  Remote Config <code>maintenance_mode</code> đang bật — ứng dụng di động tạm thời bị chặn.
+</div>
 
 <div class="app-container">
   <aside class="app-sidebar" id="app-sidebar" style="display: none;">
@@ -69,7 +76,7 @@
         </div>
         <h2 class="signin-title">Cổng Quản trị Học vụ</h2>
         <p class="signin-desc">
-          Khu vực dành riêng cho Cán bộ và Quản trị viên (Staff &amp; Admin). Sinh viên sử dụng ứng dụng di động FPTU Second Brain.
+          Khu vực dành riêng cho Cán bộ và Quản trị viên (Staff &amp; Admin). Sinh viên sử dụng ứng dụng di động StudyPilot.
         </p>
 
         <button class="google-signin-btn" id="btn-google-signin">

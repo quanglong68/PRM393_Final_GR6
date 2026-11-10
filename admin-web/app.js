@@ -26,6 +26,21 @@ import {
   connectFirestoreEmulator,
 } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
 
+import {
+  getAnalytics,
+  logEvent,
+  setUserId as setAnalyticsUserId,
+} from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js';
+import {
+  getRemoteConfig,
+  fetchAndActivate,
+  getValue,
+} from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-remote-config.js';
+import {
+  initializeAppCheck,
+  ReCaptchaV3Provider,
+} from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-app-check.js';
+
 import { mergeFlmFiles, detectFlmHtmlType } from './flm-parser.js';
 import { normalizeCourse } from './course-payload.js';
 
@@ -42,6 +57,60 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
+
+// ── App Check (optional until a reCAPTCHA v3 key is registered) ──
+// The web app registration in Firebase Console provides the site key; keep it
+// in index.html as <meta name="recaptcha-site-key" content="...">.
+const recaptchaSiteKey = document
+  .querySelector('meta[name="recaptcha-site-key"]')
+  ?.getAttribute('content')
+  ?.trim();
+if (recaptchaSiteKey) {
+  try {
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(recaptchaSiteKey),
+      isTokenAutoRefreshEnabled: true,
+    });
+  } catch (error) {
+    console.warn('App Check init failed', error);
+  }
+} else {
+  console.info('App Check skipped: no reCAPTCHA site key configured.');
+}
+
+// ── Analytics (needs a registered Web App with measurementId) ──
+let analytics = null;
+try {
+  if (firebaseConfig.measurementId) analytics = getAnalytics(app);
+} catch (error) {
+  console.warn('Analytics unavailable', error);
+}
+
+function track(eventName, params = {}) {
+  if (!analytics) return;
+  try {
+    logEvent(analytics, eventName, params);
+  } catch (error) {
+    console.warn('logEvent failed', eventName, error);
+  }
+}
+
+// ── Remote Config: `maintenance_mode` drives the staff banner ──
+const remoteConfig = getRemoteConfig(app);
+remoteConfig.settings.minimumFetchIntervalMillis = 300000;
+
+async function applyRemoteConfig() {
+  try {
+    await fetchAndActivate(remoteConfig);
+    const maintenance = getValue(remoteConfig, 'maintenance_mode').asBoolean();
+    const banner = $('maintenance-banner');
+    if (banner) banner.style.display = maintenance ? 'flex' : 'none';
+    return maintenance;
+  } catch (error) {
+    console.warn('Remote Config fetch failed; keeping defaults', error);
+    return false;
+  }
+}
 
 if (window.location.search.includes('emulator=true')) {
   connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
@@ -412,6 +481,8 @@ async function verifyAccess(user) {
       photoURL: user.photoURL || '',
       role,
     };
+    if (analytics) setAnalyticsUserId(analytics, user.uid);
+    track('login', { method: 'google', role });
     enterApp();
     showToast(`Chào mừng ${state.currentUser.displayName} (${role.toUpperCase()})`, 'success');
   } catch (error) {
@@ -454,6 +525,7 @@ function enterApp() {
 
   startSubscriptions();
   switchView('dashboard');
+  applyRemoteConfig();
   refreshDashboardCounts();
 }
 
@@ -517,6 +589,28 @@ function handleSnapshotError(label, error) {
   showToast(`${label}: ${error.code || error.message}`, 'error', 5200);
 }
 
+// Persistent per-screen error state with retry. A toast disappears, so the
+// screen itself must state that data failed to load (Final §7).
+function showScreenError(view, label, error) {
+  const panel = $(`view-${view}`);
+  if (!panel) return;
+  let box = panel.querySelector('.screen-error');
+  if (!box) {
+    box = document.createElement('div');
+    box.className = 'screen-error';
+    panel.prepend(box);
+  }
+  box.innerHTML = `<div><strong>${esc(label)}</strong><p>${esc(error.code || error.message || String(error))}</p><button class="btn btn-outline btn-sm" type="button">Thử lại</button></div>`;
+  box.querySelector('button').addEventListener('click', () => {
+    box.remove();
+    startSubscriptions();
+  });
+}
+
+function clearScreenError(view) {
+  $(`view-${view}`)?.querySelector('.screen-error')?.remove();
+}
+
 function startSubscriptions() {
   state.unsubscribers.forEach(unsubscribe => {
     try {
@@ -529,10 +623,14 @@ function startSubscriptions() {
 
   const majorsUnsub = onSnapshot(collection(db, 'majors'), snapshot => {
     state.majors = snapshot.docs.map(item => ({ ...item.data(), _docId: item.id }));
+    clearScreenError('majors');
     if (state.activeView === 'majors') renderMajors();
     updateDashboardNumbers();
     renderDashboardCharts();
-  }, error => handleSnapshotError('Không tải được chuyên ngành', error));
+  }, error => {
+    handleSnapshotError('Không tải được chuyên ngành', error);
+    showScreenError('majors', 'Không tải được danh sách chuyên ngành', error);
+  });
   state.unsubscribers.push(majorsUnsub);
 
   const coursesUnsub = onSnapshot(collection(db, 'courses'), snapshot => {
@@ -546,7 +644,10 @@ function startSubscriptions() {
     });
     if (state.activeView === 'majors') renderMajors();
     renderDashboardCharts();
-  }, error => handleSnapshotError('Không tải được môn học', error));
+  }, error => {
+    handleSnapshotError('Không tải được môn học', error);
+    showScreenError('majors', 'Không tải được danh sách môn học', error);
+  });
   state.unsubscribers.push(coursesUnsub);
 
   const notesUnsub = onSnapshot(
@@ -559,7 +660,10 @@ function startSubscriptions() {
       renderDashboardNotes();
       if (state.activeView === 'reviews') renderReviewsTable();
     },
-    error => handleSnapshotError('Không tải được bí kíp sinh viên', error),
+    error => {
+      handleSnapshotError('Không tải được bí kíp sinh viên', error);
+      showScreenError('reviews', 'Không tải được hàng đợi duyệt', error);
+    },
   );
   state.unsubscribers.push(notesUnsub);
 
@@ -567,9 +671,13 @@ function startSubscriptions() {
     query(collection(db, 'announcements'), orderBy('publishedAt', 'desc')),
     snapshot => {
       state.announcements = snapshot.docs.map(item => ({ ...item.data(), _docId: item.id }));
+      clearScreenError('announcements');
       renderAnnouncements();
     },
-    error => handleSnapshotError('Không tải được thông báo', error),
+    error => {
+      handleSnapshotError('Không tải được thông báo', error);
+      showScreenError('announcements', 'Không tải được thông báo', error);
+    },
   );
   state.unsubscribers.push(announcementsUnsub);
 }
@@ -1655,6 +1763,7 @@ async function submitNoteDecision(status) {
       reviewedBy: auth.currentUser.uid,
       reviewedAt: serverTimestamp(),
     });
+    track('review_decision', { decision: status });
     showToast(status === 'approved' ? 'Đã duyệt bí kíp.' : 'Đã từ chối bí kíp.', 'success');
     closeModal('modal-review-note');
     state.currentReviewNoteId = null;
@@ -1730,6 +1839,7 @@ async function submitAnnouncement(event) {
     $('ann-body').value = '';
     $('ann-title-count').textContent = '0';
     $('ann-body-count').textContent = '0';
+    track('announcement_published', { role: state.currentUser?.role || 'staff' });
     showToast('Đã đăng thông báo tới ứng dụng di động.', 'success');
   } catch (error) {
     console.error('submitAnnouncement', error);

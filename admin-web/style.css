@@ -1,5 +1,5 @@
 /* ==========================================================================
-   FPTU Second Brain - Web Admin SPA
+   StudyPilot - Web Admin SPA
    Material Design 3 Design Tokens (from Lab 2 DESIGN.md)
    ========================================================================== */
 
@@ -1332,4 +1332,25 @@ textarea.form-control {
   padding: 28px 14px;
   color: var(--color-on-surface-variant);
   font-size: 13px;
+}
+
+/* Persistent data-load failure: stays on the screen after the toast fades. */
+.screen-error {
+  margin: 0 0 20px;
+  padding: 16px 20px;
+  border: 1px solid var(--color-error, #B42318);
+  border-left-width: 6px;
+  border-radius: var(--radius-md, 12px);
+  background: var(--color-error-container, #FEE4E2);
+  color: var(--color-on-error-container, #7A271A);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.screen-error p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  opacity: 0.85;
 }

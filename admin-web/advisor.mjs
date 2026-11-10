@@ -20,7 +20,7 @@ export function createGeminiAdvisor(apiKey, model = 'gemini-3.5-flash-lite', sen
         signal: AbortSignal.timeout(30000),
         body: JSON.stringify({
           systemInstruction: { parts: [{ text:
-            'Bạn là Cố vấn học tập AI (AI Tutor) cho FPTU Second Brain. Trả lời bằng tiếng Việt, ngắn gọn, dưới 250 từ. ' +
+            'Bạn là Cố vấn học tập AI (AI Tutor) cho StudyPilot. Trả lời bằng tiếng Việt, ngắn gọn, dưới 250 từ. ' +
             'Tuân thủ nghiêm ngặt ngữ cảnh đề cương được cung cấp (30 slots học, trọng số điểm PE/FE, chuẩn đầu ra) và kinh nghiệm từ tiền bối. ' +
             'Không tự bịa đặt thông tin; nếu thiếu thông tin, nói rõ điều chưa biết. ' +
             'Đưa ra lời khuyên thực tế về cách ôn thi PE/FE và các slot học then chốt. ' +
