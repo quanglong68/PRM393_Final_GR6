@@ -15,7 +15,9 @@ class AnnouncementsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ChangeNotifierProvider(
-    create: (_) => AnnouncementsViewModel(store: store)..loadData(),
+    create: (_) => AnnouncementsViewModel(
+      watchAnnouncements: store.watchAnnouncements,
+    )..loadData(),
     child: Scaffold(
       appBar: CustomAppBar(
         title: 'Thông báo hệ thống',

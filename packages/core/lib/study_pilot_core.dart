@@ -45,6 +45,13 @@ class StudyPlanSubmission {
 }
 
 class Announcement {
+  const Announcement({
+    required this.id,
+    required this.title,
+    required this.body,
+    this.publishedAt,
+  });
+
   Announcement.fromDocument(DocumentSnapshot<Map<String, dynamic>> doc)
     : id = doc.id,
       title = doc.get('title') as String? ?? '',

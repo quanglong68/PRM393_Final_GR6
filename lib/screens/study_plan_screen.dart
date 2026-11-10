@@ -51,7 +51,9 @@ class _StudyPlanScreenState extends State<StudyPlanScreen> {
       _generating = true;
       _draft = null;
     });
-    unawaited(analytics.logEvent('ai_request'));
+    unawaited(
+      analytics.logAiRequest(feature: 'study_plan', model: config.studyPlanModel),
+    );
     try {
       String? curriculumContext;
       try {
@@ -75,7 +77,9 @@ class _StudyPlanScreenState extends State<StudyPlanScreen> {
         setState(() => _draft = draft);
       }
     } catch (_) {
-      unawaited(analytics.logEvent('ai_error'));
+      unawaited(
+        analytics.logAiError(feature: 'study_plan', errorType: 'generation_failed'),
+      );
       if (mounted) {
         _message('AI chưa khả dụng. Bạn vẫn có thể nhập kế hoạch trực tiếp.');
       }
@@ -155,9 +159,9 @@ class _StudyPlanScreenState extends State<StudyPlanScreen> {
                           _summary.text = draft.editableText;
                           setState(() => _draft = null);
                           unawaited(
-                            context.read<AnalyticsService>().logEvent(
-                              'ai_result_accepted',
-                            ),
+                            context
+                                .read<AnalyticsService>()
+                                .logAiResultAccepted(feature: 'study_plan'),
                           );
                         },
                   child: const Text('Dùng'),
