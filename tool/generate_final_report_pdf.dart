@@ -332,8 +332,8 @@ void main() async {
           ],
           [
             'Slides + video',
-            'Slide 14 trang',
-            'Kịch bản video 8–12 phút tại docs/lab3-video-script.md'
+            'Đã có',
+            'Video 8–12 phút (Google Drive); bộ dựng slide kèm kịch bản quay'
           ],
         ],
         widths: [118, 82, 323],
@@ -912,7 +912,7 @@ void main() async {
             'Đã lưu ảnh',
             'RC Version 3, App Check, Crashlytics, Analytics (evidence/firebase/)'
           ],
-          ['Video', 'Có kịch bản', 'docs/lab3-video-script.md (8–12 phút)'],
+          ['Video', 'Đã có', 'Google Drive 8–12 phút (evidence/video/linkvideo.md)'],
           ['Đổi tên repo', 'Đã xong', 'Repo PRM393_Final_GR6 (G-08)'],
         ],
         widths: [110, 100, 313],
@@ -945,7 +945,7 @@ void main() async {
           ['AI level 2 + RC + App Check + fallback', 'Đạt'],
           ['ARTEMIS + rules + web checklist có bằng chứng', 'Đạt — 10 ca × 3 lượt, máy thật'],
           ['MVVM + shared package + ≥ 3 finding review', 'Đạt — CR-15…CR-31'],
-          ['README, report, slides, video', 'README/report/slide 14 trang; kịch bản video 8–12 phút'],
+          ['README, report, slides, video', 'README/report 12 trang; video Google Drive 8–12 phút'],
         ],
         widths: [360, 163],
       ),

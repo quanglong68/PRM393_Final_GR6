@@ -154,7 +154,7 @@ Không có API key hay service-account key trong repo. Khóa đặt trong `.env`
 
 ## 10. Video demo
 
-Thư mục [`video/`](video/) đã tạo sẵn cho bản quay **8–12 phút** (file video được thêm khi hoàn tất). Kịch bản quay: [docs/lab3-video-script.md](docs/lab3-video-script.md) — mobile flows → từng màn web → cross-role hai màn song song (duyệt bí kíp → trạng thái và tin nhắn Hòm thư cập nhật ngay) → AI bật/tắt bằng Remote Config → chạy ARTEMIS trên điện thoại thật.
+Video demo **8–12 phút**: [Google Drive](https://drive.google.com/file/d/1EOve41VFtF39aHkPeTcXwGSafXJzKy5F/view?usp=sharing) (xem thêm [`evidence/video/linkvideo.md`](evidence/video/linkvideo.md)). Kịch bản quay: [docs/lab3-video-script.md](docs/lab3-video-script.md) — mobile flows → từng màn web → cross-role hai màn song song (duyệt bí kíp → trạng thái và tin nhắn Hòm thư cập nhật ngay) → AI bật/tắt bằng Remote Config → chạy ARTEMIS trên điện thoại thật.
 
 ## 11. Cấu trúc repo
 

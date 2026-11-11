@@ -17,7 +17,7 @@ Nhóm GR6: Nguyễn Sỹ Thanh Tùng · Nguyễn Bá Thái Dương · Dương Qu
 | **AI** — level 2 | 1,0 | Đạt | Structured JSON → Dart model, người dùng sửa trước khi dùng; Remote Config 9 tham số, bản live v3 (10/11); App Check; fallback thủ công; 3 input/output thật trong `evidence/ai/`. |
 | **Testing** — tests | 0,5 | Đạt | Rules 17/17, web 14/14, Flutter 165/165; ARTEMIS 10 ca × 3 lượt trên giả lập; TC_10 3/3, TC_08 và TC_11 trên máy thật; hai phiên exploratory ARTEMIS Pro. |
 | **Testing** — kiến trúc + review | 0,5 | Đạt | MVVM + `packages/core`; CR-15…CR-31 có `file:line`, quyết định và commit; output Qoder 11/11 trong `evidence/code-review/`. |
-| **Slides + video** | 2,0 | Bàn giao | Slide Final 14 trang tại `slides/Final_GR6_slides.pdf`; báo cáo Final 12 trang tại `report/Final_GR6.pdf`; báo cáo Lab 3 10 trang tại `report/Lab03_STUDENT_ID.pdf`; thư mục `video/` đã tạo cho bản quay. |
+| **Slides + video** | 2,0 | Bàn giao | Video demo 8–12 phút: Google Drive (xem `evidence/video/linkvideo.md`); báo cáo Final 12 trang tại `report/Final_GR6.pdf`; báo cáo Lab 3 10 trang tại `report/Lab03_STUDENT_ID.pdf`; bộ dựng slide tại `tool/generate_final_slides_pdf.dart`. |
 
 ## 2. Mobile — đối chiếu Lab 2 / Lab 3
 
