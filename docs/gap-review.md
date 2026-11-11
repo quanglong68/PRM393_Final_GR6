@@ -8,14 +8,14 @@ Nhóm GR6: Nguyễn Sỹ Thanh Tùng · Nguyễn Bá Thái Dương · Dương Qu
 
 | Tiêu chí | Điểm | Trạng thái | Bằng chứng trong repo |
 |---|---|---|---|
-| **Mobile** — Lab 2 + Lab 3 hoàn chỉnh | 1,25 | Đạt | 8 màn hình Lab 2 + các màn mở rộng trong `lib/screens/` (18 file); 164 test pass; ARTEMIS 10 ca × 3 lượt trên giả lập và TC_08/TC_10/TC_11 trên máy thật; APK debug/release build được. |
+| **Mobile** — Lab 2 + Lab 3 hoàn chỉnh | 1,25 | Đạt | 8 màn hình Lab 2 + các màn mở rộng trong `lib/screens/` (18 file); 165 test pass; ARTEMIS 10 ca × 3 lượt trên giả lập và TC_08/TC_10/TC_11 trên máy thật; APK debug/release build được. |
 | **Mobile** — dữ liệu Firestore + inbox | 0,75 | Đạt | Không còn mock/seed; môn, đề cương, bí kíp, thông báo đọc từ Firestore; `AnnouncementsViewModel` + listener realtime (`f2b2cb0`). |
 | **Web** — 4 màn hình + form thông báo | 1,25 | Đạt | `admin-web/`: đăng nhập, chuyên ngành (quản lý + import FLM), duyệt bí kíp, dashboard, thông báo; loading/empty/error từng màn (`c9b9985`); 14/14 test Node pass. |
 | **Web** — design system + deploy | 0,75 | Đạt | Deploy Firebase Hosting tại <https://prm323-lab2-gr6.web.app/>; dùng token/màu của Lab 2 và layout rộng; ảnh trang đăng nhập trong `evidence/firebase/auth/web-deploy-signin-2026-11-10.png`. |
-| **Backend** — data model + rules | 1,0 | Đạt | `docs/data-model.md` đủ collection/trường/quyền/chuyển trạng thái; rules deny-by-default, không `if true`; 15/15 test emulator pass; ruleset siết đã deploy live 10/11. |
+| **Backend** — data model + rules | 1,0 | Đạt | `docs/data-model.md` đủ collection/trường/quyền/chuyển trạng thái; rules deny-by-default, không `if true`; 17/17 test emulator pass; ruleset siết đã deploy live 11/11. |
 | **Backend** — cross-role flow | 1,0 | Đạt | Mobile gửi bí kíp `pending` → web duyệt kèm lý do → mobile nhận snapshot realtime; `docs/cross-role-flow.md` có sequence diagram. |
 | **AI** — level 2 | 1,0 | Đạt | Structured JSON → Dart model, người dùng sửa trước khi dùng; Remote Config 9 tham số, bản live v3 (10/11); App Check; fallback thủ công; 3 input/output thật trong `evidence/ai/`. |
-| **Testing** — tests | 0,5 | Đạt | Rules 15/15, web 14/14, Flutter 164/164; ARTEMIS 10 ca × 3 lượt trên giả lập; TC_10 3/3, TC_08 và TC_11 trên máy thật; hai phiên exploratory ARTEMIS Pro. |
+| **Testing** — tests | 0,5 | Đạt | Rules 17/17, web 14/14, Flutter 165/165; ARTEMIS 10 ca × 3 lượt trên giả lập; TC_10 3/3, TC_08 và TC_11 trên máy thật; hai phiên exploratory ARTEMIS Pro. |
 | **Testing** — kiến trúc + review | 0,5 | Đạt | MVVM + `packages/core`; CR-15…CR-31 có `file:line`, quyết định và commit; output Qoder 11/11 trong `evidence/code-review/`. |
 | **Slides + video** | 2,0 | Bàn giao | Slide Final 14 trang tại `slides/Final_GR6_slides.pdf`; báo cáo Final 12 trang tại `report/Final_GR6.pdf`; báo cáo Lab 3 10 trang tại `report/Lab03_STUDENT_ID.pdf`; thư mục `video/` đã tạo cho bản quay. |
 
@@ -61,7 +61,7 @@ URL công khai: <https://prm323-lab2-gr6.web.app/> (trang đăng nhập đã ch�
 - `firebase/remote-config-template.json` khớp 9 tham số app đọc; đã publish **Version 3** trên project `prm323-lab2-gr6` (ảnh `evidence/firebase/remote-config/console-params*-2026-11-10.png`).
 - App Check (10/11): Firestore Monitoring 65% verified / 35% unverified; Authentication Monitoring; Firebase AI Logic Basic – Enforced 100%. Mobile dùng debug token cố định cho bản demo sideload.
 - Tên hiển thị ứng dụng Firebase: **StudyPilot** (Management API); Crashlytics/App Check hiển thị đúng tên mới.
-- Ruleset siết 10/11 đã deploy live; bằng chứng `evidence/firebase/firestore/rules-api-verification-2026-11-10.json` (`codeMatchIgnoringComments: true`).
+- Ruleset siết đã deploy live ngày 11/11; bằng chứng `evidence/firebase/firestore/rules-api-verification-2026-11-11.json` (`exactMatch: true`).
 
 ## 5. AI
 
@@ -76,7 +76,7 @@ URL công khai: <https://prm323-lab2-gr6.web.app/> (trang đăng nhập đã ch�
 | Hạng mục | Bằng chứng |
 |---|---|
 | Web deploy | `evidence/firebase/auth/web-deploy-signin-2026-11-10.png`; URL `https://prm323-lab2-gr6.web.app/` |
-| Rules live | `evidence/firebase/firestore/rules-api-verification-2026-11-10.json` |
+| Rules live | `evidence/firebase/firestore/rules-api-verification-2026-11-11.json` |
 | Remote Config | `evidence/firebase/remote-config/console-params-2026-11-10.png`, `console-params-2-2026-11-10.png` |
 | Analytics | `evidence/firebase/analytics/debugview-2026-11-07.json`, `debugview-console-2026-11-10.png` |
 | Crashlytics | `evidence/firebase/crashlytics/dashboard-2026-11-10.png`, `issues-2026-11-10.png` |

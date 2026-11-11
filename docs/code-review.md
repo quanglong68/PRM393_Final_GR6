@@ -19,20 +19,20 @@ Phạm vi: toàn bộ thay đổi so với baseline `aebf28a`, tập trung vào 
 | CR-23 | Medium | `e2e_test/test_instrumentation_errors.py:11-14` | E2E còn test từ chối email ngoài `@fpt.edu.vn`, trong khi quy tắc đó đã bị bỏ; test sẽ fail giả. | Accepted | Thay bằng case huỷ Google picker, kiểm tra thông điệp và trạng thái đăng xuất. | `bd4c989` |
 | CR-24 | Low | `docs/design-traceability.md`, `docs/architecture.md`, `docs/analytics-plan.md`, `docs/test-plan.md` | Tài liệu lệch code (tên dự án, số màn hình, event, đầu mối test). | Accepted | Viết lại theo code và kết quả chạy thật. | commit tài liệu |
 | CR-25 | Low | `packages/core/pubspec.yaml:1` | Gói dùng chung và app còn tên cũ "Second Brain/FPTU", không thống nhất thương hiệu. | Accepted | Đổi thành `study_pilot_core` / StudyPilot; giữ nguyên `applicationId` để không phá Firebase binding. | `bd4c989` |
-| CR-26 | Medium | `firebase/tests/final.test.mjs:236` | Fixture rules test của `experience_notes` thiếu `title` dù UI và rules bắt buộc, khiến test đỏ dù sản phẩm đúng. | Accepted | Thêm `title` hợp lệ vào fixture; chạy emulator 15/15 pass. | `e5256c1` |
+| CR-26 | Medium | `firebase/tests/final.test.mjs:236` | Fixture rules test của `experience_notes` thiếu `title` dù UI và rules bắt buộc, khiến test đỏ dù sản phẩm đúng. | Accepted | Thêm `title` hợp lệ vào fixture; chạy emulator 16/16 pass. | `e5256c1` |
 | CR-28 | Medium | `lib/screens/study_plan_screen.dart:55,81,164` | `study_plan_screen` ghi `ai_request`/`ai_error`/`ai_result_accepted` bằng `logEvent` thô, thiếu tham số `feature`. | Accepted | Dùng `logAiRequest`/`logAiError`/`logAiResultAccepted` với `feature: 'study_plan'` và model từ Remote Config. | `4142399` |
 | CR-29 | Low | `test/viewmodels/announcements_viewmodel_test.dart:9` | Chưa có test tự động cho `AnnouncementsViewModel` sau khi thêm. | Accepted | ViewModel nhận hàm `watchAnnouncements`; test phủ loading/empty/data/error/retry. | `4142399` |
 | CR-30 | Low | `e2e_test/pyproject.toml:7`; `e2e_test/uv.lock:17` | Cần xác nhận `e2e_test/uv.lock` pin đúng ARTEMIS. | Resolved | `pyproject.toml` và `uv.lock` cùng ghim commit `351ca8422f7b5b54e80a9c1ce03a222e02415b6b`. | — |
-| CR-31 | High | `lib/services/report_export_service.dart:187-222`; `lib/screens/sync_vault_screen.dart:972-977` | Luồng xuất PDF await `saveReportMetadata` không có giới hạn thời gian; khi DNS/mạng hỏng, Future của Firestore không bao giờ hoàn tất nên UI đứng ở "Đang tải lên… 100%" dù file đã lên Cloudinary. | Accepted | Bọc `.timeout(12s)`; trả `metadataSynced=false` và hiện cảnh báo hàng đợi thay vì treo; thêm unit test với `Completer` chưa hoàn tất. `flutter analyze` sạch, 164/164 test pass. | working tree 11/11 |
+| CR-31 | High | `lib/services/report_export_service.dart:187-222`; `lib/screens/sync_vault_screen.dart:972-977` | Luồng xuất PDF await `saveReportMetadata` không có giới hạn thời gian; khi DNS/mạng hỏng, Future của Firestore không bao giờ hoàn tất nên UI đứng ở "Đang tải lên… 100%" dù file đã lên Cloudinary. | Accepted | Bọc `.timeout(12s)`; trả `metadataSynced=false` và hiện cảnh báo hàng đợi thay vì treo; thêm unit test với `Completer` chưa hoàn tất. `flutter analyze` sạch, 165/165 test pass. | working tree 11/11 |
 
 ### Kiểm chứng sau sửa
 
 | Kiểm tra | Kết quả |
 |---|---|
 | `flutter analyze` | No issues found |
-| `flutter test` | 164/164 pass (11/11/2026) |
+| `flutter test` | 165/165 pass (11/11/2026) |
 | `flutter build apk --debug` / `--release` | Thành công |
-| Rules emulator (`firebase emulators:exec`) | 15/15 pass |
+| Rules emulator (`firebase emulators:exec`) | 17/17 pass |
 | `node --test admin-web` | 14/14 pass |
 | `node --check admin-web/app.js` | Pass |
 

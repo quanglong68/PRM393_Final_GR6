@@ -24,7 +24,7 @@ Cập nhật: 2026-11-11. Tài liệu phân tách **kiểm thử tự động** 
 | `flutter test` | **PASS — 159 tests** | Chạy hermetic, không cần Firebase thật |
 | `flutter build apk --debug` | **PASS** | `build/app/outputs/flutter-apk/app-debug.apk` |
 | `flutter build apk --release` | **PASS** | `build/app/outputs/flutter-apk/app-release.apk` |
-| `cd firebase/tests && npm run test:emulator` | **PASS — 15/15 tests** | Firestore Emulator, project `demo-second-brain-final` |
+| `cd firebase/tests && npm run test:emulator` | **PASS — 17/17 tests** | Firestore Emulator, project `demo-second-brain-final` |
 | `cd admin-web && node --test` | **PASS — 14 tests** (9 parser + 5 server) | `flm-parser.test.mjs`, `server.test.mjs` |
 
 Bản đồ file test Flutter:

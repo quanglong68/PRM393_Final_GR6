@@ -246,9 +246,18 @@ class FakeFirestoreService implements FirestoreService {
     reports.add({'userId': userId, ...metadata});
   }
 
+  final StreamController<List<Map<String, dynamic>>> _notificationUpdates =
+      StreamController.broadcast();
+
   @override
   Future<List<Map<String, dynamic>>> getNotifications(String userId) async =>
       List.from(notifications);
+
+  @override
+  Stream<List<Map<String, dynamic>>> watchNotifications(String userId) async* {
+    yield List.from(notifications);
+    yield* _notificationUpdates.stream;
+  }
 
   @override
   Future<void> saveNotification(
@@ -264,6 +273,7 @@ class FakeFirestoreService implements FirestoreService {
     } else {
       notifications[index] = item;
     }
+    _notificationUpdates.add(List.from(notifications));
   }
 
   @override

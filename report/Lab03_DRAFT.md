@@ -26,7 +26,7 @@ Web admin đọc báo cáo Crashlytics qua Node và OAuth phía server. Trình d
 
 | Mục | Kết quả quan sát |
 |---|---|
-| Flutter | 164 unit/widget tests pass (`flutter test`, 11/11); `flutter analyze` 0 issue. |
+| Flutter | 165 unit/widget tests pass (`flutter test`, 11/11); `flutter analyze` 0 issue. |
 | FCM | Đã gửi và nhận trên emulator ở ba trạng thái, cold deep link mở PRM393. Script server mới gọi HTTP v1 validate_only thành công. |
 | Crashlytics | Native test crash và non-fatal đã có trong dashboard. API của web admin trả báo cáo thật và chặn truy cập chưa xác thực. |
 | Remote Config | App hiển thị 31 rồi 30 phút trên cùng APK, đọc lại 30 phút sau khi mở emulator. |

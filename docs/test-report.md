@@ -27,16 +27,16 @@ node --test
 | Lệnh | Kết quả | Ghi chú |
 |---|---|---|
 | `flutter analyze` | **0 issue** | Toàn bộ `lib/`, `packages/`, `test/`, `tool/` |
-| `flutter test` | **164/164 pass** | Hermetic, fake service, không cần Firebase |
+| `flutter test` | **165/165 pass** | Hermetic, fake service, không cần Firebase |
 | `flutter build apk --debug` | **PASS** | `build/app/outputs/flutter-apk/app-debug.apk` |
 | `flutter build apk --release` | **PASS** | `build/app/outputs/flutter-apk/app-release.apk` |
-| Rules Emulator | **15/15 pass** | `firebase/tests/final.test.mjs` |
+| Rules Emulator | **17/17 pass** | `firebase/tests/final.test.mjs` |
 | `node --test` (web) | **14/14 pass** | 9 parser FLM + 5 API server |
 | `node --check admin-web/app.js` | **PASS** | Cú pháp ES module |
 
-> **Phạm vi rules:** 15/15 là kết quả trên Firestore Emulator với project demo. Bản rules siết 10/11 (commit `e5256c1`) **đã deploy live**: ruleset tạo 2026-11-10T15:09:37Z, logic khớp `firebase/firestore.rules` sau khi bỏ comment (`codeMatchIgnoringComments: true`) — xem `evidence/firebase/firestore/rules-api-verification-2026-11-10.json`. G-09 đã đóng.
+> **Phạm vi rules:** 17/17 là kết quả trên Firestore Emulator với project demo. Bản rules siết **đã deploy live ngày 11/11**: ruleset tạo 2026-11-11T03:22:05Z, logic khớp tuyệt đối `firebase/firestore.rules` (`exactMatch: true`) — xem `evidence/firebase/firestore/rules-api-verification-2026-11-11.json`. G-09 đã đóng.
 
-> **Cập nhật 11/11/2026:** `flutter test` **164/164 pass**, `flutter analyze` 0 issue — thêm 4 test trong `test/sync_vault_flow_test.dart` (D-01 hủy/xác nhận, SyncError + Thử lại, Back về Home), 1 test metadata timeout trong `test/services/report_export_service_test.dart`, và sửa mốc Undo 8 s trong `test/regression_widget_test.dart`. APK debug build lại với `--dart-define=REPORT_MEDIA_URL=http://127.0.0.1:8788`; export + upload Cloudinary đã verify trên máy thật `GQDIV8HUPJWK79XC` (upload 37273 bytes, `export_report status=success`, metadata đọc lại từ Firestore, tải lại PDF mở share sheet) — xem `evidence/app/export-cloudinary-2026-11-11/`.
+> **Cập nhật 11/11/2026:** `flutter test` **165/165 pass**, `flutter analyze` 0 issue — thêm 4 test trong `test/sync_vault_flow_test.dart` (D-01 hủy/xác nhận, SyncError + Thử lại, Back về Home), 1 test metadata timeout trong `test/services/report_export_service_test.dart`, và sửa mốc Undo 8 s trong `test/regression_widget_test.dart`. APK debug build lại với `--dart-define=REPORT_MEDIA_URL=http://127.0.0.1:8788`; export + upload Cloudinary đã verify trên máy thật `GQDIV8HUPJWK79XC` (upload 37273 bytes, `export_report status=success`, metadata đọc lại từ Firestore, tải lại PDF mở share sheet) — xem `evidence/app/export-cloudinary-2026-11-11/`.
 
 ### 2.1 Rules — phạm vi 15 test
 
@@ -130,20 +130,20 @@ Review chạy trên working tree và lịch sử Git nhánh `main`; không giả
 
 | ID | Phát hiện | Quyết định | Kiểm chứng |
 |---|---|---|---|
-| CR-15 | `AdvisorViewModel` import trực tiếp `cloud_firestore`, `firebase_ai` | Tách `AiService`/`GeminiAiService`, inject qua Provider | Analyze sạch, 164 test pass (`bd4c989`) |
+| CR-15 | `AdvisorViewModel` import trực tiếp `cloud_firestore`, `firebase_ai` | Tách `AiService`/`GeminiAiService`, inject qua Provider | Analyze sạch, 165 test pass (`bd4c989`) |
 | CR-16 | Role gate đọc Firestore SDK trong widget | Thêm `watchUserRole` ở service layer | Test role gate pass (`bd4c989`) |
 | CR-17 | Một dịch vụ Firebase lỗi chặn toàn app | Cô lập từng bước trong `try/catch`, lỗi cốt lõi vẫn chặn | Build/run ổn định (`bd4c989`) |
 | CR-18 | Sync Vault để lại task "Connectivity check" | Ghi marker, đọc lại, xóa đúng bản ghi vừa tạo | Chạy lại sync không còn rác (`f2b2cb0`) |
-| CR-20 | Rules cho phép hồ sơ tự khai `admin`, audit log nhận mọi trường | Chặn `admin != false`, giới hạn 40 trường; audit log 3 trường | Rules 15/15 (`e5256c1`) |
+| CR-20 | Rules cho phép hồ sơ tự khai `admin`, audit log nhận mọi trường | Chặn `admin != false`, giới hạn 40 trường; audit log 3 trường | Rules 16/16 (`e5256c1`) |
 | CR-21 | Listener web lỗi chỉ log console, màn trắng | Banner lỗi + nút thử lại từng màn; thêm Analytics/RC/App Check | `node --check` + test web pass (`c9b9985`) |
-| CR-31 | Ghi metadata Firestore không có timeout, UI treo ở 100% khi mất DNS | `.timeout(12s)` + `metadataSynced=false` + cảnh báo hàng đợi | 164/164 test pass, analyze sạch (working tree 11/11) |
+| CR-31 | Ghi metadata Firestore không có timeout, UI treo ở 100% khi mất DNS | `.timeout(12s)` + `metadataSynced=false` + cảnh báo hàng đợi | 165/165 test pass, analyze sạch (working tree 11/11) |
 
 Nợ kỹ thuật còn mở: CR-27 (ba widget gọi thẳng `FinalFirestore`). CR-28 (event AI thiếu `feature`) và CR-29 (test `AnnouncementsViewModel`) đã đóng ở `4142399`; CR-30 đã xác nhận `uv.lock` ghim commit ARTEMIS.
 
 ## 6. Hạng mục đã kiểm chứng
 
-- [x] Analyze 0 issue, 164 test pass, build debug/release.
-- [x] Rules 15/15 trên emulator; bản rules siết đã deploy live ngày 10/11.
+- [x] Analyze 0 issue, 165 test pass, build debug/release.
+- [x] Rules 17/17 trên emulator; bản rules siết đã deploy live ngày 11/11.
 - [x] Web 14/14 test.
 - [x] AI có 3 output thật + 1 ca lỗi được xử lý.
 - [x] ≥ 5 finding review có quyết định, `file:line` và commit sửa; artefact Qoder 11/11.
