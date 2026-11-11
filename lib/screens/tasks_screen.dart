@@ -37,32 +37,35 @@ class TasksScreen extends StatelessWidget {
               horizontal: AppSpacing.md,
               vertical: AppSpacing.xs,
             ),
-            child: Row(
-              children: [
-                ChoiceChip(
-                  label: const Text('Tất cả'),
-                  selected: tasksVm.currentFilter == 'all',
-                  onSelected: (selected) {
-                    if (selected) tasksVm.setFilter('all');
-                  },
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                ChoiceChip(
-                  label: Text('Chưa xong (${tasksVm.pendingCount})'),
-                  selected: tasksVm.currentFilter == 'pending',
-                  onSelected: (selected) {
-                    if (selected) tasksVm.setFilter('pending');
-                  },
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                ChoiceChip(
-                  label: Text('Đã xong (${tasksVm.completedCount})'),
-                  selected: tasksVm.currentFilter == 'completed',
-                  onSelected: (selected) {
-                    if (selected) tasksVm.setFilter('completed');
-                  },
-                ),
-              ],
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  ChoiceChip(
+                    label: const Text('Tất cả'),
+                    selected: tasksVm.currentFilter == 'all',
+                    onSelected: (selected) {
+                      if (selected) tasksVm.setFilter('all');
+                    },
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  ChoiceChip(
+                    label: Text('Chưa xong (${tasksVm.pendingCount})'),
+                    selected: tasksVm.currentFilter == 'pending',
+                    onSelected: (selected) {
+                      if (selected) tasksVm.setFilter('pending');
+                    },
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  ChoiceChip(
+                    label: Text('Đã xong (${tasksVm.completedCount})'),
+                    selected: tasksVm.currentFilter == 'completed',
+                    onSelected: (selected) {
+                      if (selected) tasksVm.setFilter('completed');
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
           if (tasksVm.dueSoonCount > 0) _DueSoonBanner(vm: tasksVm),
