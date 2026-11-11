@@ -1,6 +1,6 @@
-# PRM393 Lab 3 — FPTU Second Brain
+# PRM393 Lab 3 — StudyPilot (GR6)
 
-Bản nội dung báo cáo ngày 07/11/2026. Trang bìa và tên file nộp chờ tên và MSSV. Android package là `com.example.prm323_lab3`.
+Bản nội dung báo cáo cập nhật 11/11/2026 (bản 07/11 được thay khi bổ sung minh chứng Cloudinary và số liệu kiểm thử mới). Tên cũ "FPTU Second Brain" chỉ còn trong lịch sử; mã package giữ nguyên để không phá liên kết Firebase. Trang bìa và tên file nộp dùng tên nhóm và MSSV khi xuất bản. Android package là `com.example.prm323_lab3`.
 
 ## 1. Mục tiêu và phạm vi
 
@@ -26,11 +26,11 @@ Web admin đọc báo cáo Crashlytics qua Node và OAuth phía server. Trình d
 
 | Mục | Kết quả quan sát |
 |---|---|
-| Flutter | 124 unit/widget tests pass. |
+| Flutter | 164 unit/widget tests pass (`flutter test`, 11/11); `flutter analyze` 0 issue. |
 | FCM | Đã gửi và nhận trên emulator ở ba trạng thái, cold deep link mở PRM323. Script server mới gọi HTTP v1 validate_only thành công. |
 | Crashlytics | Native test crash và non-fatal đã có trong dashboard. API của web admin trả báo cáo thật và chặn truy cập chưa xác thực. |
 | Remote Config | App hiển thị 31 rồi 30 phút trên cùng APK, đọc lại 30 phút sau khi mở emulator. |
-| PDF, tệp đính kèm và Gemini | Pixel 7 giả lập đã mở báo cáo từ lịch sử. Cloudinary trả 404 cho đúng tệp thử sau khi gỡ và Firestore giữ ghi chú. Gemini thật trả lời đúng PRM323 có 3 tín chỉ. |
+| PDF, tệp đính kèm và Gemini | 11/11 trên máy thật GQDIV8HUPJWK79XC: consent hiện trước khi upload, tệp 37.273 byte lên Cloudinary, Firestore chỉ ghi metadata sau khi dịch vụ trả 201, tải lại được đúng URL. Trước đó Firebase Storage trả 404 vì bucket chưa tồn tại trên gói Spark. Gemini thật trả lời đúng PRM323 có 3 tín chỉ. Chi tiết: [verification.json](../evidence/app/export-cloudinary-2026-11-11/verification.json). |
 | Analytics | DebugView xác nhận tám loại event trong lượt ngày 07/11. Log SDK đối chiếu `export_report` có `status=success`. Lượt trước đã thấy `export_report_local` và `course_count=4`. |
 | ARTEMIS | TC_11 pass 3/3 lượt ngày 07/11, trung bình 31,66 giây theo pytest. Xem mục lục minh chứng để theo dõi batch. |
 | AI review | Review local trên baseline `b69dc71` bổ sung năm findings. Ba sửa lỗi đã tách theo nhóm file và qua kiểm thử. PR và hash commit còn chờ. |

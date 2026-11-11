@@ -15,7 +15,7 @@ Repo nộp: <https://github.com/quanglong68/PRM393_Final_GR6>. Web admin: <https
 | [docs/ai-feature.md](docs/ai-feature.md) | Tính năng Gemini, Remote Config, App Check, fallback, 3 input/output thật |
 | [docs/test-report.md](docs/test-report.md) | Kết quả test, rules, review code và bằng chứng |
 | [docs/test-plan.md](docs/test-plan.md) | Ma trận 26 kịch bản E2E và điều kiện thoát |
-| [docs/code-review.md](docs/code-review.md) | Finding CR-01…CR-30, quyết định và commit sửa |
+| [docs/code-review.md](docs/code-review.md) | Finding CR-01…CR-31, `file:line`, quyết định và commit sửa |
 | [report/Final_GR6.pdf](report/Final_GR6.pdf) | Báo cáo Final 10–15 trang |
 | [slides/Final_GR6_slides.pdf](slides/Final_GR6_slides.pdf) | Slide Final 12–15 trang |
 
@@ -97,7 +97,7 @@ firebase deploy --only firestore:rules,firestore:indexes,remoteconfig
 - App Check bật cho Firestore và AI Logic.
 - Không dùng Cloud Functions/Cloud Storage/App Hosting theo phạm vi đề.
 
-> **Trạng thái deploy:** bản rules đã pass 15/15 test trên emulator là bản siết ngày 10/11 nhưng **chưa deploy** — release remote hiện tại vẫn là 04/11 (`evidence/firebase/firestore/rules-api-verification-2026-11-04.json`). Việc deploy nằm trong hạng mục G-09 của [gap review](docs/gap-review.md).
+> **Trạng thái deploy:** bản rules siết ngày 10/11 đã pass 15/15 test trên emulator và **đã deploy live** — ruleset tạo 2026-11-10T15:09:37Z, logic khớp `firebase/firestore.rules` sau khi bỏ comment (`codeMatchIgnoringComments: true`), xem `evidence/firebase/firestore/rules-api-verification-2026-11-10.json`.
 
 ## 6. Kiến trúc
 
@@ -133,14 +133,14 @@ Chi tiết: [docs/architecture.md](docs/architecture.md).
 | Lớp | Kết quả | Bằng chứng |
 |---|---|---|
 | `flutter analyze` | 0 issue | — |
-| `flutter test` | 159/159 pass | — |
+| `flutter test` | 164/164 pass | `test/` (11/11) |
 | Rules emulator | 15/15 pass | `firebase/tests/final.test.mjs` |
 | Web Node | 14/14 pass | `admin-web/*.test.mjs` |
 | Build APK | debug + release pass | `build/app/outputs/flutter-apk/` |
-| ARTEMIS | 10 ca × 3 lượt pass trên giả lập; TC_14 và exploratory chưa đạt | `evidence/artemis/` |
+| ARTEMIS | 10 ca × 3 lượt pass trên giả lập; TC_10 3/3, TC_08 và TC_11 trên máy thật | `evidence/artemis/2026-11-07-flash-lite.md`, `2026-11-08-completion.md`, `results-20261111T025227741246Z.md` |
 | AI model | 3 output hợp lệ + 1 ca lỗi | `evidence/ai/` |
 
-Trạng thái đầy đủ và các mục còn chờ: [docs/test-report.md](docs/test-report.md).
+Trạng thái đầy đủ: [docs/test-report.md](docs/test-report.md).
 
 ## 9. AI tools đã dùng
 
@@ -153,11 +153,7 @@ Không có API key hay service-account key trong repo. Khóa đặt trong `.env`
 
 ## 10. Video demo
 
-```text
-<dán link video 8–12 phút>
-```
-
-Kịch bản quay: [docs/lab3-video-script.md](docs/lab3-video-script.md) — mobile flows → từng màn web → cross-role hai màn song song → AI bật/tắt bằng Remote Config → chạy test.
+Thư mục [`video/`](video/) đã tạo sẵn cho bản quay 5–10 phút (file video được thêm khi hoàn tất). Kịch bản quay: [docs/lab3-video-script.md](docs/lab3-video-script.md) — mobile flows → từng màn web → cross-role hai màn song song → AI bật/tắt bằng Remote Config → chạy test.
 
 ## 11. Cấu trúc repo
 
