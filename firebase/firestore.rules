@@ -255,9 +255,12 @@ service cloud.firestore {
         data.authorName is string && data.authorName.size() >= 1 && data.authorName.size() <= 80 &&
         data.get('title', '') is string && data.title.size() >= 3 && data.title.size() <= 120 &&
         data.content is string && data.content.size() >= 20 && data.content.size() <= 2000 &&
-        data.get('lecturerTip', '') is string && data.lecturerTip.size() <= 500 &&
-        data.get('examTip', '') is string && data.examTip.size() <= 500 &&
-        data.get('rating', 0) is int && data.get('rating', 0) >= 0 && data.get('rating', 0) <= 5 &&
+        (!data.keys().hasAny(['lecturerTip']) ||
+          (data.lecturerTip is string && data.lecturerTip.size() <= 500)) &&
+        (!data.keys().hasAny(['examTip']) ||
+          (data.examTip is string && data.examTip.size() <= 500)) &&
+        (!data.keys().hasAny(['rating']) ||
+          (data.rating is int && data.rating >= 0 && data.rating <= 5)) &&
         data.status == 'pending' && data.createdAt == request.time &&
         !data.keys().hasAny(['reason', 'reviewedBy', 'reviewedAt']);
     }
