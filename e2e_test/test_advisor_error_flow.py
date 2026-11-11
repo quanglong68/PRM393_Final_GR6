@@ -12,8 +12,9 @@ async def test_TC_08_advisor_course_question(artemis):
         {'reply': 'literal reply text'},
     )
     assert 'PRM393' in observed['native_visible_text']
-    assert 'tín chỉ' in observed['reply'].casefold()
+    assert 'tín chỉ' in observed['native_visible_text'].casefold()
     assert 'Nguồn:' in observed['native_visible_text']
+    assert 'PRM393' in observed['reply']
 
 @require_artemis
 async def test_TC_09_empty_search_recovery(artemis):
