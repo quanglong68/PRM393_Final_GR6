@@ -794,7 +794,7 @@ void main() async {
           pw.TableRow(children: [
             pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text('Báo cáo & Slide', style: pw.TextStyle(font: fontRegular, fontSize: 9))),
             pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text('Report 8-12 trang, Slide 12-15 tr', style: pw.TextStyle(font: fontRegular, fontSize: 9))),
-            pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text('report/Lab03_[StudentID].pdf, slides/...', style: pw.TextStyle(font: fontRegular, fontSize: 9))),
+            pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text('report/PRM393_LAB3_GR6.pdf, slides/...', style: pw.TextStyle(font: fontRegular, fontSize: 9))),
             pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text('ĐÃ KẾT XUẤT', style: pw.TextStyle(font: fontBold, fontSize: 9, color: PdfColors.green800))),
           ]),
           pw.TableRow(children: [

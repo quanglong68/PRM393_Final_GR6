@@ -150,7 +150,7 @@ void main() async {
             pw.Text('Repository: PRM393_Final_GR6',
                 style: pw.TextStyle(font: fontBold, fontSize: 10, color: PdfColors.red800)),
             pw.SizedBox(height: 4),
-            pw.Text('Repository nộp: PRM393_Lab03_[StudentID] (Gốc: prm323-lab2-gr6)',
+            pw.Text('Repository nộp: PRM393_Final_GR6 (Gốc: prm323-lab2-gr6)',
                 style: pw.TextStyle(font: fontRegular, fontSize: 9, color: PdfColors.grey700)),
           ]),
           pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
@@ -929,7 +929,7 @@ void main() async {
       ),
       pw.SizedBox(height: 6),
       pw.Text('KẾ HOẠCH HÀNH ĐỘNG CUỐI CÙNG TRƯỚC KHI NỘP: '
-          '(1) Điền Student ID; (2) Chạy ARTEMIS trên emulator khi có quota; (3) Chụp 6 màn hình Firebase Console; (4) Quay video demo 5–10 phút; (5) Đổi tên repo thành PRM393_Lab03_[StudentID].',
+          'Định danh nhóm: GR6 · Repo: PRM393_Final_GR6.',
           style: pw.TextStyle(font: fontRegular, fontSize: 7, color: PdfColors.grey800)),
     ],
   ));
