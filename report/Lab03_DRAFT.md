@@ -27,13 +27,13 @@ Web admin đọc báo cáo Crashlytics qua Node và OAuth phía server. Trình d
 | Mục | Kết quả quan sát |
 |---|---|
 | Flutter | 164 unit/widget tests pass (`flutter test`, 11/11); `flutter analyze` 0 issue. |
-| FCM | Đã gửi và nhận trên emulator ở ba trạng thái, cold deep link mở PRM323. Script server mới gọi HTTP v1 validate_only thành công. |
+| FCM | Đã gửi và nhận trên emulator ở ba trạng thái, cold deep link mở PRM393. Script server mới gọi HTTP v1 validate_only thành công. |
 | Crashlytics | Native test crash và non-fatal đã có trong dashboard. API của web admin trả báo cáo thật và chặn truy cập chưa xác thực. |
 | Remote Config | App hiển thị 31 rồi 30 phút trên cùng APK, đọc lại 30 phút sau khi mở emulator. |
-| PDF, tệp đính kèm và Gemini | 11/11 trên máy thật GQDIV8HUPJWK79XC: consent hiện trước khi upload, tệp 37.273 byte lên Cloudinary, Firestore chỉ ghi metadata sau khi dịch vụ trả 201, tải lại được đúng URL. Trước đó Firebase Storage trả 404 vì bucket chưa tồn tại trên gói Spark. Gemini thật trả lời đúng PRM323 có 3 tín chỉ. Chi tiết: [verification.json](../evidence/app/export-cloudinary-2026-11-11/verification.json). |
+| PDF, tệp đính kèm và Gemini | 11/11 trên máy thật GQDIV8HUPJWK79XC: consent hiện trước khi upload, tệp 37.273 byte lên Cloudinary, Firestore chỉ ghi metadata sau khi dịch vụ trả 201, tải lại được đúng URL. Trước đó Firebase Storage trả 404 vì bucket chưa tồn tại trên gói Spark. Gemini thật trả lời đúng PRM393 có 3 tín chỉ. Chi tiết: [verification.json](../evidence/app/export-cloudinary-2026-11-11/verification.json). |
 | Analytics | DebugView xác nhận tám loại event trong lượt ngày 07/11. Log SDK đối chiếu `export_report` có `status=success`. Lượt trước đã thấy `export_report_local` và `course_count=4`. |
-| ARTEMIS | TC_11 pass 3/3 lượt ngày 07/11, trung bình 31,66 giây theo pytest. Xem mục lục minh chứng để theo dõi batch. |
-| AI review | Review local trên baseline `b69dc71` bổ sung năm findings. Ba sửa lỗi đã tách theo nhóm file và qua kiểm thử. PR và hash commit còn chờ. |
+| ARTEMIS | Mười ca × 3 lượt pass trên Pixel 7 giả lập; TC_11 pass 3/3 (20,3 giây/lượt), TC_13 pass 3/3 (57,51 giây). Máy thật: TC_08 92,20 giây, TC_11 41,56 giây, TC_10 3/3 (224,02 giây/lượt). |
+| AI review | Review Qoder 11/11: CR-15…CR-31 có `file:line` và quyết định; artefact `evidence/code-review/qoder-review-2026-11-11.md`. Sửa lỗi ở các commit `bd4c989`, `f2b2cb0`, `e5256c1`, `c9b9985`, `4142399`, `f971262`. |
 
 Xem [mục lục bằng chứng](../evidence/README.md), [DebugView](../evidence/firebase/analytics/debugview-2026-11-07.json) và [hướng dẫn demo](../docs/lab3-oral-defense.md).
 

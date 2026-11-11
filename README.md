@@ -16,6 +16,7 @@ Repo nộp: <https://github.com/quanglong68/PRM393_Final_GR6>. Web admin: <https
 | [docs/test-report.md](docs/test-report.md) | Kết quả test, rules, review code và bằng chứng |
 | [docs/test-plan.md](docs/test-plan.md) | Ma trận 26 kịch bản E2E và điều kiện thoát |
 | [docs/code-review.md](docs/code-review.md) | Finding CR-01…CR-31, `file:line`, quyết định và commit sửa |
+| [report/Lab03_STUDENT_ID.pdf](report/Lab03_STUDENT_ID.pdf) | Báo cáo Lab 3, 10 trang (đổi tên theo MSSV khi nộp) |
 | [report/Final_GR6.pdf](report/Final_GR6.pdf) | Báo cáo Final 10–15 trang |
 | [slides/Final_GR6_slides.pdf](slides/Final_GR6_slides.pdf) | Slide Final 12–15 trang |
 
