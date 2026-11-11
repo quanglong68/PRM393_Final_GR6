@@ -17,7 +17,7 @@ Nhóm GR6: Nguyễn Sỹ Thanh Tùng · Nguyễn Bá Thái Dương · Dương Qu
 | **AI** — level 2 | 1,0 | Đạt | Structured JSON → Dart model, người dùng sửa trước khi dùng; Remote Config 9 tham số, bản live v3 (10/11); App Check; fallback thủ công; 3 input/output thật trong `evidence/ai/`. |
 | **Testing** — tests | 0,5 | Đạt | Rules 17/17, web 14/14, Flutter 165/165; ARTEMIS 10 ca × 3 lượt trên giả lập; TC_10 3/3, TC_08 và TC_11 trên máy thật; hai phiên exploratory ARTEMIS Pro. |
 | **Testing** — kiến trúc + review | 0,5 | Đạt | MVVM + `packages/core`; CR-15…CR-31 có `file:line`, quyết định và commit; output Qoder 11/11 trong `evidence/code-review/`. |
-| **Slides + video** | 2,0 | Bàn giao | Video demo 8–12 phút: Google Drive (xem `evidence/video/linkvideo.md`); báo cáo Final 12 trang tại `report/Final_GR6.pdf`; báo cáo Lab 3 10 trang tại `report/Lab03_STUDENT_ID.pdf`; bộ dựng slide tại `tool/generate_final_slides_pdf.dart`. |
+| **Slides + video** | 2,0 | Bàn giao | Video demo 8–12 phút: Google Drive (xem `evidence/video/linkvideo.md`); báo cáo Final 12 trang tại `report/Final_GR6.pdf`; báo cáo Lab 3 10 trang tại `report/Lab03_STUDENT_ID.pdf`; slide Lab 3 và Final đặt riêng trong `slides/` theo `slides/README.md`. |
 
 ## 2. Mobile — đối chiếu Lab 2 / Lab 3
 
@@ -83,9 +83,9 @@ URL công khai: <https://prm323-lab2-gr6.web.app/> (trang đăng nhập đã ch�
 | ARTEMIS | `evidence/artemis/2026-11-07-flash-lite.md`, `2026-11-07-regression.md`, `2026-11-08-completion.md`, `results-20261111T025227741246Z.md`, `runs/` |
 | Xuất PDF + Cloudinary | `evidence/app/export-cloudinary-2026-11-11/verification.json` |
 | AI review | `evidence/code-review/qoder-review-2026-11-11.md` |
-| Báo cáo / slide | `report/Lab03_STUDENT_ID.pdf`, `report/Final_GR6.pdf`, `slides/Final_GR6_slides.pdf` |
+| Báo cáo / slide | `report/Lab03_STUDENT_ID.pdf`, `report/Final_GR6.pdf`, `slides/README.md` (nơi đặt slide Lab 3 + Final) |
 | Video | thư mục `video/` sẵn sàng cho bản quay theo `docs/lab3-video-script.md` |
 
 ## 7. Kết luận
 
-Code, rules, dữ liệu Firestore, tài liệu và kiểm thử tự động đã đóng gói trong repo. ARTEMIS có bảng kết quả theo ca, trace/ảnh từng lượt và hai phiên exploratory. Báo cáo Lab 3 10 trang và báo cáo Final 12 trang nằm trong `report/`; slide Final trong `slides/`. Mọi số liệu trong tài liệu đều trỏ tới tệp bằng chứng tương ứng.
+Code, rules, dữ liệu Firestore, tài liệu và kiểm thử tự động đã đóng gói trong repo. ARTEMIS có bảng kết quả theo ca, trace/ảnh từng lượt và hai phiên exploratory. Báo cáo Lab 3 10 trang và báo cáo Final 12 trang nằm trong `report/`; slide Lab 3 và Final đặt trong `slides/` theo hướng dẫn tại đó. Mọi số liệu trong tài liệu đều trỏ tới tệp bằng chứng tương ứng.

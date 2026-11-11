@@ -18,7 +18,7 @@ Repo nộp: <https://github.com/quanglong68/PRM393_Final_GR6>. Web admin: <https
 | [docs/code-review.md](docs/code-review.md) | Finding CR-01…CR-31, `file:line`, quyết định và commit sửa |
 | [report/Lab03_STUDENT_ID.pdf](report/Lab03_STUDENT_ID.pdf) | Báo cáo Lab 3, 10 trang (đổi tên theo MSSV khi nộp) |
 | [report/Final_GR6.pdf](report/Final_GR6.pdf) | Báo cáo Final 10–15 trang |
-| [slides/Final_GR6_slides.pdf](slides/Final_GR6_slides.pdf) | Slide Final 12–15 trang |
+| [slides/README.md](slides/README.md) | Nơi đặt slide Lab 3 và Final (hai file riêng) |
 
 ## 1. Vai trò và tài khoản demo
 
@@ -169,14 +169,14 @@ Video demo **8–12 phút**: [Google Drive](https://drive.google.com/file/d/1EOv
 ├── docs/               # Tài liệu Final
 ├── evidence/           # Ảnh, JSON, trace, log
 ├── report/             # Final_GR6.pdf
-└── slides/             # Final_GR6_slides.pdf
+└── slides/             # slide Lab 3 + Final (xem slides/README.md)
 ```
 
 ## 12. Ghi chú nộp bài
 
 - Repo GitHub: `PRM393_Final_GR6` (đã đổi tên, hạng mục G-08).
 - Web admin đã deploy tại <https://prm323-lab2-gr6.web.app/> (hạng mục G-01).
-- Báo cáo và slide được sinh bằng `dart run tool/generate_final_report_pdf.dart` và `dart run tool/generate_final_slides_pdf.dart`.
+- Báo cáo Final sinh bằng `dart run tool/generate_final_report_pdf.dart`; slide Lab 3 và Final do sinh viên dựng, đặt trong `slides/` theo [slides/README.md](slides/README.md).
 - `google-services.json` và khóa bí mật không commit; clone mới cần cấu hình Firebase riêng.
 - Ảnh/log trong `evidence/` đã lọc email, UID và token trước khi lưu.
 
