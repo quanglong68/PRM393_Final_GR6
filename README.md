@@ -8,7 +8,7 @@ Repo nộp: <https://github.com/quanglong68/PRM393_Final_GR6>. Web admin: <https
 
 | Tài liệu | Nội dung |
 |---|---|
-| [docs/gap-review.md](docs/gap-review.md) | Đối chiếu Lab 2/Lab 3 với rubric Final, phần đã đóng và còn mở |
+| [docs/gap-review.md](docs/gap-review.md) | Đối chiếu rubric Final với bằng chứng trong repo |
 | [docs/architecture.md](docs/architecture.md) | Kiến trúc mobile + web + Firebase, MVVM, package dùng chung |
 | [docs/data-model.md](docs/data-model.md) | Collection, trường, quyền theo vai trò, chuyển trạng thái |
 | [docs/cross-role-flow.md](docs/cross-role-flow.md) | Sinh viên gửi bí kíp → Staff duyệt → mobile cập nhật realtime |
