@@ -5,14 +5,9 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
-void main(List<String> args) async {
-  final studentId = args.isEmpty ? null : args.first.toUpperCase();
-  if (studentId != null && !RegExp(r'^[A-Z]{2}\d{6}$').hasMatch(studentId)) {
-    throw ArgumentError('Cách dùng: dart run tool/generate_report_pdf.dart MSSV "Họ và tên"');
-  }
-  final studentName = args.length > 1 ? args.skip(1).join(' ').trim() : '';
-  final studentLabel = studentId ?? 'Chờ MSSV';
-  final nameLabel = studentName.isEmpty ? 'Chờ tên sinh viên' : studentName;
+void main() async {
+  const studentLabel = 'GR6';
+  const nameLabel = 'Nhóm GR6';
   final regularBytes = File('assets/fonts/DejaVuSans.ttf').readAsBytesSync();
   final boldBytes = File('assets/fonts/DejaVuSans-Bold.ttf').readAsBytesSync();
 
@@ -21,7 +16,7 @@ void main(List<String> args) async {
 
   final doc = pw.Document(
     title: 'PRM393 Lab 3 — Project Report - $studentLabel',
-    author: '$nameLabel ($studentLabel)',
+    author: nameLabel,
     subject: 'PRM393 Cloud-Enabled Mobile App Final Report',
     keywords: 'PRM393, Lab 3, Flutter, Firebase, Report',
   );
@@ -55,7 +50,7 @@ void main(List<String> args) async {
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
-          pw.Text('MSSV: $studentLabel | Repository: prm323-lab2-gr6',
+          pw.Text('Nhóm $studentLabel | Repository: PRM393_Final_$studentLabel',
               style: pw.TextStyle(font: fontRegular, fontSize: 8, color: PdfColors.grey600)),
           pw.Text('Trang $pageNum / $totalPages',
               style: pw.TextStyle(font: fontBold, fontSize: 10, color: PdfColors.blue900)),
@@ -139,18 +134,13 @@ void main(List<String> args) async {
         child: pw.Column(
           children: [
             pw.Row(children: [
-              pw.SizedBox(width: 140, child: pw.Text('Họ và tên sinh viên:', style: pw.TextStyle(font: fontBold, fontSize: 11))),
+              pw.SizedBox(width: 140, child: pw.Text('Nhóm thực hiện:', style: pw.TextStyle(font: fontBold, fontSize: 11))),
               pw.Text(nameLabel, style: pw.TextStyle(font: fontRegular, fontSize: 11)),
             ]),
             pw.SizedBox(height: 4),
             pw.Row(children: [
-              pw.SizedBox(width: 140, child: pw.Text('Student ID (Mã SV):', style: pw.TextStyle(font: fontBold, fontSize: 11, color: PdfColors.red800))),
-              pw.Text(studentLabel, style: pw.TextStyle(font: fontBold, fontSize: 11, color: PdfColors.red800)),
-            ]),
-            pw.SizedBox(height: 4),
-            pw.Row(children: [
-              pw.SizedBox(width: 140, child: pw.Text('Tên Repository nộp:', style: pw.TextStyle(font: fontBold, fontSize: 11))),
-              pw.Text('PRM393_Lab03_[StudentID] (Hiện tại: prm323-lab2-gr6)', style: pw.TextStyle(font: fontRegular, fontSize: 11)),
+              pw.SizedBox(width: 140, child: pw.Text('Repository nộp:', style: pw.TextStyle(font: fontBold, fontSize: 11, color: PdfColors.red800))),
+              pw.Text('quanglong68/PRM393_Final_$studentLabel', style: pw.TextStyle(font: fontBold, fontSize: 11, color: PdfColors.red800)),
             ]),
             pw.SizedBox(height: 4),
             pw.Row(children: [
@@ -845,7 +835,7 @@ void main(List<String> args) async {
   final outDir = Directory('report');
   if (!outDir.existsSync()) outDir.createSync(recursive: true);
 
-  final outFile = File('report/Lab03_${studentId ?? 'STUDENT_ID'}.pdf');
+  final outFile = File('report/PRM393_LAB3_$studentLabel.pdf');
   await outFile.writeAsBytes(bytes);
 
   print('Successfully generated Report PDF: ${outFile.path}');

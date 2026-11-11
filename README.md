@@ -16,9 +16,9 @@ Repo nộp: <https://github.com/quanglong68/PRM393_Final_GR6>. Web admin: <https
 | [docs/test-report.md](docs/test-report.md) | Kết quả test, rules, review code và bằng chứng |
 | [docs/test-plan.md](docs/test-plan.md) | Ma trận 26 kịch bản E2E và điều kiện thoát |
 | [docs/code-review.md](docs/code-review.md) | Finding CR-01…CR-31, `file:line`, quyết định và commit sửa |
-| [report/Lab03_STUDENT_ID.pdf](report/Lab03_STUDENT_ID.pdf) | Báo cáo Lab 3, 10 trang (đổi tên theo MSSV khi nộp) |
+| [report/PRM393_LAB3_GR6.pdf](report/PRM393_LAB3_GR6.pdf) | Báo cáo Lab 3 của nhóm GR6, 10 trang |
 | [report/Final_GR6.pdf](report/Final_GR6.pdf) | Báo cáo Final 10–15 trang |
-| [slides/README.md](slides/README.md) | Nơi đặt slide Lab 3 và Final (hai file riêng) |
+| [slides/PRM393_LAB3_GR6.pdf](slides/PRM393_LAB3_GR6.pdf) | Slide bảo vệ Lab 3, 14 slide (kèm bản `.pptx`) |
 
 ## 1. Vai trò và tài khoản demo
 
@@ -169,14 +169,14 @@ Video demo **8–12 phút**: [Google Drive](https://drive.google.com/file/d/1EOv
 ├── docs/               # Tài liệu Final
 ├── evidence/           # Ảnh, JSON, trace, log
 ├── report/             # Final_GR6.pdf
-└── slides/             # slide Lab 3 + Final (xem slides/README.md)
+└── slides/             # PRM393_LAB3_GR6.pdf/.pptx; slide Final đặt cùng thư mục
 ```
 
 ## 12. Ghi chú nộp bài
 
 - Repo GitHub: `PRM393_Final_GR6` (đã đổi tên, hạng mục G-08).
 - Web admin đã deploy tại <https://prm323-lab2-gr6.web.app/> (hạng mục G-01).
-- Báo cáo Final sinh bằng `dart run tool/generate_final_report_pdf.dart`; slide Lab 3 và Final do sinh viên dựng, đặt trong `slides/` theo [slides/README.md](slides/README.md).
+- Báo cáo Final sinh bằng `dart run tool/generate_final_report_pdf.dart`; báo cáo Lab 3 sinh bằng `dart run tool/generate_report_pdf.dart`. Slide Lab 3 nằm tại `slides/PRM393_LAB3_GR6.pdf`; slide Final đặt cùng thư mục khi hoàn tất.
 - `google-services.json` và khóa bí mật không commit; clone mới cần cấu hình Firebase riêng.
 - Ảnh/log trong `evidence/` đã lọc email, UID và token trước khi lưu.
 

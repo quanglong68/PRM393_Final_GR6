@@ -1,6 +1,6 @@
 # PRM393 Lab 3 — StudyPilot (GR6)
 
-Bản nội dung báo cáo cập nhật 11/11/2026 (bản 07/11 được thay khi bổ sung minh chứng Cloudinary và số liệu kiểm thử mới). Tên cũ "FPTU Second Brain" chỉ còn trong lịch sử; mã package giữ nguyên để không phá liên kết Firebase. Trang bìa và tên file nộp dùng tên nhóm và MSSV khi xuất bản. Android package là `com.example.prm323_lab3`.
+Bản nội dung báo cáo cập nhật 11/11/2026 (bản 07/11 được thay khi bổ sung minh chứng Cloudinary và số liệu kiểm thử mới). Tên cũ "FPTU Second Brain" chỉ còn trong lịch sử; mã package giữ nguyên để không phá liên kết Firebase. Trang bìa và tên file nộp dùng định danh nhóm GR6. Android package là `com.example.prm323_lab3`.
 
 ## 1. Mục tiêu và phạm vi
 
@@ -43,4 +43,4 @@ Firestore chỉ cho owner dùng dữ liệu cá nhân theo UID. Hosted domain c�
 
 ## 6. Kiểm thử trên máy thật và bàn giao
 
-Chọn serial máy thật qua ADB. Dùng app cùng project, tài khoản FPT demo và APK có SHA phù hợp. Thu kết quả crash trước/sau trên web admin, ba trạng thái FCM, upload/tải lại Cloudinary, Analytics DebugView và batch ARTEMIS. Chốt MSSV và đổi tên file khi xuất bản nộp. Slide để sau theo yêu cầu. Video quay khi có thiết bị thật.
+Chọn serial máy thật qua ADB. Dùng app cùng project, tài khoản FPT demo và APK có SHA phù hợp. Thu kết quả crash trước/sau trên web admin, ba trạng thái FCM, upload/tải lại Cloudinary, Analytics DebugView và batch ARTEMIS. Tên file xuất bản dùng định danh nhóm GR6. Slide Lab 3 nằm tại `slides/PRM393_LAB3_GR6.pdf`; video demo có link trong `evidence/video/linkvideo.md`.
